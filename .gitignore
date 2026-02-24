@@ -1,1 +1,5 @@
 .DS_Store
+
+# Keep planning artifacts local-only
+docs/
+workitems/
