@@ -27,10 +27,18 @@ export interface SharedMatchPolicy {
   candidateMax: number;
 }
 
+export type SharedMatchConfidence = "high" | "medium" | "low";
+
 export interface RankCandidatesOptions {
   path?: SharedMatchPath;
   applyPathBonuses?: boolean;
   policy?: Partial<SharedMatchPolicy>;
+}
+
+export interface SharedMatchDecision {
+  confidence: SharedMatchConfidence;
+  topScore: number;
+  policy: SharedMatchPolicy;
 }
 
 export const DEFAULT_SHARED_MATCH_POLICY: SharedMatchPolicy = {
@@ -127,6 +135,21 @@ export const resolveSharedMatchPolicy = (
     autoAcceptMin: clampScore(merged.autoAcceptMin),
     candidateMax: Math.max(1, Math.floor(merged.candidateMax)),
   };
+};
+
+export const classifyMatchConfidence = (
+  score: number,
+  policyInput?: Partial<SharedMatchPolicy> | SharedMatchPolicy,
+): SharedMatchDecision => {
+  const policy = resolveSharedMatchPolicy(policyInput);
+  const topScore = clampScore(score);
+  if (topScore >= policy.highConfidenceMin) {
+    return { confidence: "high", topScore, policy };
+  }
+  if (topScore >= policy.autoAcceptMin) {
+    return { confidence: "medium", topScore, policy };
+  }
+  return { confidence: "low", topScore, policy };
 };
 
 export const rankCandidatesShared = (

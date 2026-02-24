@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  classifyMatchConfidence,
   computeTokenOverlap,
   rankCandidatesShared,
   scoreCandidateCanonical,
@@ -72,4 +73,16 @@ test("parity: reconcile and picnic produce equal base scores for same input/cand
   const reconcileDirect = scoreCandidateCanonical(input, CANDIDATES[0], "reconcile", true);
   const picnicDirect = scoreCandidateCanonical(input, CANDIDATES[0], "picnic", true);
   assert.equal(reconcileDirect.baseScore, picnicDirect.baseScore);
+});
+
+test("classifyMatchConfidence applies central high/medium/low thresholds", () => {
+  const policy = {
+    highConfidenceMin: 0.9,
+    autoAcceptMin: 0.5,
+    candidateMax: 20,
+  };
+
+  assert.equal(classifyMatchConfidence(0.95, policy).confidence, "high");
+  assert.equal(classifyMatchConfidence(0.6, policy).confidence, "medium");
+  assert.equal(classifyMatchConfidence(0.2, policy).confidence, "low");
 });

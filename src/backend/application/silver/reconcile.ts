@@ -1,4 +1,4 @@
-import { computeTokenOverlap } from "../../domain/matching";
+import { computeTokenOverlap } from "../../domain/matching/shared-core.ts";
 import type {
   SilverDataQualityEventRow,
   SilverIngredientCanonicalRow,

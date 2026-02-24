@@ -22,6 +22,7 @@
 4. Track: `.copilot-tracking/changes/`
 5. Commit and push
 6. start executing next item on workitems.md in `workitems/workitems.md`, start at step 1 of 3) Execution Flow in `AGENTS.md`
+7. when no more items available on workitems.md in `workitems/workitems.md` add new items based on projectdocs and builded code.
 
 ## 4) Context Loading (Only What You Need)
 

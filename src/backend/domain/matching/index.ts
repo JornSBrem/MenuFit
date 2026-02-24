@@ -1,4 +1,5 @@
 export {
+  classifyMatchConfidence,
   computeTokenOverlap,
   DEFAULT_SHARED_MATCH_POLICY,
   normalizeMatchText,
@@ -7,7 +8,9 @@ export {
   scoreCandidateCanonical,
   tokenizeMatchText,
   type RankCandidatesOptions,
+  type SharedMatchConfidence,
   type SharedMatchCandidate,
+  type SharedMatchDecision,
   type SharedMatchPath,
   type SharedMatchPolicy,
   type SharedRankedCandidate,

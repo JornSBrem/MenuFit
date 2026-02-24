@@ -6,4 +6,10 @@ Application services orchestrate domain logic and integrations:
 - execute match and review workflows
 - trigger cart sync safely
 
+Current workflow modules:
+- `ingest/`
+- `silver/`
+- `gold/`
+- `matching/`
+
 Application code should not contain UI concerns.
