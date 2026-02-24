@@ -1,4 +1,5 @@
 export { MatchingReviewService, type MatchingReviewServiceOptions } from "./review-service";
+export { DEFAULT_MATCHING_KPI_THRESHOLDS, evaluateMatchingKpiGates } from "./kpi-gates";
 export type {
   MatchAuditEvent,
   MatchEvaluationInput,
@@ -11,3 +12,4 @@ export type {
   ReviewActionResult,
   ReviewQueueStatus,
 } from "./types";
+export type { MatchingKpiGateCheck, MatchingKpiGateResult, MatchingKpiMetrics, MatchingKpiThresholds } from "./kpi-gates";

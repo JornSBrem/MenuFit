@@ -1,0 +1,8 @@
+{
+  "metrics": {
+    "top1": 0.74,
+    "top3": 0.9,
+    "reviewRate": 0.2,
+    "noMatchRate": 0.08
+  }
+}

@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  backend-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Unit and Integration Tests
+        run: |
+          find src/backend -name '*.test.ts' ! -name 'e2e-smoke.test.ts' -print0 \
+            | xargs -0 node --test --experimental-strip-types
+
+      - name: Run E2E Smoke Suite
+        run: node --test --experimental-strip-types src/backend/tests/e2e-smoke.test.ts
+
+      - name: Evaluate KPI Release Gates
+        run: node --experimental-strip-types infrastructure/release-gates/check-kpi-gates.ts infrastructure/release-gates/sample-metrics.json
