@@ -9,6 +9,7 @@ export const nlAdminResources = {
   "admin.operation.recompute": "Recompute",
   "admin.operation.config_update": "Configuratie-update",
   "admin.operation.cleanup": "Opschonen",
+  "admin.operation.cutover_checklist": "Cutover-checklist",
   "admin.pending.true": "Bezig...",
   "admin.pending.false": "Klaar",
   "admin.error.with_hint": "{code}: {message} ({hint})",

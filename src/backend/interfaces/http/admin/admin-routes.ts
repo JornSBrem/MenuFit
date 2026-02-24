@@ -1,4 +1,7 @@
-import { AdminOperationsService } from "../../../application/admin/admin-operations-service.ts";
+import {
+  AdminOperationsService,
+  type CutoverChecklistGateInput,
+} from "../../../application/admin/admin-operations-service.ts";
 import {
   type AdminSessionContext,
   type AnySessionContext,
@@ -41,6 +44,11 @@ export interface CleanupBody {
   operationId: string;
   dryRun: boolean;
   targets: string[];
+}
+
+export interface CutoverChecklistBody {
+  operationId: string;
+  gates: CutoverChecklistGateInput[];
 }
 
 const forbidden = (error: SessionContextError): ApiEnvelope<never> => ({
@@ -134,6 +142,38 @@ const validateCleanupBody = (body: CleanupBody): string | null => {
   }
   if (!Array.isArray(body.targets) || body.targets.length === 0) {
     return "targets requires at least one value";
+  }
+  return null;
+};
+
+const validateCutoverChecklistBody = (body: CutoverChecklistBody): string | null => {
+  if (!body.operationId?.trim()) {
+    return "operationId is required";
+  }
+  if (!Array.isArray(body.gates) || body.gates.length === 0) {
+    return "gates requires at least one value";
+  }
+
+  for (const gate of body.gates) {
+    if (!gate.gateId?.trim()) {
+      return "each gate requires gateId";
+    }
+    if (!gate.label?.trim()) {
+      return "each gate requires label";
+    }
+    if (!Number.isFinite(gate.metric)) {
+      return "each gate requires metric as finite number";
+    }
+    if (gate.minValue === undefined && gate.maxValue === undefined) {
+      return "each gate requires minValue and/or maxValue";
+    }
+    if (
+      gate.minValue !== undefined &&
+      gate.maxValue !== undefined &&
+      gate.minValue > gate.maxValue
+    ) {
+      return "gate minValue cannot be greater than maxValue";
+    }
   }
   return null;
 };
@@ -237,6 +277,29 @@ export const handleAdminCleanup = (
   return { ok: true, data: report };
 };
 
+export const handleAdminCutoverChecklist = (
+  service: AdminOperationsService,
+  session: AnySessionContext,
+  body: CutoverChecklistBody,
+): ApiEnvelope<ReturnType<AdminOperationsService["runCutoverChecklist"]>> => {
+  const sessionResult = withAdminSession(session);
+  if (!sessionResult.ok || !sessionResult.data) {
+    return sessionResult;
+  }
+
+  const validationError = validateCutoverChecklistBody(body);
+  if (validationError) {
+    return invalidBody(validationError);
+  }
+
+  const report = service.runCutoverChecklist({
+    operationId: body.operationId,
+    performedBy: sessionResult.data.subjectId,
+    gates: body.gates,
+  });
+  return { ok: true, data: report };
+};
+
 export interface AdminRouteHandlers {
   ingest: (session: AnySessionContext, body: IngestBody) => ApiEnvelope<ReturnType<AdminOperationsService["runIngest"]>>;
   recompute: (
@@ -251,6 +314,10 @@ export interface AdminRouteHandlers {
     session: AnySessionContext,
     body: CleanupBody,
   ) => ApiEnvelope<ReturnType<AdminOperationsService["runCleanup"]>>;
+  cutoverChecklist: (
+    session: AnySessionContext,
+    body: CutoverChecklistBody,
+  ) => ApiEnvelope<ReturnType<AdminOperationsService["runCutoverChecklist"]>>;
 }
 
 export const createAdminRouteHandlers = (service: AdminOperationsService): AdminRouteHandlers => ({
@@ -258,4 +325,5 @@ export const createAdminRouteHandlers = (service: AdminOperationsService): Admin
   recompute: (session, body) => handleAdminRecompute(service, session, body),
   configUpdate: (session, body) => handleAdminConfigUpdate(service, session, body),
   cleanup: (session, body) => handleAdminCleanup(service, session, body),
+  cutoverChecklist: (session, body) => handleAdminCutoverChecklist(service, session, body),
 });

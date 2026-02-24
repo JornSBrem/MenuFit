@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-204 | type:feature | priority:P3 | status:TODO | title:Geautomatiseerde cutover checklist V1 -> V3
-  - value: gecontroleerde overgang met rollback-afspraken en meetbare gates
-
 - [ ] WI-207 | type:feature | priority:P1 | status:TODO | title:Echte auth/session lifecycle voor PG/Picnic + user/admin middleware
   - context: Out-of-scope items noemen expliciet ontbrekende auth/session lifecycle en middleware wiring.
   - acceptance:
@@ -88,6 +85,13 @@
 _None_
 
 ## Done
+
+- [x] WI-204 | type:feature | priority:P3 | status:DONE | title:Geautomatiseerde cutover checklist V1 -> V3
+  - context: Cutover-criteria en rollback-gates zijn nog niet geautomatiseerd, waardoor releasebeslissingen handmatig en foutgevoelig zijn.
+  - acceptance:
+    - Admin flow kan een cutover checklist evalueren met expliciete gate-pass/fail uitkomst.
+    - Checklistresultaat bevat rollback-indicatie en traceerbare details per gate.
+    - Routecontract en tests dekken success/fail scenario's en validatie.
 
 - [x] WI-203 | type:feature | priority:P2 | status:DONE | title:i18n-ready UI (start NL-only met resource-based strings)
   - context: User-facing teksten staan hardcoded in iOS views en er is nog geen resource-structuur voor admin-web labels.

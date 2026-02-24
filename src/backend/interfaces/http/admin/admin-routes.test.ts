@@ -66,4 +66,75 @@ test("admin routes allow ingest/recompute/config/cleanup with admin session", ()
   assert.equal(cleanup.ok, true);
   assert.equal(cleanup.data?.operationType, "cleanup");
   assert.equal(cleanup.data?.status, "dry_run");
+
+  const cutover = handlers.cutoverChecklist(adminSession, {
+    operationId: "cutover-1",
+    gates: [
+      {
+        gateId: "top1",
+        label: "Top-1 coverage",
+        metric: 0.73,
+        minValue: 0.7,
+        required: true,
+        rollbackOnFail: true,
+      },
+      {
+        gateId: "review-rate",
+        label: "Review rate",
+        metric: 0.2,
+        maxValue: 0.25,
+        required: true,
+        rollbackOnFail: true,
+      },
+    ],
+  });
+  assert.equal(cutover.ok, true);
+  assert.equal(cutover.data?.operationType, "cutover_checklist");
+  assert.equal(cutover.data?.details?.decision, "ready");
+});
+
+test("admin cutover checklist route validates payload and blocks when required gate fails", () => {
+  const service = new AdminOperationsService({
+    now: () => "2026-02-24T23:30:00.000Z",
+  });
+  const handlers = createAdminRouteHandlers(service);
+
+  const invalid = handlers.cutoverChecklist(adminSession, {
+    operationId: "cutover-invalid",
+    gates: [
+      {
+        gateId: "bad-gate",
+        label: "Bad gate",
+        metric: 1,
+      },
+    ],
+  });
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.error?.code, "INVALID_BODY");
+
+  const blocked = handlers.cutoverChecklist(adminSession, {
+    operationId: "cutover-blocked",
+    gates: [
+      {
+        gateId: "top1",
+        label: "Top-1 coverage",
+        metric: 0.65,
+        minValue: 0.7,
+        required: true,
+        rollbackOnFail: true,
+      },
+      {
+        gateId: "manual-check",
+        label: "Manual note",
+        metric: 1,
+        minValue: 1,
+        required: false,
+        rollbackOnFail: false,
+      },
+    ],
+  });
+  assert.equal(blocked.ok, true);
+  assert.equal(blocked.data?.details?.decision, "blocked");
+  assert.equal(blocked.data?.details?.rollbackRequired, true);
+  assert.deepEqual(blocked.data?.details?.failedGateIds, ["top1"]);
 });

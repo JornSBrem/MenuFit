@@ -1,4 +1,9 @@
-export type AdminOperationType = "ingest" | "recompute" | "config_update" | "cleanup";
+export type AdminOperationType =
+  | "ingest"
+  | "recompute"
+  | "config_update"
+  | "cleanup"
+  | "cutover_checklist";
 export type AdminOperationStatus = "completed" | "dry_run";
 
 export interface AdminOperationReport {

@@ -10,7 +10,12 @@ export interface AdminSession {
 export interface AdminOperationReport {
   reportId: string;
   operationId: string;
-  operationType: "ingest" | "recompute" | "config_update" | "cleanup";
+  operationType:
+    | "ingest"
+    | "recompute"
+    | "config_update"
+    | "cleanup"
+    | "cutover_checklist";
   status: "completed" | "dry_run";
   dryRun: boolean;
   message: string;

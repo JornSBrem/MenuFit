@@ -18,6 +18,6 @@ Implemented baseline:
 - `cart/cart-routes.ts` for idempotent cart sync and sync report envelopes.
 - `household/household-routes.ts` for user-session household bootstrap, invitation lifecycle, and status reads.
 - `match/match-routes.ts` for evaluate/queue/review-action/audit/overrides with optional LLM finish-pass.
-- `admin/admin-routes.ts` for admin-only ingest/recompute/config/cleanup handlers.
+- `admin/admin-routes.ts` for admin-only ingest/recompute/config/cleanup/cutover-checklist handlers.
 - `system/system-routes.ts` for health/diagnostics/jobs and backup/restore/cleanup operations.
 - `auth/session-context.ts` for user/admin bearer parsing with optional expiry validation.

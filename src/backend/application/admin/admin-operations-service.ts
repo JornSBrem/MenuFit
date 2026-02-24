@@ -14,6 +14,76 @@ interface ExecuteOptions {
   details?: Record<string, unknown>;
 }
 
+export interface CutoverChecklistGateInput {
+  gateId: string;
+  label: string;
+  metric: number;
+  minValue?: number;
+  maxValue?: number;
+  required?: boolean;
+  rollbackOnFail?: boolean;
+}
+
+interface CutoverChecklistGateResult {
+  gateId: string;
+  label: string;
+  metric: number;
+  minValue?: number;
+  maxValue?: number;
+  required: boolean;
+  rollbackOnFail: boolean;
+  status: "pass" | "fail";
+}
+
+interface CutoverChecklistSummary {
+  decision: "ready" | "blocked";
+  rollbackRequired: boolean;
+  totalGates: number;
+  passedGates: number;
+  failedRequiredGates: number;
+  failedGateIds: string[];
+  gateResults: CutoverChecklistGateResult[];
+}
+
+const evaluateGate = (gate: CutoverChecklistGateInput): CutoverChecklistGateResult => {
+  const required = gate.required ?? true;
+  const rollbackOnFail = gate.rollbackOnFail ?? required;
+  const minSatisfied = gate.minValue === undefined || gate.metric >= gate.minValue;
+  const maxSatisfied = gate.maxValue === undefined || gate.metric <= gate.maxValue;
+  const status: "pass" | "fail" = minSatisfied && maxSatisfied ? "pass" : "fail";
+
+  return {
+    gateId: gate.gateId,
+    label: gate.label,
+    metric: gate.metric,
+    minValue: gate.minValue,
+    maxValue: gate.maxValue,
+    required,
+    rollbackOnFail,
+    status,
+  };
+};
+
+const evaluateChecklist = (
+  gates: CutoverChecklistGateInput[],
+): CutoverChecklistSummary => {
+  const gateResults = gates.map(evaluateGate);
+  const failedRequiredGates = gateResults.filter((gate) => gate.required && gate.status === "fail");
+  const failedRollbackGates = gateResults.filter((gate) => gate.rollbackOnFail && gate.status === "fail");
+
+  return {
+    decision: failedRequiredGates.length === 0 ? "ready" : "blocked",
+    rollbackRequired: failedRollbackGates.length > 0,
+    totalGates: gateResults.length,
+    passedGates: gateResults.filter((gate) => gate.status === "pass").length,
+    failedRequiredGates: failedRequiredGates.length,
+    failedGateIds: gateResults
+      .filter((gate) => gate.status === "fail")
+      .map((gate) => gate.gateId),
+    gateResults,
+  };
+};
+
 export class AdminOperationsService {
   private readonly reports: AdminOperationReport[] = [];
 
@@ -107,6 +177,23 @@ export class AdminOperationsService {
       dryRun: input.dryRun,
       details: {
         targets: input.targets,
+      },
+    });
+  }
+
+  runCutoverChecklist(input: {
+    operationId: string;
+    performedBy: string;
+    gates: CutoverChecklistGateInput[];
+  }): AdminOperationReport {
+    const summary = evaluateChecklist(input.gates);
+
+    return this.execute({
+      operationId: input.operationId,
+      operationType: "cutover_checklist",
+      performedBy: input.performedBy,
+      details: {
+        ...summary,
       },
     });
   }

@@ -11,12 +11,17 @@ const tabLabelKeys: Record<AdminTab, "admin.tab.data" | "admin.tab.settings" | "
 
 const operationLabelKeys: Record<
   AdminOperationReport["operationType"],
-  "admin.operation.ingest" | "admin.operation.recompute" | "admin.operation.config_update" | "admin.operation.cleanup"
+  | "admin.operation.ingest"
+  | "admin.operation.recompute"
+  | "admin.operation.config_update"
+  | "admin.operation.cleanup"
+  | "admin.operation.cutover_checklist"
 > = {
   ingest: "admin.operation.ingest",
   recompute: "admin.operation.recompute",
   config_update: "admin.operation.config_update",
   cleanup: "admin.operation.cleanup",
+  cutover_checklist: "admin.operation.cutover_checklist",
 };
 
 const statusLabelKeys: Record<AdminOperationReport["status"], "admin.status.completed" | "admin.status.dry_run"> = {

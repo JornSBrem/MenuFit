@@ -12,6 +12,7 @@ import {
 test("admin labels map tabs and operation metadata to localized text", () => {
   assert.equal(getAdminTabLabel("settings"), "Instellingen");
   assert.equal(getAdminOperationTypeLabel("config_update"), "Configuratie-update");
+  assert.equal(getAdminOperationTypeLabel("cutover_checklist"), "Cutover-checklist");
   assert.equal(getAdminOperationStatusLabel("dry_run"), "Dry-run");
   assert.equal(getAdminPendingLabel(true), "Bezig...");
 });
