@@ -13,5 +13,6 @@ Current workflow modules:
 - `matching/`
 - `cart/`
 - `admin/`
+- `system/`
 
 Application code should not contain UI concerns.
