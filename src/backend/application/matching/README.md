@@ -3,6 +3,7 @@
 Application-level matching workflow for WI-007:
 
 - evaluate candidates using shared matching core + central confidence gates
+- optional LLM finish-pass orchestration via `match-workflow-service.ts`
 - queue `medium` and `low` decisions for review
 - apply review actions (`map`, `skip`, `defer`)
 - persist feedback to in-memory audit trail and override records

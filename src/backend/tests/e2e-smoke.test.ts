@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { createDefaultRuntimeConfig } from "../../shared/config/index.ts";
 import { GoldWeekReadService } from "../application/gold/read-service.ts";
 import { AuditTrailService } from "../application/audit/audit-trail-service.ts";
 import { MatchingReviewService } from "../application/matching/review-service.ts";
+import { MatchWorkflowService } from "../application/matching/match-workflow-service.ts";
 import { CartSyncService } from "../application/cart/sync-service.ts";
 import { SystemOperationsService } from "../application/system/system-operations-service.ts";
 import { createWeekRouteHandlers } from "../interfaces/http/week/week-routes.ts";
 import { createCartRouteHandlers } from "../interfaces/http/cart/cart-routes.ts";
+import { createMatchRouteHandlers } from "../interfaces/http/match/match-routes.ts";
 import { createSystemRouteHandlers } from "../interfaces/http/system/system-routes.ts";
 import { parseSessionToken } from "../interfaces/http/auth/session-context.ts";
 
@@ -77,25 +80,54 @@ test("e2e smoke: week -> match -> cart -> system operations", async () => {
   });
   assert.equal(summary.ok, true);
 
-  const matching = new MatchingReviewService({
+  const matchingReview = new MatchingReviewService({
     policy: {
-      highConfidenceMin: 0.9,
-      autoAcceptMin: 0.6,
+      highConfidenceMin: 0.95,
+      autoAcceptMin: 0.8,
       candidateMax: 5,
     },
     auditTrail,
   });
-  const matchResult = matching.evaluate({
+  const matchingWorkflow = new MatchWorkflowService({
+    reviewService: matchingReview,
+    configStore: createDefaultRuntimeConfig({
+      LLM_PROVIDER: "openai",
+      LLM_BASE_URL: "https://api.openai.com/v1",
+      LLM_API_KEY: "test-key",
+      LLM_API_VERSION: "2024-10-21",
+      LLM_MODEL: "gpt-4o-mini",
+    }),
+    fetchImpl: (async () =>
+      ({
+        ok: true,
+        status: 200,
+        async json() {
+          return {
+            output_text: '{"candidateId":"cand-1","note":"best lexical fit"}',
+          };
+        },
+      }) as Response) as typeof fetch,
+  });
+  const matchRoutes = createMatchRouteHandlers(matchingWorkflow);
+  const matchResult = await matchRoutes.evaluate({
     itemId: "item-1",
     sourceRef: "week-9",
     query: "volkoren pasta",
     candidates: [
-      { candidateId: "cand-1", label: "volkoren pasta" },
+      { candidateId: "cand-1", label: "volkoren spaghetti", pathBonus: 0.05 },
       { candidateId: "cand-2", label: "witte rijst" },
     ],
     path: "picnic",
+    finishPass: {
+      enabled: true,
+      autoApply: true,
+      actorId: "llm-smoke",
+    },
   });
-  assert.equal(matchResult.decision, "high");
+  assert.equal(matchResult.ok, true);
+  assert.equal(matchResult.data?.finishPass.attempted, true);
+  assert.equal(matchResult.data?.finishPass.suggestedCandidateId, "cand-1");
+  assert.equal(matchResult.data?.finishPass.appliedReviewAction?.queueItem.status, "mapped");
 
   const cart = new CartSyncService({
     now: () => "2026-02-25T00:30:00.000Z",
@@ -131,7 +163,7 @@ test("e2e smoke: week -> match -> cart -> system operations", async () => {
   const matchingEvents = auditTrail.list({ category: "matching" });
   const syncEvents = auditTrail.list({ category: "sync" });
   const systemEvents = auditTrail.list({ category: "system" });
-  assert.equal(matchingEvents.length, 1);
+  assert.equal(matchingEvents.length, 2);
   assert.equal(syncEvents.length, 1);
   assert.equal(systemEvents.length, 1);
 });
