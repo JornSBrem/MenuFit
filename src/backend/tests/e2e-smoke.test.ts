@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { GoldWeekReadService } from "../application/gold/read-service.ts";
+import { AuditTrailService } from "../application/audit/audit-trail-service.ts";
 import { MatchingReviewService } from "../application/matching/review-service.ts";
 import { CartSyncService } from "../application/cart/sync-service.ts";
 import { SystemOperationsService } from "../application/system/system-operations-service.ts";
@@ -11,6 +12,10 @@ import { createSystemRouteHandlers } from "../interfaces/http/system/system-rout
 import { parseSessionToken } from "../interfaces/http/auth/session-context.ts";
 
 test("e2e smoke: week -> match -> cart -> system operations", async () => {
+  const auditTrail = new AuditTrailService({
+    now: () => "2026-02-25T00:30:00.000Z",
+  });
+
   const readService = new GoldWeekReadService();
   readService.upsert({
     weekPlan: {
@@ -78,6 +83,7 @@ test("e2e smoke: week -> match -> cart -> system operations", async () => {
       autoAcceptMin: 0.6,
       candidateMax: 5,
     },
+    auditTrail,
   });
   const matchResult = matching.evaluate({
     itemId: "item-1",
@@ -93,6 +99,7 @@ test("e2e smoke: week -> match -> cart -> system operations", async () => {
 
   const cart = new CartSyncService({
     now: () => "2026-02-25T00:30:00.000Z",
+    auditTrail,
   });
   const cartRoutes = createCartRouteHandlers(cart);
   const cartReport = await cartRoutes.sync({
@@ -108,6 +115,7 @@ test("e2e smoke: week -> match -> cart -> system operations", async () => {
 
   const system = new SystemOperationsService({
     now: () => "2026-02-25T00:30:00.000Z",
+    auditTrail,
   });
   const systemRoutes = createSystemRouteHandlers(system);
   const adminSession = parseSessionToken("admin:ops-user:token-smoke:owner");
@@ -119,4 +127,11 @@ test("e2e smoke: week -> match -> cart -> system operations", async () => {
   assert.equal(backupReport.ok, true);
   assert.equal(backupReport.data?.mode, "dry-run");
   assert.equal(systemRoutes.jobs().data?.length, 1);
+
+  const matchingEvents = auditTrail.list({ category: "matching" });
+  const syncEvents = auditTrail.list({ category: "sync" });
+  const systemEvents = auditTrail.list({ category: "system" });
+  assert.equal(matchingEvents.length, 1);
+  assert.equal(syncEvents.length, 1);
+  assert.equal(systemEvents.length, 1);
 });

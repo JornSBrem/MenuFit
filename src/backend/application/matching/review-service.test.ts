@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type { SharedMatchCandidate } from "../../domain/matching/shared-core.ts";
 import { MatchingReviewService } from "./review-service.ts";
 
@@ -138,4 +139,37 @@ test("review actions map/skip/defer write audit and overrides", () => {
   assert.equal(queueStatuses.get("queue-map"), "mapped");
   assert.equal(queueStatuses.get("queue-skip"), "skipped");
   assert.equal(queueStatuses.get("queue-defer"), "deferred");
+});
+
+test("matching service writes central audit records for decisions and review actions", () => {
+  const centralAudit = new AuditTrailService({
+    now: () => "2026-02-24T22:00:00.000Z",
+  });
+  const service = new MatchingReviewService({
+    policy: {
+      highConfidenceMin: 0.95,
+      autoAcceptMin: 0.7,
+      candidateMax: 10,
+    },
+    now: () => "2026-02-24T22:00:00.000Z",
+    auditTrail: centralAudit,
+  });
+
+  service.evaluate({
+    itemId: "queue-1",
+    sourceRef: "week:9:item:queue-1",
+    query: "volkoren pasta",
+    candidates: [{ candidateId: "cand-low", label: "witte rijst" }],
+    path: "reconcile",
+  });
+  service.applyReviewAction({
+    itemId: "queue-1",
+    action: "skip",
+    actorId: "admin-ops",
+  });
+
+  const events = centralAudit.list({ category: "matching" });
+  assert.equal(events.length, 2);
+  assert.equal(events[0].action, "decision");
+  assert.equal(events[1].action, "review_action");
 });

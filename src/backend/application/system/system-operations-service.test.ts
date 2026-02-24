@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { AuditTrailService } from "../audit/audit-trail-service.ts";
 import { SystemOperationsService } from "./system-operations-service.ts";
 
 test("system service exposes health diagnostics and job status", () => {
@@ -17,8 +18,12 @@ test("system service exposes health diagnostics and job status", () => {
 });
 
 test("backup/restore/cleanup support dry-run and execute with logs", () => {
+  const auditTrail = new AuditTrailService({
+    now: () => "2026-02-25T00:00:00.000Z",
+  });
   const service = new SystemOperationsService({
     now: () => "2026-02-25T00:00:00.000Z",
+    auditTrail,
   });
 
   const backup = service.runBackup({
@@ -51,4 +56,10 @@ test("backup/restore/cleanup support dry-run and execute with logs", () => {
   const jobs = service.listJobs();
   assert.equal(jobs.length, 3);
   assert.equal(jobs.every((job) => job.status === "completed"), true);
+
+  const auditEvents = auditTrail.list({ category: "system" });
+  assert.equal(auditEvents.length, 3);
+  assert.equal(auditEvents[0].action, "backup");
+  assert.equal(auditEvents[1].action, "restore");
+  assert.equal(auditEvents[2].action, "cleanup");
 });

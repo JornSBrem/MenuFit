@@ -1,16 +1,16 @@
-import { DEFAULT_CONFIG_DEFINITIONS } from "./default-definitions";
-import { RuntimeConfigStore } from "./runtime-config";
+import { DEFAULT_CONFIG_DEFINITIONS } from "./default-definitions.ts";
+import { RuntimeConfigStore } from "./runtime-config.ts";
 
-export { DEFAULT_CONFIG_DEFINITIONS } from "./default-definitions";
-export { RuntimeConfigStore } from "./runtime-config";
+export { DEFAULT_CONFIG_DEFINITIONS } from "./default-definitions.ts";
+export { RuntimeConfigStore } from "./runtime-config.ts";
 export type {
   ConfigDefinition,
   ConfigKind,
   ConfigMeta,
   JsonValue,
   PublicConfigEntry,
-} from "./types";
-export { ConfigError } from "./types";
+} from "./types.ts";
+export { ConfigError } from "./types.ts";
 
 export const createDefaultRuntimeConfig = (initialValues?: Record<string, unknown>) =>
   new RuntimeConfigStore(DEFAULT_CONFIG_DEFINITIONS, initialValues);

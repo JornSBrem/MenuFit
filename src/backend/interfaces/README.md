@@ -10,3 +10,4 @@ Interfaces translate transport payloads into application commands.
 
 Session separation baseline:
 - user and admin sessions are represented as distinct context types in `interfaces/http/auth/`.
+- bearer token parsing supports optional expiry segment (`:<expiresAtEpochSeconds>`) for stricter validation.

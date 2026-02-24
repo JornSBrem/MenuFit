@@ -4,6 +4,7 @@ interface BaseSessionContext {
   sessionKind: SessionKind;
   subjectId: string;
   tokenId: string;
+  expiresAtEpochSeconds?: number;
 }
 
 export interface UserSessionContext extends BaseSessionContext {
@@ -38,17 +39,64 @@ const assertSegment = (value: string | undefined, hint: string): string => {
   return value.trim();
 };
 
-export const parseSessionToken = (token: string): AnySessionContext => {
+const parseExpirySegment = (segment: string): number => {
+  const parsed = Number(segment);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new SessionContextError(
+      "INVALID_SESSION_EXPIRY",
+      "Session expiry must be a valid unix epoch (seconds).",
+      "Use format ...:<expiresAtEpochSeconds>.",
+    );
+  }
+  return parsed;
+};
+
+export interface SessionValidationOptions {
+  requireExpiry?: boolean;
+  nowEpochSeconds?: () => number;
+}
+
+export const parseSessionToken = (
+  token: string,
+  options?: SessionValidationOptions,
+): AnySessionContext => {
   const value = token.trim();
   if (!value) {
     throw new SessionContextError("EMPTY_SESSION_TOKEN", "Session token is required.");
   }
 
   const segments = value.split(":");
-  const sessionKind = assertSegment(segments[0], "Use token format user:<subject>:<token>:<picnicAccount> or admin:<subject>:<token>:<role>.");
+  if (segments.length < 4 || segments.length > 5) {
+    throw new SessionContextError(
+      "INVALID_SESSION_TOKEN",
+      "Session token is malformed.",
+      "Use token format user:<subject>:<token>:<picnicAccount>[:<expiresAtEpochSeconds>] or admin:<subject>:<token>:<role>[:<expiresAtEpochSeconds>].",
+    );
+  }
+
+  const sessionKind = assertSegment(
+    segments[0],
+    "Use token format user:<subject>:<token>:<picnicAccount> or admin:<subject>:<token>:<role>.",
+  );
   const subjectId = assertSegment(segments[1], "Token subject segment missing.");
   const tokenId = assertSegment(segments[2], "Token id segment missing.");
   const profileSegment = assertSegment(segments[3], "Token profile segment missing.");
+  const expirySegment = segments[4];
+  const expiresAtEpochSeconds = expirySegment ? parseExpirySegment(expirySegment) : undefined;
+
+  if (options?.requireExpiry && !expiresAtEpochSeconds) {
+    throw new SessionContextError(
+      "MISSING_SESSION_EXPIRY",
+      "Session token must include expiry.",
+      "Add unix expiry as fifth segment.",
+    );
+  }
+  if (expiresAtEpochSeconds) {
+    const nowEpochSeconds = options?.nowEpochSeconds ?? (() => Math.floor(Date.now() / 1000));
+    if (expiresAtEpochSeconds <= nowEpochSeconds()) {
+      throw new SessionContextError("SESSION_EXPIRED", "Session token has expired.");
+    }
+  }
 
   if (sessionKind === "user") {
     return {
@@ -56,6 +104,7 @@ export const parseSessionToken = (token: string): AnySessionContext => {
       subjectId,
       tokenId,
       picnicAccountId: profileSegment,
+      expiresAtEpochSeconds,
     };
   }
 
@@ -72,13 +121,17 @@ export const parseSessionToken = (token: string): AnySessionContext => {
       subjectId,
       tokenId,
       adminRole: profileSegment as "operator" | "owner",
+      expiresAtEpochSeconds,
     };
   }
 
   throw new SessionContextError("INVALID_SESSION_KIND", "Session kind is invalid.", "Use user or admin.");
 };
 
-export const parseAuthorizationHeader = (authorizationHeader: string): AnySessionContext => {
+export const parseAuthorizationHeader = (
+  authorizationHeader: string,
+  options?: SessionValidationOptions,
+): AnySessionContext => {
   const headerValue = authorizationHeader.trim();
   if (!headerValue.toLowerCase().startsWith("bearer ")) {
     throw new SessionContextError(
@@ -88,7 +141,7 @@ export const parseAuthorizationHeader = (authorizationHeader: string): AnySessio
   }
 
   const token = headerValue.slice("Bearer ".length);
-  return parseSessionToken(token);
+  return parseSessionToken(token, options);
 };
 
 export const requireUserSession = (context: AnySessionContext): UserSessionContext => {

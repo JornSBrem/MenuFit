@@ -29,3 +29,29 @@ test("authorization header parser validates bearer format", () => {
     /Bearer scheme/,
   );
 });
+
+test("session parser validates optional token expiry", () => {
+  const valid = parseSessionToken("user:user-2:token-9:picnic-user:1900000000", {
+    requireExpiry: true,
+    nowEpochSeconds: () => 1800000000,
+  });
+  assert.equal(valid.expiresAtEpochSeconds, 1900000000);
+
+  assert.throws(
+    () =>
+      parseSessionToken("user:user-2:token-9:picnic-user", {
+        requireExpiry: true,
+        nowEpochSeconds: () => 1800000000,
+      }),
+    /must include expiry/,
+  );
+
+  assert.throws(
+    () =>
+      parseSessionToken("user:user-2:token-9:picnic-user:1700000000", {
+        requireExpiry: true,
+        nowEpochSeconds: () => 1800000000,
+      }),
+    /expired/,
+  );
+});

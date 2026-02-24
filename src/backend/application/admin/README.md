@@ -8,3 +8,4 @@ Operator-focused application services:
 - cleanup (dry-run + execute)
 
 All operations are intended to be invoked only from admin-session routes.
+Critical operations also emit centralized audit-trail events.

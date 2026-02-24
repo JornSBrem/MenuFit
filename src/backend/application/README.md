@@ -14,5 +14,7 @@ Current workflow modules:
 - `cart/`
 - `admin/`
 - `system/`
+- `audit/`
+- `config/`
 
 Application code should not contain UI concerns.

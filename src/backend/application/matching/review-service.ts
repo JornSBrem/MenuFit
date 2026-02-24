@@ -4,6 +4,7 @@ import {
   resolveSharedMatchPolicy,
   type SharedMatchPolicy,
 } from "../../domain/matching/shared-core.ts";
+import type { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type {
   MatchAuditEvent,
   MatchEvaluationInput,
@@ -18,12 +19,13 @@ import type {
 export interface MatchingReviewServiceOptions {
   policy?: Partial<SharedMatchPolicy>;
   now?: () => string;
+  auditTrail?: AuditTrailService;
 }
 
 export class MatchingReviewService {
   private readonly queue = new Map<string, MatchReviewQueueItem>();
 
-  private readonly auditTrail: MatchAuditEvent[] = [];
+  private readonly matchAuditTrail: MatchAuditEvent[] = [];
 
   private readonly overrides: MatchOverrideRecord[] = [];
 
@@ -33,9 +35,12 @@ export class MatchingReviewService {
 
   private readonly now: () => string;
 
+  private readonly centralAuditTrail?: AuditTrailService;
+
   constructor(options?: MatchingReviewServiceOptions) {
     this.policy = resolveSharedMatchPolicy(options?.policy);
     this.now = options?.now ?? (() => new Date().toISOString());
+    this.centralAuditTrail = options?.auditTrail;
   }
 
   evaluate(input: MatchEvaluationInput): MatchEvaluationResult {
@@ -63,7 +68,7 @@ export class MatchingReviewService {
       });
     }
 
-    this.auditTrail.push({
+    this.matchAuditTrail.push({
       eventId: this.nextId("audit"),
       eventType: "decision",
       itemId: input.itemId,
@@ -72,6 +77,20 @@ export class MatchingReviewService {
       candidateId: topCandidateId,
       createdAt: now,
       note: `topScore=${decision.topScore.toFixed(4)}`,
+    });
+    this.centralAuditTrail?.record({
+      category: "matching",
+      action: "decision",
+      resourceId: input.itemId,
+      outcome: "success",
+      details: {
+        sourceRef: input.sourceRef,
+        path: input.path ?? "reconcile",
+        decision: decision.confidence,
+        topCandidateId,
+        topScore: Number(decision.topScore.toFixed(4)),
+        queuedForReview,
+      },
     });
 
     return {
@@ -88,10 +107,30 @@ export class MatchingReviewService {
   applyReviewAction(input: ReviewActionInput): ReviewActionResult {
     const queueItem = this.queue.get(input.itemId);
     if (!queueItem) {
+      this.centralAuditTrail?.record({
+        category: "matching",
+        action: "review_action_rejected",
+        resourceId: input.itemId,
+        actorId: input.actorId,
+        outcome: "failure",
+        details: {
+          reason: "review_item_not_found",
+        },
+      });
       throw new Error(`Review item not found: ${input.itemId}`);
     }
 
     if (input.action === "map" && !input.candidateId) {
+      this.centralAuditTrail?.record({
+        category: "matching",
+        action: "review_action_rejected",
+        resourceId: input.itemId,
+        actorId: input.actorId,
+        outcome: "failure",
+        details: {
+          reason: "candidate_required_for_map",
+        },
+      });
       throw new Error('Review action "map" requires candidateId');
     }
 
@@ -133,7 +172,20 @@ export class MatchingReviewService {
       actorId: input.actorId,
       note: input.note,
     };
-    this.auditTrail.push(auditEvent);
+    this.matchAuditTrail.push(auditEvent);
+    this.centralAuditTrail?.record({
+      category: "matching",
+      action: "review_action",
+      resourceId: updatedItem.itemId,
+      actorId: input.actorId,
+      outcome: "success",
+      details: {
+        sourceRef: updatedItem.sourceRef,
+        action: input.action,
+        decision: updatedItem.decision,
+        candidateId: input.candidateId,
+      },
+    });
 
     return {
       queueItem: updatedItem,
@@ -147,7 +199,7 @@ export class MatchingReviewService {
   }
 
   listAuditTrail(): MatchAuditEvent[] {
-    return [...this.auditTrail];
+    return [...this.matchAuditTrail];
   }
 
   listOverrides(): MatchOverrideRecord[] {

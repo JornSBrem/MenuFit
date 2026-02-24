@@ -1,5 +1,5 @@
-import type { ConfigDefinition, ConfigMeta, PublicConfigEntry } from "./types";
-import { ConfigError } from "./types";
+import type { ConfigDefinition, ConfigMeta, PublicConfigEntry } from "./types.ts";
+import { ConfigError } from "./types.ts";
 
 const REDACTED_VALUE = "***REDACTED***";
 

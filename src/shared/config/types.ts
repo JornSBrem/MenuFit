@@ -29,11 +29,14 @@ export interface PublicConfigEntry {
 }
 
 export class ConfigError extends Error {
+  readonly key: string;
+
   constructor(
     message: string,
-    public readonly key: string,
+    key: string,
   ) {
     super(message);
     this.name = "ConfigError";
+    this.key = key;
   }
 }

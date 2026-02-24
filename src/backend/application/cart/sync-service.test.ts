@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type { PicnicCartSyncAdapter } from "../../integrations/picnic/cart-sync.ts";
 import { CartSyncError, CartSyncService } from "./sync-service.ts";
 
@@ -89,4 +90,32 @@ test("dry-run works in admin flow and does not call adapter", async () => {
   assert.equal(report.status, "dry_run");
   assert.equal(report.idempotentReplay, false);
   assert.equal(report.message.includes("Dry-run"), true);
+});
+
+test("sync writes audit events for execute and replay", async () => {
+  const auditTrail = new AuditTrailService({
+    now: () => "2026-02-24T23:00:00.000Z",
+  });
+  const adapter: PicnicCartSyncAdapter = {
+    async syncCart(request) {
+      return {
+        syncedCount: request.items.length,
+        failedCount: 0,
+      };
+    },
+  };
+
+  const service = new CartSyncService({
+    adapter,
+    now: () => "2026-02-24T23:00:00.000Z",
+    auditTrail,
+  });
+
+  await service.sync(baseRequest);
+  await service.sync(baseRequest);
+
+  const events = auditTrail.list({ category: "sync" });
+  assert.equal(events.length, 2);
+  assert.equal(events[0].action, "cart_sync");
+  assert.equal(events[1].action, "cart_sync_replay");
 });

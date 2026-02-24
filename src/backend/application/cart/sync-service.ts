@@ -2,11 +2,13 @@ import {
   NoopPicnicCartSyncAdapter,
   type PicnicCartSyncAdapter,
 } from "../../integrations/picnic/cart-sync.ts";
+import type { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type { CartSyncReport, CartSyncRequest } from "./types";
 
 interface CartSyncServiceOptions {
   adapter?: PicnicCartSyncAdapter;
   now?: () => string;
+  auditTrail?: AuditTrailService;
 }
 
 export class CartSyncError extends Error {
@@ -58,36 +60,95 @@ export class CartSyncService {
 
   private readonly now: () => string;
 
+  private readonly auditTrail?: AuditTrailService;
+
   constructor(options?: CartSyncServiceOptions) {
     this.adapter = options?.adapter ?? new NoopPicnicCartSyncAdapter();
     this.now = options?.now ?? (() => new Date().toISOString());
+    this.auditTrail = options?.auditTrail;
   }
 
   async sync(request: CartSyncRequest): Promise<CartSyncReport> {
-    assertValidRequest(request);
+    try {
+      assertValidRequest(request);
 
-    const mode = request.mode ?? "execute";
-    if (mode === "dry-run" && request.source !== "admin") {
-      throw new CartSyncError(
-        "DRY_RUN_FORBIDDEN",
-        "Dry-run is only available in admin/debug flow.",
-        "Use mode=execute in user flow.",
-      );
-    }
+      const mode = request.mode ?? "execute";
+      if (mode === "dry-run" && request.source !== "admin") {
+        throw new CartSyncError(
+          "DRY_RUN_FORBIDDEN",
+          "Dry-run is only available in admin/debug flow.",
+          "Use mode=execute in user flow.",
+        );
+      }
 
-    const existing = this.reportsByIdempotencyKey.get(request.idempotencyKey);
-    if (existing) {
-      return {
-        ...existing,
-        idempotentReplay: true,
-      };
-    }
+      const existing = this.reportsByIdempotencyKey.get(request.idempotencyKey);
+      if (existing) {
+        const replay = {
+          ...existing,
+          idempotentReplay: true,
+        };
+        this.auditTrail?.record({
+          category: "sync",
+          action: "cart_sync_replay",
+          resourceId: replay.idempotencyKey,
+          actorId: request.source,
+          outcome: "success",
+          details: {
+            householdId: replay.householdId,
+            weekPlanId: replay.weekPlanId,
+            status: replay.status,
+          },
+        });
+        return replay;
+      }
 
-    const createdAt = this.now();
-    const reportId = this.nextReportId();
-    const itemCount = request.items.length;
+      const createdAt = this.now();
+      const reportId = this.nextReportId();
+      const itemCount = request.items.length;
 
-    if (mode === "dry-run") {
+      if (mode === "dry-run") {
+        const report: CartSyncReport = {
+          reportId,
+          idempotencyKey: request.idempotencyKey,
+          weekPlanId: request.weekPlanId,
+          householdId: request.householdId,
+          source: request.source,
+          mode,
+          status: "dry_run",
+          itemCount,
+          syncedCount: 0,
+          failedCount: 0,
+          idempotentReplay: false,
+          message: "Dry-run completed. No changes pushed to Picnic.",
+          createdAt,
+        };
+        this.reportsByIdempotencyKey.set(request.idempotencyKey, report);
+        this.auditTrail?.record({
+          category: "sync",
+          action: "cart_sync",
+          resourceId: report.idempotencyKey,
+          actorId: request.source,
+          outcome: "dry_run",
+          details: {
+            householdId: report.householdId,
+            weekPlanId: report.weekPlanId,
+            itemCount: report.itemCount,
+          },
+        });
+        return report;
+      }
+
+      const adapterResult = await this.adapter.syncCart({
+        householdId: request.householdId,
+        weekPlanId: request.weekPlanId,
+        items: request.items.map((item) => ({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unit: item.unit,
+        })),
+      });
+
+      const status = adapterResult.failedCount > 0 ? "failed" : "synced";
       const report: CartSyncReport = {
         reportId,
         idempotencyKey: request.idempotencyKey,
@@ -95,52 +156,52 @@ export class CartSyncService {
         householdId: request.householdId,
         source: request.source,
         mode,
-        status: "dry_run",
+        status,
         itemCount,
-        syncedCount: 0,
-        failedCount: 0,
+        syncedCount: adapterResult.syncedCount,
+        failedCount: adapterResult.failedCount,
         idempotentReplay: false,
-        message: "Dry-run completed. No changes pushed to Picnic.",
+        message:
+          status === "synced"
+            ? "Cart sync completed successfully."
+            : "Cart sync completed with failures.",
+        externalCartId: adapterResult.externalCartId,
+        errors: adapterResult.errors,
         createdAt,
       };
+
       this.reportsByIdempotencyKey.set(request.idempotencyKey, report);
+      this.auditTrail?.record({
+        category: "sync",
+        action: "cart_sync",
+        resourceId: report.idempotencyKey,
+        actorId: request.source,
+        outcome: status === "synced" ? "success" : "failure",
+        details: {
+          householdId: report.householdId,
+          weekPlanId: report.weekPlanId,
+          itemCount: report.itemCount,
+          syncedCount: report.syncedCount,
+          failedCount: report.failedCount,
+        },
+      });
       return report;
+    } catch (error) {
+      if (error instanceof CartSyncError) {
+        this.auditTrail?.record({
+          category: "sync",
+          action: "cart_sync_rejected",
+          resourceId: request.idempotencyKey,
+          actorId: request.source,
+          outcome: "failure",
+          details: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+      throw error;
     }
-
-    const adapterResult = await this.adapter.syncCart({
-      householdId: request.householdId,
-      weekPlanId: request.weekPlanId,
-      items: request.items.map((item) => ({
-        itemId: item.itemId,
-        quantity: item.quantity,
-        unit: item.unit,
-      })),
-    });
-
-    const status = adapterResult.failedCount > 0 ? "failed" : "synced";
-    const report: CartSyncReport = {
-      reportId,
-      idempotencyKey: request.idempotencyKey,
-      weekPlanId: request.weekPlanId,
-      householdId: request.householdId,
-      source: request.source,
-      mode,
-      status,
-      itemCount,
-      syncedCount: adapterResult.syncedCount,
-      failedCount: adapterResult.failedCount,
-      idempotentReplay: false,
-      message:
-        status === "synced"
-          ? "Cart sync completed successfully."
-          : "Cart sync completed with failures.",
-      externalCartId: adapterResult.externalCartId,
-      errors: adapterResult.errors,
-      createdAt,
-    };
-
-    this.reportsByIdempotencyKey.set(request.idempotencyKey, report);
-    return report;
   }
 
   getReport(idempotencyKey: string): CartSyncReport | null {

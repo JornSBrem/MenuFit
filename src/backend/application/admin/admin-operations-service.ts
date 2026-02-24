@@ -1,7 +1,9 @@
+import type { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type { AdminConfigEntry, AdminOperationReport, AdminOperationType } from "./types";
 
 export interface AdminOperationsServiceOptions {
   now?: () => string;
+  auditTrail?: AuditTrailService;
 }
 
 interface ExecuteOptions {
@@ -21,8 +23,11 @@ export class AdminOperationsService {
 
   private readonly now: () => string;
 
+  private readonly auditTrail?: AuditTrailService;
+
   constructor(options?: AdminOperationsServiceOptions) {
     this.now = options?.now ?? (() => new Date().toISOString());
+    this.auditTrail = options?.auditTrail;
   }
 
   runIngest(input: {
@@ -131,6 +136,14 @@ export class AdminOperationsService {
       details: options.details,
     };
     this.reports.push(report);
+    this.auditTrail?.record({
+      category: options.operationType === "config_update" ? "config" : "admin",
+      action: options.operationType,
+      resourceId: options.operationId,
+      actorId: options.performedBy,
+      outcome: dryRun ? "dry_run" : "success",
+      details: options.details,
+    });
     return report;
   }
 

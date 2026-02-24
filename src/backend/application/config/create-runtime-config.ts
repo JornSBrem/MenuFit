@@ -1,14 +1,15 @@
-import { createDefaultRuntimeConfig, type RuntimeConfigStore } from "../../../shared/config";
+import {
+  createDefaultRuntimeConfig,
+  DEFAULT_CONFIG_DEFINITIONS,
+  type RuntimeConfigStore,
+} from "../../../shared/config/index.ts";
+import { resolveEnvSecrets } from "./resolve-env-secrets.ts";
 
 export const createBackendRuntimeConfig = (
   env: Record<string, string | undefined>,
 ): RuntimeConfigStore => {
-  const values: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(env)) {
-    if (value !== undefined) {
-      values[key] = value;
-    }
-  }
-
+  const values = resolveEnvSecrets(env, {
+    knownKeys: DEFAULT_CONFIG_DEFINITIONS.map((definition) => definition.key),
+  });
   return createDefaultRuntimeConfig(values);
 };

@@ -1,4 +1,4 @@
-import type { ConfigDefinition } from "./types";
+import type { ConfigDefinition } from "./types.ts";
 
 export const DEFAULT_CONFIG_DEFINITIONS = [
   {
@@ -62,7 +62,7 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     description: "Extra headers for Project Gezond API calls.",
     kind: "json",
     defaultValue: { "X-Requested-With": "XMLHttpRequest" },
-    meta: { hotReload: true, sensitive: false, restartRequired: false },
+    meta: { hotReload: true, sensitive: true, restartRequired: false },
   },
   {
     key: "LLM_PROVIDER",
