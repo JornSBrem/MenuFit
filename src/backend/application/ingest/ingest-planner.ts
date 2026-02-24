@@ -1,5 +1,10 @@
 import type { RuntimeConfigStore } from "../../../shared/config";
 import type { BronzeEntityType } from "../../domain/storage/medallion-schema";
+import {
+  buildPgEndpointUrl,
+  PG_ENDPOINT_BY_ENTITY_TYPE,
+  type PgEndpointVariables,
+} from "../../integrations/pg/endpoint-contract";
 import type { IngestMatrixRequest, IngestTask } from "./types";
 
 const DEFAULT_ENTITY_TYPES: BronzeEntityType[] = [
@@ -11,21 +16,17 @@ const sortAscending = (values: number[]) => [...values].sort((a, b) => a - b);
 
 const uniqueNumbers = (values: number[]) => Array.from(new Set(values));
 
-const replaceTemplate = (template: string, variables: Record<string, string | number>): string => {
-  let value = template;
-  for (const [key, replacement] of Object.entries(variables)) {
-    value = value.replace(`{${key}}`, String(replacement));
+const endpointVariablesByEntityType = (
+  entityType: BronzeEntityType,
+  week: number,
+): PgEndpointVariables => {
+  if (entityType === "pg.day_menu") {
+    return { dayId: week };
   }
-  return value;
-};
-
-const endpointKeyByEntityType: Record<BronzeEntityType, string | null> = {
-  "pg.week_menu": "PG_WEEK_URL_TEMPLATE",
-  "pg.day_menu": "PG_DAY_URL_TEMPLATE",
-  "pg.recipe": "PG_RECIPE_URL_TEMPLATE",
-  "pg.shopping_list_pdf": "PG_SHOPPINGLIST_URL_TEMPLATE",
-  "picnic.search_result": null,
-  "picnic.product_detail": null,
+  if (entityType === "pg.recipe") {
+    return { recipeId: `week-${week}` };
+  }
+  return { week };
 };
 
 export interface PlannerOptions {
@@ -47,17 +48,16 @@ export const createIngestPlan = (
     for (const kcal of kcals) {
       for (const basePersons of basePersonsList) {
         for (const entityType of entityTypes) {
-          const endpointKey = endpointKeyByEntityType[entityType];
-          if (!endpointKey) {
+          const endpoint = PG_ENDPOINT_BY_ENTITY_TYPE[entityType];
+          if (!endpoint) {
             continue;
           }
 
-          const template = config.get<string>(endpointKey);
-          const requestUrl = replaceTemplate(template, {
-            week,
-            dayId: week,
-            recipeId: `week-${week}`,
-          });
+          const requestUrl = buildPgEndpointUrl(
+            config,
+            endpoint,
+            endpointVariablesByEntityType(entityType, week),
+          );
 
           tasks.push({
             source: "pg",
