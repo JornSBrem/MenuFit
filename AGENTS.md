@@ -20,9 +20,18 @@
 2. Implement: `src/backend|src/admin-web|src/ios-user-app|src/shared|infrastructure`
 3. Review: use reviewer workflow
 4. Track: `.copilot-tracking/changes/`
-5. Commit and push
-6. start executing next item on workitems.md in `workitems/workitems.md`, start at step 1 of 3) Execution Flow in `AGENTS.md`
-7. when no more items available on workitems.md in `workitems/workitems.md` add new items based on projectdocs and builded code.
+5. Convert out-of-scope immediately: after marking a workitem DONE, review that plan's `Out of scope` section and create new `TODO` workitems in `workitems/workitems.md` for each still-relevant item before continuing.
+6. Commit and push
+7. start executing next item on workitems.md in `workitems/workitems.md`, start at step 1 of 3) Execution Flow in `AGENTS.md`
+8. when no more items available on workitems.md in `workitems/workitems.md` add new items based on projectdocs and builded code.
+
+### 3.1) Out-of-scope Conversion Rule (Mandatory)
+
+- Trigger: every time a workitem is moved to `Done`.
+- Source: corresponding plan file in `.copilot-tracking/plans/`.
+- Action: transform each valid out-of-scope bullet into a new workitem (`type:feature|bug|chore|spike`, priority, context, acceptance).
+- De-duplication: do not add duplicates; update existing matching workitem if already present.
+- Scope discipline: only add items that are still relevant to current architecture/docs.
 
 ## 4) Context Loading (Only What You Need)
 

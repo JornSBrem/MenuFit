@@ -1,3 +1,4 @@
+import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import type { GoldReadModel, WeekGroceriesResponse, WeekSummaryResponse } from "./types";
 
 const keyFromWeek = (year: number, week: number, kcal: number, basePersons: number): string =>
@@ -5,6 +6,18 @@ const keyFromWeek = (year: number, week: number, kcal: number, basePersons: numb
 
 export class GoldWeekReadService {
   private readonly store = new Map<string, GoldReadModel>();
+
+  private readonly stateStore?: PersistentStateStore;
+
+  constructor(options?: { stateStore?: PersistentStateStore }) {
+    this.stateStore = options?.stateStore;
+    if (this.stateStore) {
+      const persisted = this.stateStore.read().goldReadModels;
+      for (const [key, model] of Object.entries(persisted)) {
+        this.store.set(key, model);
+      }
+    }
+  }
 
   upsert(model: GoldReadModel): void {
     const key = keyFromWeek(
@@ -14,6 +27,9 @@ export class GoldWeekReadService {
       model.weekPlan.basePersons,
     );
     this.store.set(key, model);
+    this.stateStore?.update((draft) => {
+      draft.goldReadModels[key] = structuredClone(model);
+    });
   }
 
   getSummary(year: number, week: number, kcal: number, basePersons: number): WeekSummaryResponse | null {

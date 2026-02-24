@@ -8,5 +8,6 @@ Application-level matching workflow for WI-007:
 - apply review actions (`map`, `skip`, `defer`)
 - persist feedback to in-memory audit trail and override records
 - emit centralized audit-trail events for decisions and review actions
+- optional persisted queue/audit/override storage across service restarts
 
 This is intentionally in-memory and route-agnostic; persistence and HTTP wiring follow in next workitems.

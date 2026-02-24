@@ -1,3 +1,4 @@
+import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import type { AuditEvent, AuditEventInput, AuditListFilter } from "./types";
 
 const DEFAULT_REDACTED_KEYS = [
@@ -38,6 +39,7 @@ const redactDetails = (
 export interface AuditTrailServiceOptions {
   now?: () => string;
   redactedKeys?: string[];
+  stateStore?: PersistentStateStore;
 }
 
 export class AuditTrailService {
@@ -49,11 +51,23 @@ export class AuditTrailService {
 
   private readonly redactedKeys: Set<string>;
 
+  private readonly stateStore?: PersistentStateStore;
+
   constructor(options?: AuditTrailServiceOptions) {
     this.now = options?.now ?? (() => new Date().toISOString());
     this.redactedKeys = new Set(
       (options?.redactedKeys ?? [...DEFAULT_REDACTED_KEYS]).map((key) => key.toLowerCase()),
     );
+    this.stateStore = options?.stateStore;
+
+    if (this.stateStore) {
+      const persisted = this.stateStore.read().auditTrail;
+      this.events.push(...persisted);
+      this.sequence = this.events.reduce(
+        (max, row) => Math.max(max, this.parseSequence(row.eventId)),
+        0,
+      );
+    }
   }
 
   record(input: AuditEventInput): AuditEvent {
@@ -66,6 +80,7 @@ export class AuditTrailService {
         : undefined,
     };
     this.events.push(event);
+    this.persist();
     return event;
   }
 
@@ -87,5 +102,23 @@ export class AuditTrailService {
   private nextId(): string {
     this.sequence += 1;
     return `audit-${this.sequence}`;
+  }
+
+  private parseSequence(eventId: string): number {
+    const match = eventId.match(/^audit-(\d+)$/);
+    if (!match) {
+      return 0;
+    }
+    const number = Number(match[1]);
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  private persist(): void {
+    if (!this.stateStore) {
+      return;
+    }
+    this.stateStore.update((draft) => {
+      draft.auditTrail = structuredClone(this.events);
+    });
   }
 }

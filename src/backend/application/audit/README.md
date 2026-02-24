@@ -8,3 +8,5 @@ Provides a centralized in-memory audit trail for critical backend events:
 - cart sync executions/replays/failures
 
 Event details are redacted by key name for common secret fields (`token`, `secret`, `authorization`, `cookie`, ...).
+
+When connected to the persistent state store, audit events survive service restarts.

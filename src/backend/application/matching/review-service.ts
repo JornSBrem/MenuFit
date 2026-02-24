@@ -4,6 +4,7 @@ import {
   resolveSharedMatchPolicy,
   type SharedMatchPolicy,
 } from "../../domain/matching/shared-core.ts";
+import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import type { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type {
   MatchAuditEvent,
@@ -20,6 +21,7 @@ export interface MatchingReviewServiceOptions {
   policy?: Partial<SharedMatchPolicy>;
   now?: () => string;
   auditTrail?: AuditTrailService;
+  stateStore?: PersistentStateStore;
 }
 
 export class MatchingReviewService {
@@ -37,10 +39,32 @@ export class MatchingReviewService {
 
   private readonly centralAuditTrail?: AuditTrailService;
 
+  private readonly stateStore?: PersistentStateStore;
+
   constructor(options?: MatchingReviewServiceOptions) {
     this.policy = resolveSharedMatchPolicy(options?.policy);
     this.now = options?.now ?? (() => new Date().toISOString());
     this.centralAuditTrail = options?.auditTrail;
+    this.stateStore = options?.stateStore;
+
+    if (this.stateStore) {
+      const persisted = this.stateStore.read();
+      for (const row of persisted.matchingQueue) {
+        this.queue.set(row.itemId, row);
+      }
+      this.matchAuditTrail.push(...persisted.matchingAuditTrail);
+      this.overrides.push(...persisted.matchingOverrides);
+
+      const maxAuditId = this.matchAuditTrail.reduce(
+        (max, row) => Math.max(max, this.parseSequence(row.eventId, "audit-")),
+        0,
+      );
+      const maxOverrideId = this.overrides.reduce(
+        (max, row) => Math.max(max, this.parseSequence(row.overrideId, "override-")),
+        0,
+      );
+      this.sequence = Math.max(maxAuditId, maxOverrideId);
+    }
   }
 
   evaluate(input: MatchEvaluationInput): MatchEvaluationResult {
@@ -92,6 +116,7 @@ export class MatchingReviewService {
         queuedForReview,
       },
     });
+    this.persistState();
 
     return {
       itemId: input.itemId,
@@ -186,6 +211,7 @@ export class MatchingReviewService {
         candidateId: input.candidateId,
       },
     });
+    this.persistState();
 
     return {
       queueItem: updatedItem,
@@ -229,5 +255,27 @@ export class MatchingReviewService {
   private nextId(prefix: string): string {
     this.sequence += 1;
     return `${prefix}-${this.sequence}`;
+  }
+
+  private parseSequence(value: string, prefix: string): number {
+    if (!value.startsWith(prefix)) {
+      return 0;
+    }
+    const number = Number(value.slice(prefix.length));
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  private persistState(): void {
+    if (!this.stateStore) {
+      return;
+    }
+    const matchingQueue = this.listQueueItems();
+    const matchingAuditTrail = this.listAuditTrail();
+    const matchingOverrides = this.listOverrides();
+    this.stateStore.update((draft) => {
+      draft.matchingQueue = structuredClone(matchingQueue);
+      draft.matchingAuditTrail = structuredClone(matchingAuditTrail);
+      draft.matchingOverrides = structuredClone(matchingOverrides);
+    });
   }
 }

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
+import { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import { AuditTrailService } from "../audit/audit-trail-service.ts";
 import { SystemOperationsService } from "./system-operations-service.ts";
 
@@ -62,4 +66,31 @@ test("backup/restore/cleanup support dry-run and execute with logs", () => {
   assert.equal(auditEvents[0].action, "backup");
   assert.equal(auditEvents[1].action, "restore");
   assert.equal(auditEvents[2].action, "cleanup");
+});
+
+test("system jobs and reports persist across service restarts", () => {
+  const dir = mkdtempSync(join(tmpdir(), "menufit-system-"));
+  try {
+    const stateStore = new PersistentStateStore(join(dir, "state.json"));
+
+    const first = new SystemOperationsService({
+      now: () => "2026-02-25T00:10:00.000Z",
+      stateStore,
+    });
+    first.runBackup({
+      operationId: "backup-persist",
+      mode: "execute",
+      actorId: "admin-1",
+      target: "db/v3.sqlite",
+    });
+
+    const second = new SystemOperationsService({
+      now: () => "2026-02-25T00:20:00.000Z",
+      stateStore,
+    });
+    assert.equal(second.listJobs().length, 1);
+    assert.equal(second.getDiagnostics().reportsGenerated, 1);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

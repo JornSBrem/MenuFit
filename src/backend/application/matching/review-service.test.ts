@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
+import { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type { SharedMatchCandidate } from "../../domain/matching/shared-core.ts";
 import { MatchingReviewService } from "./review-service.ts";
@@ -172,4 +176,50 @@ test("matching service writes central audit records for decisions and review act
   assert.equal(events.length, 2);
   assert.equal(events[0].action, "decision");
   assert.equal(events[1].action, "review_action");
+});
+
+test("matching queue and overrides persist across service restarts", () => {
+  const dir = mkdtempSync(join(tmpdir(), "menufit-match-"));
+  try {
+    const stateStore = new PersistentStateStore(join(dir, "state.json"));
+
+    const first = new MatchingReviewService({
+      policy: {
+        highConfidenceMin: 0.95,
+        autoAcceptMin: 0.8,
+        candidateMax: 10,
+      },
+      now: () => "2026-02-25T00:40:00.000Z",
+      stateStore,
+    });
+
+    first.evaluate({
+      itemId: "persist-item",
+      sourceRef: "week:9:item:persist",
+      query: "volkoren pasta",
+      candidates: [{ candidateId: "cand-low", label: "witte rijst" }],
+      path: "reconcile",
+    });
+    first.applyReviewAction({
+      itemId: "persist-item",
+      action: "defer",
+      actorId: "admin-persist",
+      note: "defer to next batch",
+    });
+
+    const second = new MatchingReviewService({
+      policy: {
+        highConfidenceMin: 0.95,
+        autoAcceptMin: 0.8,
+        candidateMax: 10,
+      },
+      stateStore,
+    });
+
+    assert.equal(second.listQueueItems().length, 1);
+    assert.equal(second.listQueueItems()[0]?.status, "deferred");
+    assert.equal(second.listOverrides().length, 1);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

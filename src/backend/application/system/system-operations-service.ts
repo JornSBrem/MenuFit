@@ -1,3 +1,4 @@
+import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import type { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type {
   SystemDiagnosticsSummary,
@@ -12,6 +13,7 @@ import type {
 export interface SystemOperationsServiceOptions {
   now?: () => string;
   auditTrail?: AuditTrailService;
+  stateStore?: PersistentStateStore;
 }
 
 export class SystemOperationsError extends Error {
@@ -55,11 +57,30 @@ export class SystemOperationsService {
 
   private readonly auditTrail?: AuditTrailService;
 
+  private readonly stateStore?: PersistentStateStore;
+
   private lastOperationAt?: string;
 
   constructor(options?: SystemOperationsServiceOptions) {
     this.now = options?.now ?? (() => new Date().toISOString());
     this.auditTrail = options?.auditTrail;
+    this.stateStore = options?.stateStore;
+
+    if (this.stateStore) {
+      const persisted = this.stateStore.read();
+      this.jobs.push(...persisted.systemJobs);
+      this.reports.push(...persisted.systemReports);
+      this.lastOperationAt = this.reports[this.reports.length - 1]?.createdAt;
+
+      this.jobSequence = this.jobs.reduce(
+        (max, row) => Math.max(max, this.parseSequence(row.jobId, "system-job-")),
+        0,
+      );
+      this.reportSequence = this.reports.reduce(
+        (max, row) => Math.max(max, this.parseSequence(row.reportId, "system-report-")),
+        0,
+      );
+    }
   }
 
   getHealth(): SystemHealthStatus {
@@ -171,6 +192,7 @@ export class SystemOperationsService {
       };
       this.reports.push(report);
       this.lastOperationAt = finishedAt;
+      this.persistState();
       this.auditTrail?.record({
         category: "system",
         action: operationType,
@@ -212,5 +234,25 @@ export class SystemOperationsService {
   private nextReportId(): string {
     this.reportSequence += 1;
     return `system-report-${this.reportSequence}`;
+  }
+
+  private parseSequence(value: string, prefix: string): number {
+    if (!value.startsWith(prefix)) {
+      return 0;
+    }
+    const number = Number(value.slice(prefix.length));
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  private persistState(): void {
+    if (!this.stateStore) {
+      return;
+    }
+    const jobs = this.jobs.map((row) => structuredClone(row));
+    const reports = this.reports.map((row) => structuredClone(row));
+    this.stateStore.update((draft) => {
+      draft.systemJobs = jobs;
+      draft.systemReports = reports;
+    });
   }
 }

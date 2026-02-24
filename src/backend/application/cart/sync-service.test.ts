@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
+import { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type { PicnicCartSyncAdapter } from "../../integrations/picnic/cart-sync.ts";
 import { CartSyncError, CartSyncService } from "./sync-service.ts";
@@ -118,4 +122,45 @@ test("sync writes audit events for execute and replay", async () => {
   assert.equal(events.length, 2);
   assert.equal(events[0].action, "cart_sync");
   assert.equal(events[1].action, "cart_sync_replay");
+});
+
+test("sync reports persist by idempotency key across service restarts", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "menufit-cart-"));
+  try {
+    const stateStore = new PersistentStateStore(join(dir, "state.json"));
+    const adapter: PicnicCartSyncAdapter = {
+      async syncCart(request) {
+        return {
+          syncedCount: request.items.length,
+          failedCount: 0,
+          externalCartId: "cart-persisted",
+        };
+      },
+    };
+
+    const firstService = new CartSyncService({
+      adapter,
+      stateStore,
+      now: () => "2026-02-25T00:00:00.000Z",
+    });
+    const firstReport = await firstService.sync({
+      ...baseRequest,
+      idempotencyKey: "idem-persist",
+    });
+    assert.equal(firstReport.idempotentReplay, false);
+
+    const secondService = new CartSyncService({
+      adapter,
+      stateStore,
+      now: () => "2026-02-25T00:05:00.000Z",
+    });
+    const secondReport = await secondService.sync({
+      ...baseRequest,
+      idempotencyKey: "idem-persist",
+    });
+    assert.equal(secondReport.idempotentReplay, true);
+    assert.equal(secondReport.reportId, firstReport.reportId);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

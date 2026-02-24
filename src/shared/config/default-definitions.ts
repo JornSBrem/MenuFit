@@ -23,6 +23,13 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     meta: { hotReload: true, sensitive: false, restartRequired: false },
   },
   {
+    key: "STATE_STORE_PATH",
+    description: "Persistent state store file path for baseline runtime repositories.",
+    kind: "string",
+    defaultValue: "out/v3/state/menu-fit-state.json",
+    meta: { hotReload: false, sensitive: false, restartRequired: false },
+  },
+  {
     key: "PG_LOGIN_URL",
     description: "Project Gezond login endpoint.",
     kind: "url",

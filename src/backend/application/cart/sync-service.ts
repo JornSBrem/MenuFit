@@ -2,6 +2,7 @@ import {
   NoopPicnicCartSyncAdapter,
   type PicnicCartSyncAdapter,
 } from "../../integrations/picnic/cart-sync.ts";
+import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import type { AuditTrailService } from "../audit/audit-trail-service.ts";
 import type { CartSyncReport, CartSyncRequest } from "./types";
 
@@ -9,6 +10,7 @@ interface CartSyncServiceOptions {
   adapter?: PicnicCartSyncAdapter;
   now?: () => string;
   auditTrail?: AuditTrailService;
+  stateStore?: PersistentStateStore;
 }
 
 export class CartSyncError extends Error {
@@ -62,10 +64,21 @@ export class CartSyncService {
 
   private readonly auditTrail?: AuditTrailService;
 
+  private readonly stateStore?: PersistentStateStore;
+
   constructor(options?: CartSyncServiceOptions) {
     this.adapter = options?.adapter ?? new NoopPicnicCartSyncAdapter();
     this.now = options?.now ?? (() => new Date().toISOString());
     this.auditTrail = options?.auditTrail;
+    this.stateStore = options?.stateStore;
+
+    if (this.stateStore) {
+      const persisted = this.stateStore.read().cartReportsByIdempotencyKey;
+      for (const [idempotencyKey, report] of Object.entries(persisted)) {
+        this.reportsByIdempotencyKey.set(idempotencyKey, report);
+        this.sequence = Math.max(this.sequence, this.reportSequence(report.reportId));
+      }
+    }
   }
 
   async sync(request: CartSyncRequest): Promise<CartSyncReport> {
@@ -123,6 +136,7 @@ export class CartSyncService {
           createdAt,
         };
         this.reportsByIdempotencyKey.set(request.idempotencyKey, report);
+        this.persistReports();
         this.auditTrail?.record({
           category: "sync",
           action: "cart_sync",
@@ -171,6 +185,7 @@ export class CartSyncService {
       };
 
       this.reportsByIdempotencyKey.set(request.idempotencyKey, report);
+      this.persistReports();
       this.auditTrail?.record({
         category: "sync",
         action: "cart_sync",
@@ -211,5 +226,23 @@ export class CartSyncService {
   private nextReportId(): string {
     this.sequence += 1;
     return `cart-sync-${this.sequence}`;
+  }
+
+  private reportSequence(reportId: string): number {
+    const match = reportId.match(/cart-sync-(\d+)/);
+    return match ? Number(match[1]) || 0 : 0;
+  }
+
+  private persistReports(): void {
+    if (!this.stateStore) {
+      return;
+    }
+    const reports: Record<string, CartSyncReport> = {};
+    for (const [key, report] of this.reportsByIdempotencyKey.entries()) {
+      reports[key] = structuredClone(report);
+    }
+    this.stateStore.update((draft) => {
+      draft.cartReportsByIdempotencyKey = reports;
+    });
   }
 }

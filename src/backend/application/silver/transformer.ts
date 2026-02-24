@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
-import { canonicalizeIngredient, normalizeQuantity } from "./normalization";
-import { reconcileComputedIngredientsWithPdf } from "./reconcile";
+import { canonicalizeIngredient, normalizeQuantity } from "./normalization.ts";
+import { reconcileComputedIngredientsWithPdf } from "./reconcile.ts";
 import type {
   BronzeLikeMeal,
   BronzeLikeMealIngredient,
