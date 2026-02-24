@@ -26,4 +26,31 @@ Current baseline SwiftUI structure in `App/`:
 Notes:
 - Week/groceries support offline fallback via cache.
 - Cart sync remains online-only (`mode=execute`, source `user`).
-- Base URL is currently hardcoded in `MenuFitUserApp.swift` and should be externalized in a production setup.
+
+## WI-210 Productionization Baseline
+
+Added production-oriented wiring:
+
+- `App/AppEnvironment.swift`: reads backend URL and default user session fields from `Info.plist`.
+- `App/AuthSessionStore.swift`: persisted user token session store used as bearer-token provider.
+- `App/BackendAPI.swift`: attaches `Authorization: Bearer <token>` to API requests and includes match endpoints:
+  - `/api/v3/match/evaluate`
+  - `/api/v3/match/queue`
+  - `/api/v3/match/review-action`
+- `App/UserFlowViewModel.swift`: match evaluate/queue/review actions and auth-session aware cart sync household handling.
+- `App/MatchScreen.swift`: interactive match controls (`evaluate`, `map`, `skip`, `defer`) and queue/result rendering.
+
+Signing/team development:
+
+- `project.yml` now uses `CODE_SIGN_STYLE = Automatic` and `DEVELOPMENT_TEAM = YOURTEAMID`.
+- Replace `YOURTEAMID` with your team id in local/dev branches if needed.
+- CI/simulator builds can still override signing with `CODE_SIGNING_ALLOWED=NO`.
+
+Runtime configuration keys in `Info.plist`:
+
+- `MenuFitBackendBaseURL`
+- `MenuFitUserAccessToken`
+- `MenuFitUserSubjectId`
+- `MenuFitPicnicAccountId`
+- `MenuFitHouseholdId`
+- `MenuFitUserTokenExpiryEpochSeconds`

@@ -55,6 +55,41 @@ enum L10nKey: String {
   case cartSyncFailedOnlineOnly
   case backendInvalidBaseUrl
   case backendInvalidResponse
+  case authSessionSection
+  case authSubject
+  case authPicnicAccount
+  case authHousehold
+  case authExpiry
+  case authExpiryMissing
+  case authSessionMissing
+  case authSessionRequired
+  case authSessionExpired
+  case authAuthorizationFailed
+  case matchFlowSection
+  case evaluateUnresolvedButton
+  case refreshMatchQueueButton
+  case latestEvaluationSection
+  case matchDecision
+  case topCandidate
+  case finishPassAttempted
+  case finishPassSuggested
+  case reviewQueueSection
+  case queueStatus
+  case actionMap
+  case actionSkip
+  case actionDefer
+  case matchQueueEmpty
+  case lastReviewActionSection
+  case reviewItem
+  case reviewStatus
+  case loadWeekBeforeMatchFlow
+  case noUnresolvedMatchItems
+  case matchEvaluateFailed
+  case matchReviewFailed
+  case matchQueueLoadFailed
+  case matchMapNeedsCandidate
+  case yes
+  case no
 }
 
 struct AppStrings {
@@ -111,6 +146,41 @@ struct AppStrings {
     .cartSyncFailedOnlineOnly: "Winkelwagen sync mislukt (alleen online): %@",
     .backendInvalidBaseUrl: "Backend basis-URL is ongeldig.",
     .backendInvalidResponse: "Backend response kon niet worden verwerkt.",
+    .authSessionSection: "Sessie",
+    .authSubject: "Gebruiker: %@",
+    .authPicnicAccount: "Picnic account: %@",
+    .authHousehold: "Huishouden: %@",
+    .authExpiry: "Token expiry (epoch): %d",
+    .authExpiryMissing: "Token expiry ontbreekt.",
+    .authSessionMissing: "Geen gebruikerssessie geconfigureerd.",
+    .authSessionRequired: "Gebruikerssessie/token is verplicht voor API-calls.",
+    .authSessionExpired: "Gebruikerssessie token is verlopen.",
+    .authAuthorizationFailed: "Autorisatie mislukt: %@",
+    .matchFlowSection: "Match flow",
+    .evaluateUnresolvedButton: "Evalueer eerste unresolved item",
+    .refreshMatchQueueButton: "Ververs review queue",
+    .latestEvaluationSection: "Laatste evaluatie",
+    .matchDecision: "Beslissing: %@",
+    .topCandidate: "Top candidate: %@",
+    .finishPassAttempted: "Finish-pass geprobeerd: %@",
+    .finishPassSuggested: "Finish-pass suggestie: %@",
+    .reviewQueueSection: "Review queue",
+    .queueStatus: "Queue status: %@",
+    .actionMap: "Map",
+    .actionSkip: "Skip",
+    .actionDefer: "Defer",
+    .matchQueueEmpty: "Review queue is leeg.",
+    .lastReviewActionSection: "Laatste review actie",
+    .reviewItem: "Item: %@",
+    .reviewStatus: "Status: %@",
+    .loadWeekBeforeMatchFlow: "Laad eerst weekdata voor match evaluatie.",
+    .noUnresolvedMatchItems: "Geen unresolved match items gevonden.",
+    .matchEvaluateFailed: "Match evaluatie mislukt: %@",
+    .matchReviewFailed: "Review actie mislukt: %@",
+    .matchQueueLoadFailed: "Kon match queue niet laden: %@",
+    .matchMapNeedsCandidate: "Map actie vereist een (suggested) candidate.",
+    .yes: "ja",
+    .no: "nee",
   ]
 
   static func text(_ key: L10nKey, _ arguments: CVarArg...) -> String {

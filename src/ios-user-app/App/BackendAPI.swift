@@ -3,6 +3,7 @@ import Foundation
 enum BackendAPIError: Error, LocalizedError {
   case invalidBaseURL
   case invalidResponse
+  case authorization(message: String)
   case backend(code: String, message: String, hint: String?)
   case transport(message: String)
 
@@ -12,6 +13,8 @@ enum BackendAPIError: Error, LocalizedError {
       return AppStrings.text(.backendInvalidBaseUrl)
     case .invalidResponse:
       return AppStrings.text(.backendInvalidResponse)
+    case let .authorization(message):
+      return AppStrings.text(.authAuthorizationFailed, message)
     case let .backend(code, message, hint):
       return "\(code): \(message)\(hint.map { " (\($0))" } ?? "")"
     case let .transport(message):
@@ -25,10 +28,12 @@ final class BackendAPI {
   private let session: URLSession
   private let decoder = JSONDecoder()
   private let encoder = JSONEncoder()
+  private let tokenProvider: AccessTokenProvider
 
-  init(baseURL: URL, session: URLSession = .shared) {
+  init(baseURL: URL, session: URLSession = .shared, tokenProvider: AccessTokenProvider) {
     self.baseURL = baseURL
     self.session = session
+    self.tokenProvider = tokenProvider
   }
 
   func fetchWeekSummary(selection: WeekSelection) async throws -> WeekSummaryResponse {
@@ -55,18 +60,30 @@ final class BackendAPI {
     )
   }
 
+  func fetchMatchQueue() async throws -> [MatchReviewQueueItem] {
+    try await get(path: "/api/v3/match/queue")
+  }
+
+  func evaluateMatch(body: MatchEvaluateRequestBody) async throws -> MatchWorkflowEvaluateResponse {
+    try await post(path: "/api/v3/match/evaluate", body: body)
+  }
+
+  func applyMatchReviewAction(body: MatchReviewActionRequestBody) async throws -> MatchReviewActionResponse {
+    try await post(path: "/api/v3/match/review-action", body: body)
+  }
+
   func syncCart(body: CartSyncRequestBody) async throws -> CartSyncReport {
     try await post(path: "/api/v3/cart/sync", body: body)
   }
 
-  private func get<T: Decodable>(path: String, query: [URLQueryItem]) async throws -> T {
+  private func get<T: Decodable>(path: String, query: [URLQueryItem] = []) async throws -> T {
     guard var components = URLComponents(
       url: baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))),
       resolvingAgainstBaseURL: false
     ) else {
       throw BackendAPIError.invalidBaseURL
     }
-    components.queryItems = query
+    components.queryItems = query.isEmpty ? nil : query
     guard let url = components.url else {
       throw BackendAPIError.invalidBaseURL
     }
@@ -74,6 +91,7 @@ final class BackendAPI {
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
     request.setValue("application/json", forHTTPHeaderField: "Accept")
+    try applyAuthorization(to: &request)
 
     return try await perform(request)
   }
@@ -84,9 +102,26 @@ final class BackendAPI {
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    try applyAuthorization(to: &request)
     request.httpBody = try encoder.encode(body)
 
     return try await perform(request)
+  }
+
+  private func applyAuthorization(to request: inout URLRequest) throws {
+    do {
+      let token = try tokenProvider.accessToken().trimmingCharacters(in: .whitespacesAndNewlines)
+      if token.isEmpty {
+        throw BackendAPIError.authorization(message: AppStrings.text(.authSessionRequired))
+      }
+      request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    } catch let error as AuthSessionStoreError {
+      throw BackendAPIError.authorization(message: error.localizedDescription)
+    } catch let error as BackendAPIError {
+      throw error
+    } catch {
+      throw BackendAPIError.authorization(message: error.localizedDescription)
+    }
   }
 
   private func perform<T: Decodable>(_ request: URLRequest) async throws -> T {

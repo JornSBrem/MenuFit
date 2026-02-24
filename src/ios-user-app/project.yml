@@ -7,7 +7,8 @@ settings:
   base:
     SWIFT_VERSION: 5.10
     PRODUCT_BUNDLE_IDENTIFIER: nl.menufit.userapp
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: YOURTEAMID
+    CODE_SIGN_STYLE: Automatic
 targets:
   MenuFitUserApp:
     type: application
@@ -23,9 +24,15 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
+        MenuFitBackendBaseURL: https://api.menufit.local
+        MenuFitUserAccessToken: ""
+        MenuFitUserSubjectId: ios-user
+        MenuFitPicnicAccountId: picnic-default
+        MenuFitHouseholdId: default-household
+        MenuFitUserTokenExpiryEpochSeconds: 0
     settings:
       base:
         GENERATE_INFOPLIST_FILE: NO
-        CODE_SIGNING_ALLOWED: NO
-        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGNING_REQUIRED: YES
         TARGETED_DEVICE_FAMILY: "1,2"

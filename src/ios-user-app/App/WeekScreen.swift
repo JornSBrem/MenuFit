@@ -54,6 +54,22 @@ struct WeekScreen: View {
           }
         }
 
+        Section(AppStrings.text(.authSessionSection)) {
+          if let session = viewModel.authSession {
+            Text(AppStrings.text(.authSubject, session.subjectId))
+            Text(AppStrings.text(.authPicnicAccount, session.picnicAccountId))
+            Text(AppStrings.text(.authHousehold, session.householdId))
+            if let expiry = session.expiresAtEpochSeconds {
+              Text(AppStrings.text(.authExpiry, expiry))
+            } else {
+              Text(AppStrings.text(.authExpiryMissing))
+            }
+          } else {
+            Text(AppStrings.text(.authSessionMissing))
+              .foregroundColor(.orange)
+          }
+        }
+
         if let summary = viewModel.summary {
           Section(AppStrings.text(.weekOverviewSection)) {
             Text(AppStrings.text(.weekPlanId, summary.weekPlan.weekPlanId))

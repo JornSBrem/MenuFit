@@ -25,6 +25,18 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 	</dict>
+	<key>MenuFitBackendBaseURL</key>
+	<string>https://api.menufit.local</string>
+	<key>MenuFitUserAccessToken</key>
+	<string></string>
+	<key>MenuFitUserSubjectId</key>
+	<string>ios-user</string>
+	<key>MenuFitPicnicAccountId</key>
+	<string>picnic-default</string>
+	<key>MenuFitHouseholdId</key>
+	<string>default-household</string>
+	<key>MenuFitUserTokenExpiryEpochSeconds</key>
+	<integer>0</integer>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

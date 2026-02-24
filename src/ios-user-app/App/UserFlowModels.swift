@@ -6,6 +6,14 @@ struct ApiEnvelope<T: Decodable>: Decodable {
   let error: ApiErrorPayload?
 }
 
+struct UserAuthSession: Codable {
+  let accessToken: String
+  let subjectId: String
+  let picnicAccountId: String
+  let householdId: String
+  let expiresAtEpochSeconds: Int?
+}
+
 struct ApiErrorPayload: Decodable {
   let code: String
   let message: String
@@ -106,6 +114,101 @@ struct CartSyncReport: Codable {
   let externalCartId: String?
   let errors: [String]?
   let createdAt: String
+}
+
+struct MatchCandidateInput: Codable {
+  let candidateId: String
+  let label: String
+  let canonicalLabel: String?
+  let pathBonus: Double?
+}
+
+struct MatchFinishPassInput: Codable {
+  let enabled: Bool
+  let autoApply: Bool
+  let actorId: String
+}
+
+struct MatchEvaluateRequestBody: Codable {
+  let itemId: String
+  let sourceRef: String
+  let query: String
+  let path: String
+  let candidates: [MatchCandidateInput]
+  let finishPass: MatchFinishPassInput
+}
+
+struct MatchRankedCandidate: Codable, Identifiable {
+  struct Candidate: Codable {
+    let candidateId: String
+    let label: String
+    let canonicalLabel: String?
+  }
+
+  struct Breakdown: Codable {
+    let finalScore: Double
+  }
+
+  let candidate: Candidate
+  let breakdown: Breakdown
+
+  var id: String { candidate.candidateId }
+}
+
+struct MatchEvaluationResult: Codable {
+  let itemId: String
+  let sourceRef: String
+  let decision: String
+  let policy: String
+  let rankedCandidates: [MatchRankedCandidate]
+  let topCandidateId: String?
+  let queuedForReview: Bool
+}
+
+struct MatchFinishPassResult: Codable {
+  let attempted: Bool
+  let usedFallback: Bool?
+  let reason: String?
+  let provider: String?
+  let suggestedCandidateId: String?
+  let note: String?
+}
+
+struct MatchWorkflowEvaluateResponse: Codable {
+  let evaluation: MatchEvaluationResult
+  let finishPass: MatchFinishPassResult
+}
+
+struct MatchReviewQueueItem: Codable, Identifiable {
+  let itemId: String
+  let sourceRef: String
+  let query: String
+  let status: String
+  let decision: String
+  let suggestedCandidateId: String?
+  let selectedCandidateId: String?
+  let createdAt: String
+  let updatedAt: String
+
+  var id: String { itemId }
+}
+
+struct MatchReviewActionRequestBody: Codable {
+  let itemId: String
+  let action: String
+  let actorId: String
+  let candidateId: String?
+  let note: String?
+}
+
+struct MatchReviewActionResponse: Codable {
+  struct QueueItem: Codable {
+    let itemId: String
+    let status: String
+    let selectedCandidateId: String?
+  }
+
+  let queueItem: QueueItem
 }
 
 struct CachedWeekBundle: Codable {
