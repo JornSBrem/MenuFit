@@ -51,6 +51,13 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     meta: { hotReload: true, sensitive: false, restartRequired: false },
   },
   {
+    key: "PG_SHOPPINGLIST_URL_TEMPLATE",
+    description: "Project Gezond shopping list endpoint template.",
+    kind: "url",
+    defaultValue: "https://backend.projectgezond.nl/api/v3/week-menus/{week}",
+    meta: { hotReload: true, sensitive: false, restartRequired: false },
+  },
+  {
     key: "PG_EXTRA_HEADERS_JSON",
     description: "Extra headers for Project Gezond API calls.",
     kind: "json",

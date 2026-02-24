@@ -20,6 +20,8 @@
 2. Implement: `src/backend|src/admin-web|src/ios-user-app|src/shared|infrastructure`
 3. Review: use reviewer workflow
 4. Track: `.copilot-tracking/changes/`
+5. Commit and push
+6. start executing next item on workitems.md: workitems/workitems.md
 
 ## 4) Context Loading (Only What You Need)
 
