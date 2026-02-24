@@ -15,6 +15,7 @@ Current admin-web baseline modules in `src/admin-web/src`:
 - `types.ts`
 - `admin-api.ts`
 - `admin-dashboard-state.ts`
+- `admin-dashboard-controller.ts`
 - `README.md`
 
 This baseline is intentionally separate from `src/ios-user-app` user flow modules and uses admin-session contracts only.

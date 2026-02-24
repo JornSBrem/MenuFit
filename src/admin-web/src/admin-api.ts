@@ -6,7 +6,9 @@ import type {
   ConfigUpdateRequest,
   IngestRequest,
   RecomputeRequest,
-} from "./types";
+  SystemDiagnosticsSummary,
+  SystemJobRecord,
+} from "./types.ts";
 
 export class AdminApiClient {
   private readonly baseUrl: string;
@@ -32,6 +34,26 @@ export class AdminApiClient {
 
   runCleanup(body: CleanupRequest): Promise<ApiEnvelope<AdminOperationReport>> {
     return this.post("/api/v3/admin/cleanup", body);
+  }
+
+  getDiagnostics(): Promise<ApiEnvelope<SystemDiagnosticsSummary>> {
+    return this.get("/api/v3/system/diagnostics");
+  }
+
+  getJobs(): Promise<ApiEnvelope<SystemJobRecord[]>> {
+    return this.get("/api/v3/system/jobs");
+  }
+
+  private async get<T>(path: string): Promise<ApiEnvelope<T>> {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.session.accessToken}`,
+      },
+    });
+
+    const payload = (await response.json()) as ApiEnvelope<T>;
+    return payload;
   }
 
   private async post<T>(path: string, body: unknown): Promise<ApiEnvelope<T>> {

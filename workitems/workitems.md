@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-209 | type:feature | priority:P2 | status:TODO | title:Admin web React/Vite UI uitwerken voor operations dashboards
-  - context: Alleen baseline modules bestaan; volwaardige operator-UI is nog niet geïmplementeerd.
-  - acceptance:
-    - Data/Instellingen/Extract/Operations views hebben werkende UI states (loading/empty/error/success).
-    - Kritieke admin flows (ingest, recompute, cleanup, diagnostics) zijn interactief uitvoerbaar.
-
 - [ ] WI-210 | type:feature | priority:P2 | status:TODO | title:iOS productionization met Xcode project, token-auth en uitgebreide match-flow
   - context: iOS baseline liet projectgeneratie/signing en volledige auth/match integratie buiten scope.
   - acceptance:
@@ -85,6 +79,12 @@
 _None_
 
 ## Done
+
+- [x] WI-209 | type:feature | priority:P2 | status:DONE | title:Admin web React/Vite UI uitwerken voor operations dashboards
+  - context: Alleen baseline modules bestaan; volwaardige operator-UI is nog niet geïmplementeerd.
+  - acceptance:
+    - Data/Instellingen/Extract/Operations views hebben werkende UI states (loading/empty/error/success).
+    - Kritieke admin flows (ingest, recompute, cleanup, diagnostics) zijn interactief uitvoerbaar.
 
 - [x] WI-208 | type:chore | priority:P2 | status:DONE | title:Production scheduler + background retry queues
   - context: Scheduler wiring en persisted retries zijn herhaaldelijk out-of-scope gebleven.
