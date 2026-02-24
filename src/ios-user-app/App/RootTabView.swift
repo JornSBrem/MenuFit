@@ -5,17 +5,17 @@ struct RootTabView: View {
     TabView {
       WeekScreen()
         .tabItem {
-          Label("Week", systemImage: "calendar")
+          Label(AppStrings.text(.tabWeek), systemImage: "calendar")
         }
 
       MatchScreen()
         .tabItem {
-          Label("Match", systemImage: "slider.horizontal.3")
+          Label(AppStrings.text(.tabMatch), systemImage: "slider.horizontal.3")
         }
 
       OrderScreen()
         .tabItem {
-          Label("Bestellen", systemImage: "cart")
+          Label(AppStrings.text(.tabOrder), systemImage: "cart")
         }
     }
   }

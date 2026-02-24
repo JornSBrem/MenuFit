@@ -21,6 +21,7 @@ Current baseline SwiftUI structure in `App/`:
 - `OfflineCacheStore.swift`: local cache for week summary + groceries.
 - `UserFlowViewModel.swift`: orchestrates online fetch, cache fallback, and sync flow.
 - `UserFlowModels.swift`: API and cache models.
+- `Localization.swift`: NL resource-based string catalog for i18n-ready UI rendering.
 
 Notes:
 - Week/groceries support offline fallback via cache.

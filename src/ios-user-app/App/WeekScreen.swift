@@ -6,17 +6,30 @@ struct WeekScreen: View {
   var body: some View {
     NavigationView {
       List {
-        Section("Week instellingen") {
-          Stepper("Jaar: \(viewModel.selection.year)", value: $viewModel.selection.year, in: 2024...2035)
-          Stepper("Week: \(viewModel.selection.week)", value: $viewModel.selection.week, in: 1...53)
-          Stepper("Kcal: \(viewModel.selection.kcal)", value: $viewModel.selection.kcal, in: 1000...3500, step: 50)
+        Section(AppStrings.text(.weekSettingsSection)) {
           Stepper(
-            "Basis personen: \(viewModel.selection.basePersons)",
+            AppStrings.text(.yearStepper, viewModel.selection.year),
+            value: $viewModel.selection.year,
+            in: 2024...2035
+          )
+          Stepper(
+            AppStrings.text(.weekStepper, viewModel.selection.week),
+            value: $viewModel.selection.week,
+            in: 1...53
+          )
+          Stepper(
+            AppStrings.text(.kcalStepper, viewModel.selection.kcal),
+            value: $viewModel.selection.kcal,
+            in: 1000...3500,
+            step: 50
+          )
+          Stepper(
+            AppStrings.text(.basePersonsStepper, viewModel.selection.basePersons),
             value: $viewModel.selection.basePersons,
             in: 1...8
           )
 
-          Button("Laad weekdata") {
+          Button(AppStrings.text(.loadWeekDataButton)) {
             Task {
               await viewModel.loadWeekBundle()
             }
@@ -24,15 +37,15 @@ struct WeekScreen: View {
           .disabled(viewModel.isLoading)
         }
 
-        Section("Status") {
+        Section(AppStrings.text(.statusSection)) {
           if viewModel.isLoading {
-            ProgressView("Laden...")
+            ProgressView(AppStrings.text(.loading))
           }
           if viewModel.isUsingOfflineCache {
-            Label("Offline cache actief", systemImage: "icloud.slash")
+            Label(AppStrings.text(.offlineCacheActive), systemImage: "icloud.slash")
               .foregroundColor(.orange)
           } else {
-            Label("Online data", systemImage: "icloud")
+            Label(AppStrings.text(.onlineData), systemImage: "icloud")
               .foregroundColor(.green)
           }
           if let lastError = viewModel.lastError {
@@ -42,16 +55,16 @@ struct WeekScreen: View {
         }
 
         if let summary = viewModel.summary {
-          Section("Weekoverzicht") {
-            Text("Weekplan ID: \(summary.weekPlan.weekPlanId)")
-            Text("Maaltijden: \(summary.weekPlan.mealCount)")
-            Text("Coverage: \(Int(summary.matchStatus.coverageScore * 100))%")
-            Text("Open issues: \(summary.matchStatus.unresolvedItems)")
+          Section(AppStrings.text(.weekOverviewSection)) {
+            Text(AppStrings.text(.weekPlanId, summary.weekPlan.weekPlanId))
+            Text(AppStrings.text(.mealCount, summary.weekPlan.mealCount))
+            Text(AppStrings.text(.coverage, Int(summary.matchStatus.coverageScore * 100)))
+            Text(AppStrings.text(.openIssues, summary.matchStatus.unresolvedItems))
           }
         }
 
         if let groceries = viewModel.groceries {
-          Section("Boodschappen") {
+          Section(AppStrings.text(.groceriesSection)) {
             ForEach(groceries.groceries) { item in
               VStack(alignment: .leading, spacing: 4) {
                 Text(item.canonicalName)
@@ -65,7 +78,7 @@ struct WeekScreen: View {
           }
         }
       }
-      .navigationTitle("Week")
+      .navigationTitle(AppStrings.text(.weekNavigationTitle))
     }
   }
 }

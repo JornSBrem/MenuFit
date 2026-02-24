@@ -7,21 +7,21 @@ struct MatchScreen: View {
     NavigationView {
       List {
         if let summary = viewModel.summary {
-          Section("Matching status") {
-            Text("Totaal items: \(summary.matchStatus.totalItems)")
-            Text("Resolved: \(summary.matchStatus.resolvedItems)")
-            Text("Unresolved: \(summary.matchStatus.unresolvedItems)")
-            Text("Coverage: \(Int(summary.matchStatus.coverageScore * 100))%")
+          Section(AppStrings.text(.matchStatusSection)) {
+            Text(AppStrings.text(.totalItems, summary.matchStatus.totalItems))
+            Text(AppStrings.text(.resolvedItems, summary.matchStatus.resolvedItems))
+            Text(AppStrings.text(.unresolvedItems, summary.matchStatus.unresolvedItems))
+            Text(AppStrings.text(.coverage, Int(summary.matchStatus.coverageScore * 100)))
           }
         } else {
           Section {
-            Text("Nog geen weekdata geladen.")
+            Text(AppStrings.text(.noWeekDataLoaded))
               .foregroundColor(.secondary)
           }
         }
 
         if let groceries = viewModel.groceries {
-          Section("Reconcile details") {
+          Section(AppStrings.text(.reconcileDetailsSection)) {
             ForEach(groceries.reconcile) { row in
               HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -41,7 +41,7 @@ struct MatchScreen: View {
           }
         }
       }
-      .navigationTitle("Match")
+      .navigationTitle(AppStrings.text(.matchNavigationTitle))
     }
   }
 }

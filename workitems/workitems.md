@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-203 | type:feature | priority:P2 | status:TODO | title:i18n-ready UI (start NL-only met resource-based strings)
-  - value: voorbereiding op latere meertaligheid zonder grote refactor
-
 - [ ] WI-204 | type:feature | priority:P3 | status:TODO | title:Geautomatiseerde cutover checklist V1 -> V3
   - value: gecontroleerde overgang met rollback-afspraken en meetbare gates
 
@@ -74,11 +71,30 @@
     - Gebruiker kan een persoonlijk kcal-profiel kiezen/beheren in de primaire flow.
     - Geselecteerd profiel wordt consistent toegepast op week/grocery reads.
 
+- [ ] WI-218 | type:feature | priority:P2 | status:TODO | title:Runtime locale switching + locale persistency
+  - context: WI-203 levert resource-based strings, maar nog geen actieve locale-switch of voorkeuropslag.
+  - acceptance:
+    - Gebruiker/operator kan locale wisselen tijdens runtime zonder app-herstart.
+    - Gekozen locale wordt persistent opgeslagen en hersteld bij volgende sessie.
+
+- [ ] WI-219 | type:chore | priority:P2 | status:TODO | title:Volledige foutlokalisatie voor backend/domain error payloads
+  - context: WI-203 sluit volledige lokalisatie van backend/domain foutteksten expliciet uit.
+  - acceptance:
+    - User-facing foutmeldingen zijn via i18n resources gemapt op error codes/hints.
+    - Onbekende fouten hebben consistente gelokaliseerde fallback-berichten.
+
 ## In Progress
 
 _None_
 
 ## Done
+
+- [x] WI-203 | type:feature | priority:P2 | status:DONE | title:i18n-ready UI (start NL-only met resource-based strings)
+  - context: User-facing teksten staan hardcoded in iOS views en er is nog geen resource-structuur voor admin-web labels.
+  - acceptance:
+    - iOS user app gebruikt centrale string-resources (NL) i.p.v. hardcoded schermteksten.
+    - Admin-web heeft resource-based labels als basis voor toekomstige React UI componenten.
+    - Nieuwe stringstructuur is uitbreidbaar naar extra locales zonder grote refactor.
 
 - [x] WI-202 | type:feature | priority:P2 | status:DONE | title:Dynamische kcal-profielen bovenop baseline datasets
   - context: Gold read-flow levert nu alleen exact ingestte kcal-combinaties; product vraagt afgeleide profielen zonder extra bron-ingest.

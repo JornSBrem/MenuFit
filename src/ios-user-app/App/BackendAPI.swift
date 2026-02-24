@@ -9,9 +9,9 @@ enum BackendAPIError: Error, LocalizedError {
   var errorDescription: String? {
     switch self {
     case .invalidBaseURL:
-      return "Invalid backend base URL."
+      return AppStrings.text(.backendInvalidBaseUrl)
     case .invalidResponse:
-      return "Backend response could not be parsed."
+      return AppStrings.text(.backendInvalidResponse)
     case let .backend(code, message, hint):
       return "\(code): \(message)\(hint.map { " (\($0))" } ?? "")"
     case let .transport(message):

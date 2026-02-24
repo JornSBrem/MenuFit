@@ -48,9 +48,9 @@ final class UserFlowViewModel: ObservableObject {
         summary = cached.summary
         groceries = cached.groceries
         isUsingOfflineCache = true
-        lastError = "Offline data loaded: \(error.localizedDescription)"
+        lastError = AppStrings.text(.offlineDataLoaded, error.localizedDescription)
       } catch {
-        lastError = "Could not load week data online or offline cache."
+        lastError = AppStrings.text(.loadWeekOnlineOrOfflineFailed)
       }
     }
   }
@@ -58,7 +58,7 @@ final class UserFlowViewModel: ObservableObject {
   func syncCartOnlineOnly() async {
     lastError = nil
     guard let summary, let groceries else {
-      lastError = "Load week data first."
+      lastError = AppStrings.text(.loadWeekFirst)
       return
     }
 
@@ -82,7 +82,7 @@ final class UserFlowViewModel: ObservableObject {
     do {
       lastSyncReport = try await api.syncCart(body: request)
     } catch {
-      lastError = "Cart sync failed (online-only): \(error.localizedDescription)"
+      lastError = AppStrings.text(.cartSyncFailedOnlineOnly, error.localizedDescription)
     }
   }
 }

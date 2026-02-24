@@ -15,6 +15,7 @@
 		586371043F98771AE1CD477A /* UserFlowModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3941274E4041CB58B8BC8447 /* UserFlowModels.swift */; };
 		748342154DC6D5C1CA201765 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D31B5618A6714859B8C35E13 /* RootTabView.swift */; };
 		9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */; };
+		C309FFCB7BE1147CF6CE9550 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE482EB44234E5DB375E836 /* Localization.swift */; };
 		C7843F6778C2273A38B57C7E /* OrderScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7DC178D1015232B3FA63D01 /* OrderScreen.swift */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +28,7 @@
 		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7DC178D1015232B3FA63D01 /* OrderScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderScreen.swift; sourceTree = "<group>"; };
 		C9F7813B54367774B77BC8D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		CFE482EB44234E5DB375E836 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		D31B5618A6714859B8C35E13 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		F9346B79CF692F41BADFEC8F /* MatchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScreen.swift; sourceTree = "<group>"; };
 		FD375DB99A1D8042CD754B02 /* OfflineCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineCacheStore.swift; sourceTree = "<group>"; };
@@ -54,6 +56,7 @@
 			children = (
 				5862F6F0387CA8260E450902 /* BackendAPI.swift */,
 				C9F7813B54367774B77BC8D4 /* Info.plist */,
+				CFE482EB44234E5DB375E836 /* Localization.swift */,
 				F9346B79CF692F41BADFEC8F /* MatchScreen.swift */,
 				4EB8E3243064BD44720733F3 /* MenuFitUserApp.swift */,
 				FD375DB99A1D8042CD754B02 /* OfflineCacheStore.swift */,
@@ -125,6 +128,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				07BC08D9558522998C9C3EE6 /* BackendAPI.swift in Sources */,
+				C309FFCB7BE1147CF6CE9550 /* Localization.swift in Sources */,
 				34E1F0A1990D1898942BA303 /* MatchScreen.swift in Sources */,
 				568FAF82A578BEEF0A366C75 /* MenuFitUserApp.swift in Sources */,
 				28A052B2CAD27C6BD9302D43 /* OfflineCacheStore.swift in Sources */,
