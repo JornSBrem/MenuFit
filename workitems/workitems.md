@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-202 | type:feature | priority:P2 | status:TODO | title:Dynamische kcal-profielen bovenop baseline datasets
-  - value: betere personalisatie zonder extra volledige bron-ingest
-
 - [ ] WI-203 | type:feature | priority:P2 | status:TODO | title:i18n-ready UI (start NL-only met resource-based strings)
   - value: voorbereiding op latere meertaligheid zonder grote refactor
 
@@ -65,11 +62,30 @@
     - Baseline iOS UI smoke-tests draaien geautomatiseerd op simulator in CI.
     - Regressies op primaire flow (Week -> Match -> Bestellen) worden in pipeline gedetecteerd.
 
+- [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
+  - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
+  - acceptance:
+    - Ingest planner ondersteunt configureerbare kcal-sets buiten de baselinewaarden.
+    - Pipeline en opslag blijven deterministisch bij grotere profiel-matrices.
+
+- [ ] WI-217 | type:feature | priority:P2 | status:TODO | title:Gebruikersinstellingen voor kcal-profielbeheer
+  - context: WI-202 levert backend-afleiding maar geen user-facing profielbeheer of voorkeuren.
+  - acceptance:
+    - Gebruiker kan een persoonlijk kcal-profiel kiezen/beheren in de primaire flow.
+    - Geselecteerd profiel wordt consistent toegepast op week/grocery reads.
+
 ## In Progress
 
 _None_
 
 ## Done
+
+- [x] WI-202 | type:feature | priority:P2 | status:DONE | title:Dynamische kcal-profielen bovenop baseline datasets
+  - context: Gold read-flow levert nu alleen exact ingestte kcal-combinaties; product vraagt afgeleide profielen zonder extra bron-ingest.
+  - acceptance:
+    - Week read-routes kunnen voor niet-baseline kcal een afgeleid profiel leveren vanuit dichtstbijzijnde baseline voor dezelfde week/basePersons.
+    - Afgeleide grocery hoeveelheden zijn deterministisch geschaald en contractvorm blijft stabiel.
+    - Baseline exact-match gedrag en not-found gedrag buiten week/basePersons scope blijven behouden.
 
 - [x] WI-201 | type:feature | priority:P2 | status:DONE | title:Huishouden model met gezinshoofd + gezinslid uitnodigingen
   - context: V3 vereist een huishoudenmodel met uitnodigingen; huidige flow gebruikt alleen losse `householdId` zonder lidmaatschapsbeheer.

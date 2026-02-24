@@ -123,6 +123,15 @@ test("e2e smoke: household -> week -> match -> cart -> system operations", async
       basePersons: 2,
     });
     assert.equal(summary.ok, true);
+    const derivedGroceries = weekRoutes.groceries({
+      year: 2026,
+      week: 9,
+      kcal: 1700,
+      basePersons: 2,
+    });
+    assert.equal(derivedGroceries.ok, true);
+    assert.equal(derivedGroceries.data?.weekPlanId, "weekplan-9:kcal-1700");
+    assert.equal(derivedGroceries.data?.groceries[0]?.totalAmount, 236.111);
 
     const matchingReview = new MatchingReviewService({
       policy: {
