@@ -28,3 +28,21 @@ jobs:
 
       - name: Evaluate KPI Release Gates
         run: node --experimental-strip-types infrastructure/release-gates/check-kpi-gates.ts infrastructure/release-gates/sample-metrics.json
+
+  live-contract-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate Live API Contracts
+        env:
+          LIVE_CONTRACT_BASE_URL: ${{ secrets.LIVE_CONTRACT_BASE_URL }}
+          LIVE_CONTRACT_AUTH_TOKEN: ${{ secrets.LIVE_CONTRACT_AUTH_TOKEN }}
+          LIVE_CONTRACT_REQUIRE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'true' || 'false' }}
+        run: node --experimental-strip-types infrastructure/release-gates/check-live-contracts.ts

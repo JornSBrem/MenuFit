@@ -20,6 +20,7 @@ Steps:
 1. Run unit + integration tests (`find src/backend -name '*.test.ts' ! -name 'e2e-smoke.test.ts'`).
 2. Run e2e smoke test.
 3. Evaluate KPI release gates from metrics JSON.
+4. Run live contract validation against configured external backend endpoints.
 
 ## KPI Release Gates
 
@@ -33,5 +34,6 @@ Implementation:
 - Evaluator: `src/backend/application/matching/kpi-gates.ts`
 - Checker CLI: `infrastructure/release-gates/check-kpi-gates.ts`
 - CI sample input: `infrastructure/release-gates/sample-metrics.json`
+- Live contract checker: `infrastructure/release-gates/check-live-contracts.ts`
 
 CI fails when any KPI gate is violated.

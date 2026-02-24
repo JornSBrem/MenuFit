@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-212 | type:chore | priority:P3 | status:TODO | title:Delivery hardening: deploy wiring, branch protection en live contract-validatie
-  - context: Deployment wiring, branch protection en live endpoint-contract validatie zijn nog niet afgerond.
-  - acceptance:
-    - Deployment pipeline en branch protection policies zijn ingesteld en gedocumenteerd.
-    - Live contract-validatie tegen externe endpoints is opgenomen in release checks.
-
 - [ ] WI-222 | type:chore | priority:P2 | status:TODO | title:Externe observability stack provisioning (Prometheus/Grafana) voor productie
   - context: WI-211 levert interne telemetry export, maar provisioning/operationalisatie van externe observability stack bleef out-of-scope.
   - acceptance:
@@ -19,6 +13,12 @@
   - acceptance:
     - Ingress heeft afdwingbare WAF/CDN rulesets voor OWASP-baseline en rate controls op kritieke endpoints.
     - Deploybare configuratie is traceerbaar versiebeheer met rollbackpad.
+
+- [ ] WI-224 | type:chore | priority:P2 | status:TODO | title:Cloud deployment provisioning voor productie-omgeving
+  - context: WI-212 levert delivery guardrails en checks, maar volledige cloud provisioning blijft out-of-scope.
+  - acceptance:
+    - Productie infrastructuur provisioning (compute/network/secrets/observability basis) is geautomatiseerd en reproduceerbaar.
+    - Provisioningpad bevat rollback/rollback-safe documentatie en validatiechecks.
 
 - [ ] WI-213 | type:feature | priority:P2 | status:TODO | title:Relationele database runtime-integratie voor persistente domeinen
   - context: WI-206 noemt volledige relationele database-integratie expliciet als out-of-scope.
@@ -79,6 +79,12 @@
 _None_
 
 ## Done
+
+- [x] WI-212 | type:chore | priority:P3 | status:DONE | title:Delivery hardening: deploy wiring, branch protection en live contract-validatie
+  - context: Deployment wiring, branch protection en live endpoint-contract validatie zijn nog niet afgerond.
+  - acceptance:
+    - Deployment pipeline en branch protection policies zijn ingesteld en gedocumenteerd.
+    - Live contract-validatie tegen externe endpoints is opgenomen in release checks.
 
 - [x] WI-211 | type:chore | priority:P2 | status:DONE | title:Observability en security hardening voor productie
   - context: Externe observability stacks, telemetry ingestie, RBAC/WAF/rate-limiting zijn nog openstaande out-of-scope punten.
