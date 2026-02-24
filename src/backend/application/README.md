@@ -11,5 +11,6 @@ Current workflow modules:
 - `silver/`
 - `gold/`
 - `matching/`
+- `cart/`
 
 Application code should not contain UI concerns.

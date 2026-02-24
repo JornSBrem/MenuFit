@@ -3,7 +3,7 @@
 Integrations connect to external dependencies:
 
 - Project Gezond endpoints
-- Picnic API
+- Picnic API (`picnic/`)
 - LLM providers (OpenAI/Azure) with preflight + fallback adapter (`llm/`)
 - persistence and storage adapters
 

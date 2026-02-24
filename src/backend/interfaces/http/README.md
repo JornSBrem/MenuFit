@@ -14,3 +14,4 @@ Planned route groups:
 Implemented baseline:
 
 - `week/week-routes.ts` for summary and groceries read handlers.
+- `cart/cart-routes.ts` for idempotent cart sync and sync report envelopes.
