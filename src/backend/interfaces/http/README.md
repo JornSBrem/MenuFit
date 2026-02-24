@@ -15,3 +15,4 @@ Implemented baseline:
 
 - `week/week-routes.ts` for summary and groceries read handlers.
 - `cart/cart-routes.ts` for idempotent cart sync and sync report envelopes.
+- `admin/admin-routes.ts` for admin-only ingest/recompute/config/cleanup handlers.

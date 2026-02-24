@@ -12,5 +12,6 @@ Current workflow modules:
 - `gold/`
 - `matching/`
 - `cart/`
+- `admin/`
 
 Application code should not contain UI concerns.

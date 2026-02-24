@@ -7,3 +7,6 @@ Entry points into backend use-cases:
 - job triggers
 
 Interfaces translate transport payloads into application commands.
+
+Session separation baseline:
+- user and admin sessions are represented as distinct context types in `interfaces/http/auth/`.
