@@ -72,6 +72,27 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     meta: { hotReload: true, sensitive: false, restartRequired: false },
   },
   {
+    key: "LLM_BASE_URL",
+    description: "Base URL for the active LLM provider.",
+    kind: "url",
+    defaultValue: "https://api.openai.com/v1",
+    meta: { hotReload: true, sensitive: false, restartRequired: false },
+  },
+  {
+    key: "LLM_MODEL",
+    description: "Model identifier used for LLM completion requests.",
+    kind: "string",
+    defaultValue: "gpt-4o-mini",
+    meta: { hotReload: true, sensitive: false, restartRequired: false },
+  },
+  {
+    key: "LLM_AZURE_DEPLOYMENT",
+    description: "Azure OpenAI deployment name mapped to the configured model.",
+    kind: "string",
+    defaultValue: "",
+    meta: { hotReload: true, sensitive: false, restartRequired: false },
+  },
+  {
     key: "LLM_API_KEY",
     description: "Secret key for the active LLM provider.",
     kind: "string",
