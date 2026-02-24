@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-201 | type:feature | priority:P2 | status:TODO | title:Huishouden model met gezinshoofd + gezinslid uitnodigingen
-  - value: meerdere gebruikers beheren dezelfde week/match/bestelflow
-
 - [ ] WI-202 | type:feature | priority:P2 | status:TODO | title:Dynamische kcal-profielen bovenop baseline datasets
   - value: betere personalisatie zonder extra volledige bron-ingest
 
@@ -73,6 +70,13 @@
 _None_
 
 ## Done
+
+- [x] WI-201 | type:feature | priority:P2 | status:DONE | title:Huishouden model met gezinshoofd + gezinslid uitnodigingen
+  - context: V3 vereist een huishoudenmodel met uitnodigingen; huidige flow gebruikt alleen losse `householdId` zonder lidmaatschapsbeheer.
+  - acceptance:
+    - Gezinshoofd kan een huishouden opzetten en leden uitnodigen met een expliciete uitnodigingsstatus.
+    - Uitgenodigd gezinslid kan uitnodiging accepteren waarna lidmaatschap van hetzelfde huishouden actief is.
+    - User-routes valideren sessie-identiteit en tonen huishoud- en uitnodigingsstatus consistent.
 
 - [x] WI-206 | type:chore | priority:P1 | status:DONE | title:Persistente opslag + migraties voor silver/gold/jobs/idempotency/audit
   - context: In-memory baselines zijn opgeleverd, maar productie vereist duurzame opslag en migratiepad.

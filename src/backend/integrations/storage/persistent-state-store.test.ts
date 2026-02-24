@@ -27,6 +27,8 @@ test("persistent state store creates default state when file does not exist", ()
     assert.deepEqual(state.goldReadModels, {});
     assert.deepEqual(state.silverTransforms, {});
     assert.deepEqual(state.systemJobs, []);
+    assert.deepEqual(state.households, []);
+    assert.deepEqual(state.householdInvitations, []);
   });
 });
 
@@ -80,6 +82,44 @@ test("persistent state store migrates legacy schema to current schema", () => {
     assert.equal(Object.keys(state.goldReadModels).length, 1);
     assert.equal(state.systemJobs.length, 1);
     assert.deepEqual(state.cartReportsByIdempotencyKey, {});
+    assert.deepEqual(state.households, []);
+    assert.deepEqual(state.householdInvitations, []);
+  });
+});
+
+test("persistent state store migrates v1 schema to v2 household fields", () => {
+  withTempStateFile((stateFile) => {
+    writeFileSync(
+      stateFile,
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          silverTransforms: {},
+          goldReadModels: {},
+          cartReportsByIdempotencyKey: {},
+          systemJobs: [],
+          systemReports: [],
+          matchingQueue: [],
+          matchingAuditTrail: [],
+          matchingOverrides: [],
+          auditTrail: [],
+          updatedAt: "2026-02-25T00:00:00.000Z",
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const store = new PersistentStateStore(stateFile);
+    const state = store.read();
+
+    assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
+    assert.deepEqual(state.households, []);
+    assert.deepEqual(state.householdInvitations, []);
+
+    const persisted = JSON.parse(readFileSync(stateFile, "utf8")) as { schemaVersion?: number };
+    assert.equal(persisted.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
   });
 });
 

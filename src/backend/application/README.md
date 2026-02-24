@@ -12,6 +12,7 @@ Current workflow modules:
 - `gold/`
 - `matching/`
 - `cart/`
+- `household/`
 - `admin/`
 - `system/`
 - `audit/`

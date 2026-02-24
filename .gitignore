@@ -1,4 +1,5 @@
 .DS_Store
+.vscode/
 
 # Keep planning artifacts local-only
 #docs/

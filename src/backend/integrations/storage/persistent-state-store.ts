@@ -5,6 +5,10 @@ import type { AuditEvent } from "../../application/audit/types.ts";
 import type { CartSyncReport } from "../../application/cart/types.ts";
 import type { GoldReadModel } from "../../application/gold/types.ts";
 import type {
+  HouseholdInvitation,
+  HouseholdRecord,
+} from "../../application/household/types.ts";
+import type {
   MatchAuditEvent,
   MatchOverrideRecord,
   MatchReviewQueueItem,
@@ -12,10 +16,26 @@ import type {
 import type { SilverTransformOutput } from "../../application/silver/types.ts";
 import type { SystemJobRecord, SystemOperationReport } from "../../application/system/types.ts";
 
-export const CURRENT_STATE_SCHEMA_VERSION = 1;
+export const CURRENT_STATE_SCHEMA_VERSION = 2;
 
 export interface PersistentAppState {
   schemaVersion: number;
+  silverTransforms: Record<string, SilverTransformOutput>;
+  goldReadModels: Record<string, GoldReadModel>;
+  cartReportsByIdempotencyKey: Record<string, CartSyncReport>;
+  systemJobs: SystemJobRecord[];
+  systemReports: SystemOperationReport[];
+  matchingQueue: MatchReviewQueueItem[];
+  matchingAuditTrail: MatchAuditEvent[];
+  matchingOverrides: MatchOverrideRecord[];
+  auditTrail: AuditEvent[];
+  households: HouseholdRecord[];
+  householdInvitations: HouseholdInvitation[];
+  updatedAt: string;
+}
+
+interface PersistentAppStateV1 {
+  schemaVersion: 1;
   silverTransforms: Record<string, SilverTransformOutput>;
   goldReadModels: Record<string, GoldReadModel>;
   cartReportsByIdempotencyKey: Record<string, CartSyncReport>;
@@ -59,12 +79,17 @@ const defaultState = (): PersistentAppState => ({
   matchingAuditTrail: [],
   matchingOverrides: [],
   auditTrail: [],
+  households: [],
+  householdInvitations: [],
   updatedAt: new Date().toISOString(),
 });
 
-const migrateV0ToV1 = (raw: unknown): PersistentAppState => {
+const migrateV0ToV1 = (raw: unknown): PersistentAppStateV1 => {
   if (!isRecord(raw)) {
-    return defaultState();
+    return {
+      ...defaultState(),
+      schemaVersion: 1,
+    };
   }
 
   const source = raw as UnknownRecord;
@@ -89,13 +114,45 @@ const migrateV0ToV1 = (raw: unknown): PersistentAppState => {
   };
 };
 
+const migrateV1ToV2 = (raw: unknown): PersistentAppState => {
+  if (!isRecord(raw)) {
+    return defaultState();
+  }
+
+  const source = raw as UnknownRecord;
+
+  return {
+    schemaVersion: 2,
+    silverTransforms: asObjectRecord<SilverTransformOutput>(source.silverTransforms),
+    goldReadModels: asObjectRecord<GoldReadModel>(source.goldReadModels),
+    cartReportsByIdempotencyKey: asObjectRecord<CartSyncReport>(source.cartReportsByIdempotencyKey),
+    systemJobs: asArray<SystemJobRecord>(source.systemJobs),
+    systemReports: asArray<SystemOperationReport>(source.systemReports),
+    matchingQueue: asArray<MatchReviewQueueItem>(source.matchingQueue),
+    matchingAuditTrail: asArray<MatchAuditEvent>(source.matchingAuditTrail),
+    matchingOverrides: asArray<MatchOverrideRecord>(source.matchingOverrides),
+    auditTrail: asArray<AuditEvent>(source.auditTrail),
+    households: asArray<HouseholdRecord>(source.households),
+    householdInvitations: asArray<HouseholdInvitation>(
+      source.householdInvitations ?? source.invitations,
+    ),
+    updatedAt:
+      typeof source.updatedAt === "string" && source.updatedAt.trim().length > 0
+        ? source.updatedAt
+        : new Date().toISOString(),
+  };
+};
+
 const migrateState = (raw: unknown): PersistentAppState => {
   const version = isRecord(raw) && typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
   if (version <= 0) {
-    return migrateV0ToV1(raw);
+    return migrateV1ToV2(migrateV0ToV1(raw));
   }
   if (version === 1) {
-    return migrateV0ToV1(raw);
+    return migrateV1ToV2(raw);
+  }
+  if (version === 2) {
+    return migrateV1ToV2(raw);
   }
   return defaultState();
 };
