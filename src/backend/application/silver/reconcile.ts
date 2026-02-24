@@ -1,4 +1,4 @@
-import { normalizeText } from "./normalization";
+import { computeTokenOverlap } from "../../domain/matching";
 import type {
   SilverDataQualityEventRow,
   SilverIngredientCanonicalRow,
@@ -7,12 +7,6 @@ import type {
   SilverReconcileResultRow,
   TransformContext,
 } from "./types";
-
-const includesAllTokens = (haystack: string, needle: string): boolean => {
-  const hayTokens = new Set(normalizeText(haystack).split(" ").filter(Boolean));
-  const needleTokens = normalizeText(needle).split(" ").filter(Boolean);
-  return needleTokens.every((token) => hayTokens.has(token));
-};
 
 interface ReconcileResult {
   results: SilverReconcileResultRow[];
@@ -34,11 +28,9 @@ export const reconcileComputedIngredientsWithPdf = (
   for (const rawRow of rawRows) {
     const canonical = canonicalByRawId.get(rawRow.rawId);
     const matchTarget = canonical?.canonicalName ?? rawRow.ingredientText;
-    const hasFullMatch = pdfRows.some((pdf) => includesAllTokens(pdf.lineText, matchTarget));
-    const hasPartial = !hasFullMatch && pdfRows.some((pdf) => {
-      const firstToken = normalizeText(matchTarget).split(" ").find(Boolean);
-      return firstToken ? normalizeText(pdf.lineText).includes(firstToken) : false;
-    });
+    const overlapScores = pdfRows.map((pdf) => computeTokenOverlap(matchTarget, pdf.lineText));
+    const hasFullMatch = overlapScores.some((score) => score >= 1);
+    const hasPartial = !hasFullMatch && overlapScores.some((score) => score > 0);
 
     let status: SilverReconcileResultRow["reconcileStatus"] = "missing_in_pdf";
     let note = "No matching PDF line found.";

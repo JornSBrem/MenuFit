@@ -1,0 +1,15 @@
+export {
+  computeTokenOverlap,
+  DEFAULT_SHARED_MATCH_POLICY,
+  normalizeMatchText,
+  rankCandidatesShared,
+  resolveSharedMatchPolicy,
+  scoreCandidateCanonical,
+  tokenizeMatchText,
+  type RankCandidatesOptions,
+  type SharedMatchCandidate,
+  type SharedMatchPath,
+  type SharedMatchPolicy,
+  type SharedRankedCandidate,
+  type SharedScoreBreakdown,
+} from "./shared-core";
