@@ -1,0 +1,117 @@
+import { createHash } from "node:crypto";
+
+import type { SilverIngredientCanonicalRow, SilverQuantityNormalizedRow } from "../silver";
+import type {
+  GoldGroceryReconcileView,
+  GoldGroceryTotalView,
+  GoldProjectionInput,
+  GoldReadModel,
+} from "./types";
+
+const hashId = (seed: string): string => createHash("sha256").update(seed).digest("hex").slice(0, 24);
+
+type GroceryAccumulator = {
+  canonicalName: string;
+  totalAmount?: number;
+  unit?: string;
+  requiresReview: boolean;
+};
+
+const buildCanonicalMap = (canonicalRows: SilverIngredientCanonicalRow[]): Map<string, string> =>
+  new Map(canonicalRows.map((row) => [row.rawId, row.canonicalName]));
+
+const aggregateGroceries = (
+  canonicalRows: SilverIngredientCanonicalRow[],
+  quantityRows: SilverQuantityNormalizedRow[],
+): GoldGroceryTotalView[] => {
+  const canonicalByRaw = buildCanonicalMap(canonicalRows);
+  const map = new Map<string, GroceryAccumulator>();
+
+  for (const quantity of quantityRows) {
+    const canonicalName = canonicalByRaw.get(quantity.rawId) ?? quantity.rawId;
+    const existing = map.get(canonicalName) ?? {
+      canonicalName,
+      totalAmount: undefined,
+      unit: quantity.normalizedUnit,
+      requiresReview: false,
+    };
+
+    const amount = quantity.normalizedAmount;
+    if (typeof amount === "number") {
+      existing.totalAmount = (existing.totalAmount ?? 0) + amount;
+    }
+    if (!existing.unit && quantity.normalizedUnit) {
+      existing.unit = quantity.normalizedUnit;
+    }
+    existing.requiresReview = existing.requiresReview || quantity.requiresReview;
+    map.set(canonicalName, existing);
+  }
+
+  return Array.from(map.values())
+    .sort((a, b) => a.canonicalName.localeCompare(b.canonicalName))
+    .map((row) => ({
+      canonicalName: row.canonicalName,
+      totalAmount: row.totalAmount,
+      unit: row.unit,
+      requiresReview: row.requiresReview,
+    }));
+};
+
+const buildReconcile = (
+  input: GoldProjectionInput,
+): GoldGroceryReconcileView[] => {
+  const canonicalByRaw = buildCanonicalMap(input.silver.ingredientsCanonical);
+
+  return input.silver.reconcileResults
+    .map((row) => ({
+      canonicalName: canonicalByRaw.get(row.rawId) ?? row.rawId,
+      reconcileStatus: row.reconcileStatus,
+      note: row.note,
+    }))
+    .sort((a, b) => a.canonicalName.localeCompare(b.canonicalName));
+};
+
+export const projectSilverToGold = (input: GoldProjectionInput): GoldReadModel => {
+  const weekPlanId = hashId(
+    `${input.context.sourceObjectId}:${input.context.year}:${input.context.week}:${input.context.kcal}:${input.context.basePersons}:gold`,
+  );
+  const groceries = aggregateGroceries(
+    input.silver.ingredientsCanonical,
+    input.silver.quantitiesNormalized,
+  );
+  const groceryReconcile = buildReconcile(input);
+
+  const totalItems = groceries.length;
+  const unresolvedItems = groceryReconcile.filter((row) => row.reconcileStatus !== "matched").length;
+  const resolvedItems = Math.max(totalItems - unresolvedItems, 0);
+  const coverageScore = totalItems === 0 ? 1 : resolvedItems / totalItems;
+
+  return {
+    weekPlan: {
+      weekPlanId,
+      year: input.context.year,
+      week: input.context.week,
+      kcal: input.context.kcal,
+      basePersons: input.context.basePersons,
+      mealCount: input.silver.meals.length,
+      sourceObjectId: input.context.sourceObjectId,
+      transformVersion: input.context.transformVersion,
+      generatedAt: new Date().toISOString(),
+    },
+    groceries,
+    groceryReconcile,
+    matchStatus: {
+      totalItems,
+      resolvedItems,
+      unresolvedItems,
+      coverageScore,
+    },
+    cartPlan: {
+      cartPlanId: `${weekPlanId}:cart`,
+      weekPlanId,
+      itemCount: totalItems,
+      unresolvedCount: unresolvedItems,
+      generatedAt: new Date().toISOString(),
+    },
+  };
+};

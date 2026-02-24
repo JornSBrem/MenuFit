@@ -10,3 +10,7 @@ Planned route groups:
 - `/api/v3/match`
 - `/api/v3/cart`
 - `/api/v3/admin`
+
+Implemented baseline:
+
+- `week/week-routes.ts` for summary and groceries read handlers.
