@@ -9,5 +9,9 @@ Validation helpers:
 - `parseAuthorizationHeader(...)`
 - `requireUserSession(...)`
 - `requireAdminSession(...)`
+- `authorizeUserFromBearerHeader(...)`
+- `authorizeAdminFromBearerHeader(...)`
 
 Use `SessionValidationOptions.requireExpiry` to enforce token expiry in stricter environments.
+
+Middleware wrappers consume `SessionLifecycleService` to enforce active/revoked/expired checks before route execution.

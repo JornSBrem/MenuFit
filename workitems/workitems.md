@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-207 | type:feature | priority:P1 | status:TODO | title:Echte auth/session lifecycle voor PG/Picnic + user/admin middleware
-  - context: Out-of-scope items noemen expliciet ontbrekende auth/session lifecycle en middleware wiring.
-  - acceptance:
-    - PG/Picnic sessies en token lifecycle worden veilig beheerd met refresh/expiry regels.
-    - User/admin route middleware valideert identiteit en sessietype consistent.
-
 - [ ] WI-208 | type:chore | priority:P2 | status:TODO | title:Production scheduler + background retry queues
   - context: Scheduler wiring en persisted retries zijn herhaaldelijk out-of-scope gebleven.
   - acceptance:
@@ -80,11 +74,29 @@
     - User-facing foutmeldingen zijn via i18n resources gemapt op error codes/hints.
     - Onbekende fouten hebben consistente gelokaliseerde fallback-berichten.
 
+- [ ] WI-220 | type:feature | priority:P1 | status:TODO | title:Volledige OAuth/OpenID provider-integratie voor loginflows
+  - context: WI-207 levert sessie-lifecycle baseline, maar sluit volledige OAuth/OpenID provider-integratie expliciet uit.
+  - acceptance:
+    - Loginflow gebruikt een echte OAuth/OpenID provider met autorisatiecode- en token-uitwisseling.
+    - Provider claims worden veilig vertaald naar user/admin sessies en autorisatieregels.
+
+- [ ] WI-221 | type:chore | priority:P1 | status:TODO | title:JWT handtekeningverificatie tegen externe IdP sleutels
+  - context: WI-207 sluit cryptografische JWT-verificatie tegen externe IdP keys expliciet uit.
+  - acceptance:
+    - JWT tokens worden server-side gevalideerd op handtekening, issuer, audience en expiry.
+    - Sleutelrotatie (JWKS) wordt ondersteund zonder downtime.
+
 ## In Progress
 
 _None_
 
 ## Done
+
+- [x] WI-207 | type:feature | priority:P1 | status:DONE | title:Echte auth/session lifecycle voor PG/Picnic + user/admin middleware
+  - context: Out-of-scope items noemen expliciet ontbrekende auth/session lifecycle en middleware wiring.
+  - acceptance:
+    - PG/Picnic sessies en token lifecycle worden veilig beheerd met refresh/expiry regels.
+    - User/admin route middleware valideert identiteit en sessietype consistent.
 
 - [x] WI-204 | type:feature | priority:P3 | status:DONE | title:Geautomatiseerde cutover checklist V1 -> V3
   - context: Cutover-criteria en rollback-gates zijn nog niet geautomatiseerd, waardoor releasebeslissingen handmatig en foutgevoelig zijn.

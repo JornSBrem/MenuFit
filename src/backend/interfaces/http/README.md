@@ -21,3 +21,4 @@ Implemented baseline:
 - `admin/admin-routes.ts` for admin-only ingest/recompute/config/cleanup/cutover-checklist handlers.
 - `system/system-routes.ts` for health/diagnostics/jobs and backup/restore/cleanup operations.
 - `auth/session-context.ts` for user/admin bearer parsing with optional expiry validation.
+- `auth/session-middleware.ts` for bearer-header authorization wrappers with required session-kind checks.

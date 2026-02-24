@@ -29,6 +29,8 @@ test("persistent state store creates default state when file does not exist", ()
     assert.deepEqual(state.systemJobs, []);
     assert.deepEqual(state.households, []);
     assert.deepEqual(state.householdInvitations, []);
+    assert.deepEqual(state.authSessions, []);
+    assert.deepEqual(state.providerSessions, []);
   });
 });
 
@@ -84,10 +86,12 @@ test("persistent state store migrates legacy schema to current schema", () => {
     assert.deepEqual(state.cartReportsByIdempotencyKey, {});
     assert.deepEqual(state.households, []);
     assert.deepEqual(state.householdInvitations, []);
+    assert.deepEqual(state.authSessions, []);
+    assert.deepEqual(state.providerSessions, []);
   });
 });
 
-test("persistent state store migrates v1 schema to v2 household fields", () => {
+test("persistent state store migrates v1 schema to current auth fields", () => {
   withTempStateFile((stateFile) => {
     writeFileSync(
       stateFile,
@@ -117,9 +121,46 @@ test("persistent state store migrates v1 schema to v2 household fields", () => {
     assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
     assert.deepEqual(state.households, []);
     assert.deepEqual(state.householdInvitations, []);
+    assert.deepEqual(state.authSessions, []);
+    assert.deepEqual(state.providerSessions, []);
 
     const persisted = JSON.parse(readFileSync(stateFile, "utf8")) as { schemaVersion?: number };
     assert.equal(persisted.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
+  });
+});
+
+test("persistent state store migrates v2 schema to current auth fields", () => {
+  withTempStateFile((stateFile) => {
+    writeFileSync(
+      stateFile,
+      JSON.stringify(
+        {
+          schemaVersion: 2,
+          silverTransforms: {},
+          goldReadModels: {},
+          cartReportsByIdempotencyKey: {},
+          systemJobs: [],
+          systemReports: [],
+          matchingQueue: [],
+          matchingAuditTrail: [],
+          matchingOverrides: [],
+          auditTrail: [],
+          households: [],
+          householdInvitations: [],
+          updatedAt: "2026-02-25T00:00:00.000Z",
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const store = new PersistentStateStore(stateFile);
+    const state = store.read();
+
+    assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
+    assert.deepEqual(state.authSessions, []);
+    assert.deepEqual(state.providerSessions, []);
   });
 });
 

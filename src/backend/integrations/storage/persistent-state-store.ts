@@ -2,6 +2,10 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
 import type { AuditEvent } from "../../application/audit/types.ts";
+import type {
+  AppSessionRecord,
+  ProviderSessionRecord,
+} from "../../application/auth/types.ts";
 import type { CartSyncReport } from "../../application/cart/types.ts";
 import type { GoldReadModel } from "../../application/gold/types.ts";
 import type {
@@ -16,7 +20,7 @@ import type {
 import type { SilverTransformOutput } from "../../application/silver/types.ts";
 import type { SystemJobRecord, SystemOperationReport } from "../../application/system/types.ts";
 
-export const CURRENT_STATE_SCHEMA_VERSION = 2;
+export const CURRENT_STATE_SCHEMA_VERSION = 3;
 
 export interface PersistentAppState {
   schemaVersion: number;
@@ -31,6 +35,8 @@ export interface PersistentAppState {
   auditTrail: AuditEvent[];
   households: HouseholdRecord[];
   householdInvitations: HouseholdInvitation[];
+  authSessions: AppSessionRecord[];
+  providerSessions: ProviderSessionRecord[];
   updatedAt: string;
 }
 
@@ -45,6 +51,22 @@ interface PersistentAppStateV1 {
   matchingAuditTrail: MatchAuditEvent[];
   matchingOverrides: MatchOverrideRecord[];
   auditTrail: AuditEvent[];
+  updatedAt: string;
+}
+
+interface PersistentAppStateV2 {
+  schemaVersion: 2;
+  silverTransforms: Record<string, SilverTransformOutput>;
+  goldReadModels: Record<string, GoldReadModel>;
+  cartReportsByIdempotencyKey: Record<string, CartSyncReport>;
+  systemJobs: SystemJobRecord[];
+  systemReports: SystemOperationReport[];
+  matchingQueue: MatchReviewQueueItem[];
+  matchingAuditTrail: MatchAuditEvent[];
+  matchingOverrides: MatchOverrideRecord[];
+  auditTrail: AuditEvent[];
+  households: HouseholdRecord[];
+  householdInvitations: HouseholdInvitation[];
   updatedAt: string;
 }
 
@@ -81,6 +103,8 @@ const defaultState = (): PersistentAppState => ({
   auditTrail: [],
   households: [],
   householdInvitations: [],
+  authSessions: [],
+  providerSessions: [],
   updatedAt: new Date().toISOString(),
 });
 
@@ -114,9 +138,12 @@ const migrateV0ToV1 = (raw: unknown): PersistentAppStateV1 => {
   };
 };
 
-const migrateV1ToV2 = (raw: unknown): PersistentAppState => {
+const migrateV1ToV2 = (raw: unknown): PersistentAppStateV2 => {
   if (!isRecord(raw)) {
-    return defaultState();
+    return {
+      ...defaultState(),
+      schemaVersion: 2,
+    };
   }
 
   const source = raw as UnknownRecord;
@@ -143,16 +170,48 @@ const migrateV1ToV2 = (raw: unknown): PersistentAppState => {
   };
 };
 
+const migrateV2ToV3 = (raw: unknown): PersistentAppState => {
+  if (!isRecord(raw)) {
+    return defaultState();
+  }
+
+  const source = raw as UnknownRecord;
+
+  return {
+    schemaVersion: 3,
+    silverTransforms: asObjectRecord<SilverTransformOutput>(source.silverTransforms),
+    goldReadModels: asObjectRecord<GoldReadModel>(source.goldReadModels),
+    cartReportsByIdempotencyKey: asObjectRecord<CartSyncReport>(source.cartReportsByIdempotencyKey),
+    systemJobs: asArray<SystemJobRecord>(source.systemJobs),
+    systemReports: asArray<SystemOperationReport>(source.systemReports),
+    matchingQueue: asArray<MatchReviewQueueItem>(source.matchingQueue),
+    matchingAuditTrail: asArray<MatchAuditEvent>(source.matchingAuditTrail),
+    matchingOverrides: asArray<MatchOverrideRecord>(source.matchingOverrides),
+    auditTrail: asArray<AuditEvent>(source.auditTrail),
+    households: asArray<HouseholdRecord>(source.households),
+    householdInvitations: asArray<HouseholdInvitation>(source.householdInvitations),
+    authSessions: asArray<AppSessionRecord>(source.authSessions),
+    providerSessions: asArray<ProviderSessionRecord>(source.providerSessions),
+    updatedAt:
+      typeof source.updatedAt === "string" && source.updatedAt.trim().length > 0
+        ? source.updatedAt
+        : new Date().toISOString(),
+  };
+};
+
 const migrateState = (raw: unknown): PersistentAppState => {
   const version = isRecord(raw) && typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
   if (version <= 0) {
-    return migrateV1ToV2(migrateV0ToV1(raw));
+    return migrateV2ToV3(migrateV1ToV2(migrateV0ToV1(raw)));
   }
   if (version === 1) {
-    return migrateV1ToV2(raw);
+    return migrateV2ToV3(migrateV1ToV2(raw));
   }
   if (version === 2) {
-    return migrateV1ToV2(raw);
+    return migrateV2ToV3(raw);
+  }
+  if (version === 3) {
+    return migrateV2ToV3(raw);
   }
   return defaultState();
 };
