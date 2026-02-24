@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import {
@@ -233,4 +234,59 @@ test("persistent state store update writes to disk", () => {
     const raw = JSON.parse(readFileSync(stateFile, "utf8")) as { cartReportsByIdempotencyKey?: Record<string, unknown> };
     assert.equal(Boolean(raw.cartReportsByIdempotencyKey?.["idem-1"]), true);
   });
+});
+
+test("persistent state store supports sqlite runtime persistence", () => {
+  withTempStateFile((_unused) => {
+    const sqlitePath = join(tmpdir(), `menufit-state-sqlite-${Date.now()}.sqlite`);
+    try {
+      const store = new PersistentStateStore(sqlitePath, { driver: "sqlite" });
+      store.update((draft) => {
+        draft.systemJobs.push({
+          jobId: "system-job-1",
+          operationId: "backup-1",
+          operationType: "backup",
+          mode: "dry-run",
+          status: "completed",
+          startedAt: "2026-02-25T00:00:00.000Z",
+          finishedAt: "2026-02-25T00:00:01.000Z",
+          actorId: "ops-1",
+          message: "backup done",
+        });
+      });
+
+      const reloaded = new PersistentStateStore(sqlitePath, { driver: "sqlite" });
+      assert.equal(reloaded.read().systemJobs.length, 1);
+    } finally {
+      rmSync(sqlitePath, { force: true });
+    }
+  });
+});
+
+test("persistent sqlite store migrates legacy schema version to current", () => {
+  const sqlitePath = join(tmpdir(), `menufit-state-legacy-${Date.now()}.sqlite`);
+  try {
+    const db = new DatabaseSync(sqlitePath);
+    db.exec(`
+      CREATE TABLE state_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+      CREATE TABLE state_records (
+        collection TEXT NOT NULL,
+        record_key TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        PRIMARY KEY (collection, record_key)
+      );
+    `);
+    db.prepare("INSERT INTO state_meta(key, value) VALUES (?, ?)").run("schemaVersion", "1");
+    db.prepare("INSERT INTO state_meta(key, value) VALUES (?, ?)").run("updatedAt", "2026-02-25T00:00:00.000Z");
+    db.close();
+
+    const store = new PersistentStateStore(sqlitePath, { driver: "sqlite" });
+    const state = store.read();
+    assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
+    assert.deepEqual(state.authSessions, []);
+    assert.deepEqual(state.schedulerRuns, []);
+    assert.deepEqual(state.retryQueueEntries, []);
+  } finally {
+    rmSync(sqlitePath, { force: true });
+  }
 });

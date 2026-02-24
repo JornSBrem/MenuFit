@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 import type { AuditEvent } from "../../application/audit/types.ts";
 import type {
@@ -22,6 +23,12 @@ import type { SystemJobRecord, SystemOperationReport } from "../../application/s
 import type { RetryQueueEntryRecord, SchedulerRunRecord } from "../../jobs/types.ts";
 
 export const CURRENT_STATE_SCHEMA_VERSION = 4;
+
+export type PersistentStateStoreDriver = "file" | "sqlite";
+
+export interface PersistentStateStoreOptions {
+  driver?: PersistentStateStoreDriver;
+}
 
 export interface PersistentAppState {
   schemaVersion: number;
@@ -92,6 +99,33 @@ interface PersistentAppStateV3 {
 }
 
 type UnknownRecord = Record<string, unknown>;
+
+const MAP_COLLECTIONS = [
+  "silverTransforms",
+  "goldReadModels",
+  "cartReportsByIdempotencyKey",
+] as const;
+
+const ARRAY_COLLECTIONS = [
+  "systemJobs",
+  "systemReports",
+  "matchingQueue",
+  "matchingAuditTrail",
+  "matchingOverrides",
+  "auditTrail",
+  "households",
+  "householdInvitations",
+  "authSessions",
+  "providerSessions",
+  "schedulerRuns",
+  "retryQueueEntries",
+] as const;
+
+type MapCollectionName = (typeof MAP_COLLECTIONS)[number];
+type ArrayCollectionName = (typeof ARRAY_COLLECTIONS)[number];
+
+const SQLITE_META_SCHEMA_VERSION = "schemaVersion";
+const SQLITE_META_UPDATED_AT = "updatedAt";
 
 const isRecord = (value: unknown): value is UnknownRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -276,18 +310,31 @@ const migrateState = (raw: unknown): PersistentAppState => {
   return defaultState();
 };
 
+const buildArrayRecordKey = (index: number): string => String(index).padStart(9, "0");
+
+const asMapCollectionName = (value: string): MapCollectionName | null =>
+  MAP_COLLECTIONS.includes(value as MapCollectionName) ? (value as MapCollectionName) : null;
+
+const asArrayCollectionName = (value: string): ArrayCollectionName | null =>
+  ARRAY_COLLECTIONS.includes(value as ArrayCollectionName) ? (value as ArrayCollectionName) : null;
+
 export class PersistentStateStore {
   private stateCache?: PersistentAppState;
 
   private readonly filePath: string;
 
-  constructor(filePath: string) {
+  private readonly driver: PersistentStateStoreDriver;
+
+  private sqliteDb?: DatabaseSync;
+
+  constructor(filePath: string, options?: PersistentStateStoreOptions) {
     this.filePath = filePath;
+    this.driver = options?.driver ?? "file";
   }
 
   read(): PersistentAppState {
     if (!this.stateCache) {
-      this.stateCache = this.loadFromDisk();
+      this.stateCache = this.loadFromDriver();
     }
     return structuredClone(this.stateCache);
   }
@@ -298,8 +345,13 @@ export class PersistentStateStore {
       schemaVersion: CURRENT_STATE_SCHEMA_VERSION,
       updatedAt: new Date().toISOString(),
     };
-    mkdirSync(dirname(this.filePath), { recursive: true });
-    writeFileSync(this.filePath, JSON.stringify(normalized, null, 2), "utf8");
+
+    if (this.driver === "sqlite") {
+      this.writeToSqlite(normalized);
+    } else {
+      this.writeToFile(normalized);
+    }
+
     this.stateCache = normalized;
   }
 
@@ -310,7 +362,11 @@ export class PersistentStateStore {
     return this.read();
   }
 
-  private loadFromDisk(): PersistentAppState {
+  private loadFromDriver(): PersistentAppState {
+    return this.driver === "sqlite" ? this.loadFromSqlite() : this.loadFromFile();
+  }
+
+  private loadFromFile(): PersistentAppState {
     try {
       const raw = readFileSync(this.filePath, "utf8");
       const parsed = JSON.parse(raw) as unknown;
@@ -327,6 +383,139 @@ export class PersistentStateStore {
       const created = defaultState();
       this.write(created);
       return created;
+    }
+  }
+
+  private writeToFile(next: PersistentAppState): void {
+    mkdirSync(dirname(this.filePath), { recursive: true });
+    writeFileSync(this.filePath, JSON.stringify(next, null, 2), "utf8");
+  }
+
+  private loadFromSqlite(): PersistentAppState {
+    try {
+      const db = this.ensureSqliteDb();
+      const rawState = this.readRawSqliteState(db);
+      const migrated = migrateState(rawState);
+      const rawVersion =
+        isRecord(rawState) && typeof rawState.schemaVersion === "number"
+          ? rawState.schemaVersion
+          : 0;
+      if (rawVersion !== CURRENT_STATE_SCHEMA_VERSION) {
+        this.write(migrated);
+      }
+      return migrated;
+    } catch {
+      const created = defaultState();
+      this.write(created);
+      return created;
+    }
+  }
+
+  private ensureSqliteDb(): DatabaseSync {
+    if (!this.sqliteDb) {
+      mkdirSync(dirname(this.filePath), { recursive: true });
+      this.sqliteDb = new DatabaseSync(this.filePath);
+      this.sqliteDb.exec(`
+        CREATE TABLE IF NOT EXISTS state_meta (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS state_records (
+          collection TEXT NOT NULL,
+          record_key TEXT NOT NULL,
+          payload_json TEXT NOT NULL,
+          PRIMARY KEY (collection, record_key)
+        );
+      `);
+    }
+    return this.sqliteDb;
+  }
+
+  private readRawSqliteState(db: DatabaseSync): unknown {
+    const metaRows = db
+      .prepare("SELECT key, value FROM state_meta")
+      .all() as Array<{ key: string; value: string }>;
+    const rowMap = new Map(metaRows.map((row) => [row.key, row.value]));
+    const schemaVersion = Number(rowMap.get(SQLITE_META_SCHEMA_VERSION) ?? "0");
+    const updatedAt = rowMap.get(SQLITE_META_UPDATED_AT) ?? new Date().toISOString();
+
+    const state: Record<string, unknown> = {
+      schemaVersion: Number.isInteger(schemaVersion) ? schemaVersion : 0,
+      updatedAt,
+    };
+
+    for (const collection of MAP_COLLECTIONS) {
+      state[collection] = {};
+    }
+    for (const collection of ARRAY_COLLECTIONS) {
+      state[collection] = [];
+    }
+
+    const records = db
+      .prepare("SELECT collection, record_key, payload_json FROM state_records ORDER BY collection, record_key")
+      .all() as Array<{ collection: string; record_key: string; payload_json: string }>;
+
+    for (const record of records) {
+      let payload: unknown;
+      try {
+        payload = JSON.parse(record.payload_json);
+      } catch {
+        continue;
+      }
+
+      const mapCollection = asMapCollectionName(record.collection);
+      if (mapCollection) {
+        const target = state[mapCollection] as Record<string, unknown>;
+        target[record.record_key] = payload;
+        continue;
+      }
+
+      const arrayCollection = asArrayCollectionName(record.collection);
+      if (arrayCollection) {
+        (state[arrayCollection] as unknown[]).push(payload);
+      }
+    }
+
+    return state;
+  }
+
+  private writeToSqlite(state: PersistentAppState): void {
+    const db = this.ensureSqliteDb();
+    db.exec("BEGIN");
+    try {
+      db.prepare("DELETE FROM state_records").run();
+
+      const insertRecord = db.prepare(
+        "INSERT INTO state_records(collection, record_key, payload_json) VALUES (?, ?, ?)",
+      );
+      const insertMeta = db.prepare(
+        "INSERT OR REPLACE INTO state_meta(key, value) VALUES (?, ?)",
+      );
+
+      for (const collection of MAP_COLLECTIONS) {
+        const records = state[collection] as Record<string, unknown>;
+        for (const [recordKey, payload] of Object.entries(records)) {
+          insertRecord.run(collection, recordKey, JSON.stringify(payload));
+        }
+      }
+
+      for (const collection of ARRAY_COLLECTIONS) {
+        const records = state[collection] as unknown[];
+        for (let index = 0; index < records.length; index += 1) {
+          insertRecord.run(
+            collection,
+            buildArrayRecordKey(index),
+            JSON.stringify(records[index]),
+          );
+        }
+      }
+
+      insertMeta.run(SQLITE_META_SCHEMA_VERSION, String(state.schemaVersion));
+      insertMeta.run(SQLITE_META_UPDATED_AT, state.updatedAt);
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
     }
   }
 }

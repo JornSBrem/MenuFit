@@ -20,11 +20,11 @@
     - Productie infrastructuur provisioning (compute/network/secrets/observability basis) is geautomatiseerd en reproduceerbaar.
     - Provisioningpad bevat rollback/rollback-safe documentatie en validatiechecks.
 
-- [ ] WI-213 | type:feature | priority:P2 | status:TODO | title:Relationele database runtime-integratie voor persistente domeinen
-  - context: WI-206 noemt volledige relationele database-integratie expliciet als out-of-scope.
+- [ ] WI-225 | type:feature | priority:P2 | status:TODO | title:Postgres runtime en operationele DB setup voor persistente domeinen
+  - context: WI-213 levert relationele SQLite runtime, maar volledige Postgres runtime/deployment bleef out-of-scope.
   - acceptance:
-    - Persistente opslag gebruikt een relationele runtime (bijv. Postgres/SQLite) i.p.v. alleen file/in-memory opslag.
-    - Migraties en runtime toegangspaden zijn consistent voor silver/gold/jobs/idempotency/audit.
+    - Persistente domeinen draaien op Postgres runtime met migraties en veilige connectieconfiguratie.
+    - Operationele runbooks dekken pooling, backup en herstel voor productiegebruik.
 
 - [ ] WI-214 | type:chore | priority:P2 | status:TODO | title:Distributed locking en multi-process write coördinatie
   - context: WI-206 sluit gelijktijdige multi-process write coördinatie expliciet uit.
@@ -79,6 +79,12 @@
 _None_
 
 ## Done
+
+- [x] WI-213 | type:feature | priority:P2 | status:DONE | title:Relationele database runtime-integratie voor persistente domeinen
+  - context: WI-206 noemt volledige relationele database-integratie expliciet als out-of-scope.
+  - acceptance:
+    - Persistente opslag gebruikt een relationele runtime (bijv. Postgres/SQLite) i.p.v. alleen file/in-memory opslag.
+    - Migraties en runtime toegangspaden zijn consistent voor silver/gold/jobs/idempotency/audit.
 
 - [x] WI-212 | type:chore | priority:P3 | status:DONE | title:Delivery hardening: deploy wiring, branch protection en live contract-validatie
   - context: Deployment wiring, branch protection en live endpoint-contract validatie zijn nog niet afgerond.

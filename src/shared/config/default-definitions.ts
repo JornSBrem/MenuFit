@@ -30,6 +30,20 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     meta: { hotReload: false, sensitive: false, restartRequired: false },
   },
   {
+    key: "STATE_STORE_DRIVER",
+    description: "Persistent state store runtime driver (file or sqlite).",
+    kind: "string",
+    defaultValue: "file",
+    meta: { hotReload: false, sensitive: false, restartRequired: false },
+  },
+  {
+    key: "STATE_STORE_SQLITE_PATH",
+    description: "SQLite state store path when STATE_STORE_DRIVER=sqlite.",
+    kind: "string",
+    defaultValue: "out/v3/state/menu-fit-state.sqlite",
+    meta: { hotReload: false, sensitive: false, restartRequired: false },
+  },
+  {
     key: "PG_LOGIN_URL",
     description: "Project Gezond login endpoint.",
     kind: "url",

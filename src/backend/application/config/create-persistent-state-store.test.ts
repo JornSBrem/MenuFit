@@ -21,3 +21,31 @@ test("createPersistentStateStore uses STATE_STORE_PATH when configured", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("createPersistentStateStore selects sqlite driver when configured", () => {
+  const dir = mkdtempSync(join(tmpdir(), "menufit-state-sqlite-path-"));
+  try {
+    const sqlitePath = join(dir, "state.sqlite");
+    const config = createDefaultRuntimeConfig({
+      STATE_STORE_DRIVER: "sqlite",
+      STATE_STORE_SQLITE_PATH: sqlitePath,
+    });
+
+    const store = createPersistentStateStore(config);
+    store.update((draft) => {
+      draft.auditTrail.push({
+        eventId: "audit-1",
+        category: "admin",
+        action: "smoke",
+        resourceId: "res-1",
+        actorId: "ops-1",
+        outcome: "success",
+        createdAt: "2026-02-25T00:00:00.000Z",
+      });
+    });
+    const state = store.read();
+    assert.equal(state.auditTrail.length, 1);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
