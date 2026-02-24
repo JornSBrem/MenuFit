@@ -7,4 +7,4 @@ WI-002 foundation modules:
 - `bronze-manifest.ts`: persists ingest manifest records.
 - `retry.ts`: generic async retry with exponential backoff.
 
-This is a baseline to be integrated into jobs/routes in follow-up workitems.
+This baseline is wired for scheduled execution/retry orchestration via `src/backend/jobs/` in follow-up workitems.

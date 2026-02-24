@@ -31,6 +31,8 @@ test("persistent state store creates default state when file does not exist", ()
     assert.deepEqual(state.householdInvitations, []);
     assert.deepEqual(state.authSessions, []);
     assert.deepEqual(state.providerSessions, []);
+    assert.deepEqual(state.schedulerRuns, []);
+    assert.deepEqual(state.retryQueueEntries, []);
   });
 });
 
@@ -88,6 +90,8 @@ test("persistent state store migrates legacy schema to current schema", () => {
     assert.deepEqual(state.householdInvitations, []);
     assert.deepEqual(state.authSessions, []);
     assert.deepEqual(state.providerSessions, []);
+    assert.deepEqual(state.schedulerRuns, []);
+    assert.deepEqual(state.retryQueueEntries, []);
   });
 });
 
@@ -123,13 +127,15 @@ test("persistent state store migrates v1 schema to current auth fields", () => {
     assert.deepEqual(state.householdInvitations, []);
     assert.deepEqual(state.authSessions, []);
     assert.deepEqual(state.providerSessions, []);
+    assert.deepEqual(state.schedulerRuns, []);
+    assert.deepEqual(state.retryQueueEntries, []);
 
     const persisted = JSON.parse(readFileSync(stateFile, "utf8")) as { schemaVersion?: number };
     assert.equal(persisted.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
   });
 });
 
-test("persistent state store migrates v2 schema to current auth fields", () => {
+test("persistent state store migrates v2 schema to current auth/scheduler fields", () => {
   withTempStateFile((stateFile) => {
     writeFileSync(
       stateFile,
@@ -161,6 +167,45 @@ test("persistent state store migrates v2 schema to current auth fields", () => {
     assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
     assert.deepEqual(state.authSessions, []);
     assert.deepEqual(state.providerSessions, []);
+    assert.deepEqual(state.schedulerRuns, []);
+    assert.deepEqual(state.retryQueueEntries, []);
+  });
+});
+
+test("persistent state store migrates v3 schema to current scheduler fields", () => {
+  withTempStateFile((stateFile) => {
+    writeFileSync(
+      stateFile,
+      JSON.stringify(
+        {
+          schemaVersion: 3,
+          silverTransforms: {},
+          goldReadModels: {},
+          cartReportsByIdempotencyKey: {},
+          systemJobs: [],
+          systemReports: [],
+          matchingQueue: [],
+          matchingAuditTrail: [],
+          matchingOverrides: [],
+          auditTrail: [],
+          households: [],
+          householdInvitations: [],
+          authSessions: [],
+          providerSessions: [],
+          updatedAt: "2026-02-25T00:00:00.000Z",
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const store = new PersistentStateStore(stateFile);
+    const state = store.read();
+
+    assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
+    assert.deepEqual(state.schedulerRuns, []);
+    assert.deepEqual(state.retryQueueEntries, []);
   });
 });
 

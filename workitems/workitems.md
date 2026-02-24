@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-208 | type:chore | priority:P2 | status:TODO | title:Production scheduler + background retry queues
-  - context: Scheduler wiring en persisted retries zijn herhaaldelijk out-of-scope gebleven.
-  - acceptance:
-    - Ingest/system jobs draaien via production scheduler met status- en foutregistratie.
-    - Retry-queues voor externe afhankelijkheden zijn persistent en herstart-veilig.
-
 - [ ] WI-209 | type:feature | priority:P2 | status:TODO | title:Admin web React/Vite UI uitwerken voor operations dashboards
   - context: Alleen baseline modules bestaan; volwaardige operator-UI is nog niet geïmplementeerd.
   - acceptance:
@@ -91,6 +85,12 @@
 _None_
 
 ## Done
+
+- [x] WI-208 | type:chore | priority:P2 | status:DONE | title:Production scheduler + background retry queues
+  - context: Scheduler wiring en persisted retries zijn herhaaldelijk out-of-scope gebleven.
+  - acceptance:
+    - Ingest/system jobs draaien via production scheduler met status- en foutregistratie.
+    - Retry-queues voor externe afhankelijkheden zijn persistent en herstart-veilig.
 
 - [x] WI-207 | type:feature | priority:P1 | status:DONE | title:Echte auth/session lifecycle voor PG/Picnic + user/admin middleware
   - context: Out-of-scope items noemen expliciet ontbrekende auth/session lifecycle en middleware wiring.
