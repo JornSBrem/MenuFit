@@ -2,17 +2,23 @@
 
 ## Backlog
 
-- [ ] WI-211 | type:chore | priority:P2 | status:TODO | title:Observability en security hardening voor productie
-  - context: Externe observability stacks, telemetry ingestie, RBAC/WAF/rate-limiting zijn nog openstaande out-of-scope punten.
-  - acceptance:
-    - Monitor/trace/metric pipelines leveren operationele dashboards en release-gate input.
-    - RBAC, rate-limiting en WAF policies zijn technisch afdwingbaar op kritieke API-routes.
-
 - [ ] WI-212 | type:chore | priority:P3 | status:TODO | title:Delivery hardening: deploy wiring, branch protection en live contract-validatie
   - context: Deployment wiring, branch protection en live endpoint-contract validatie zijn nog niet afgerond.
   - acceptance:
     - Deployment pipeline en branch protection policies zijn ingesteld en gedocumenteerd.
     - Live contract-validatie tegen externe endpoints is opgenomen in release checks.
+
+- [ ] WI-222 | type:chore | priority:P2 | status:TODO | title:Externe observability stack provisioning (Prometheus/Grafana) voor productie
+  - context: WI-211 levert interne telemetry export, maar provisioning/operationalisatie van externe observability stack bleef out-of-scope.
+  - acceptance:
+    - Prometheus scrape en Grafana dashboards zijn ingericht voor backend route/security/job metrics.
+    - Alertregels voor fout- en blocked-rates zijn gekoppeld aan operationele escalatiekanalen.
+
+- [ ] WI-223 | type:chore | priority:P2 | status:TODO | title:Netwerk-level WAF/CDN policy configuratie voor productie ingress
+  - context: WI-211 levert applicatie-level WAF guards; edge/network WAF policies zijn nog niet ingericht.
+  - acceptance:
+    - Ingress heeft afdwingbare WAF/CDN rulesets voor OWASP-baseline en rate controls op kritieke endpoints.
+    - Deploybare configuratie is traceerbaar versiebeheer met rollbackpad.
 
 - [ ] WI-213 | type:feature | priority:P2 | status:TODO | title:Relationele database runtime-integratie voor persistente domeinen
   - context: WI-206 noemt volledige relationele database-integratie expliciet als out-of-scope.
@@ -73,6 +79,12 @@
 _None_
 
 ## Done
+
+- [x] WI-211 | type:chore | priority:P2 | status:DONE | title:Observability en security hardening voor productie
+  - context: Externe observability stacks, telemetry ingestie, RBAC/WAF/rate-limiting zijn nog openstaande out-of-scope punten.
+  - acceptance:
+    - Monitor/trace/metric pipelines leveren operationele dashboards en release-gate input.
+    - RBAC, rate-limiting en WAF policies zijn technisch afdwingbaar op kritieke API-routes.
 
 - [x] WI-210 | type:feature | priority:P2 | status:DONE | title:iOS productionization met Xcode project, token-auth en uitgebreide match-flow
   - context: iOS baseline liet projectgeneratie/signing en volledige auth/match integratie buiten scope.

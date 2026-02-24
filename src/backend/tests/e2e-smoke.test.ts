@@ -11,11 +11,14 @@ import { GoldWeekReadService } from "../application/gold/read-service.ts";
 import { HouseholdService } from "../application/household/household-service.ts";
 import { MatchWorkflowService } from "../application/matching/match-workflow-service.ts";
 import { MatchingReviewService } from "../application/matching/review-service.ts";
+import { OperationalTelemetryService } from "../application/observability/operational-telemetry-service.ts";
+import { RequestSecurityPolicy } from "../application/security/request-security-policy.ts";
 import { SystemOperationsService } from "../application/system/system-operations-service.ts";
 import { parseSessionToken } from "../interfaces/http/auth/session-context.ts";
 import { createCartRouteHandlers } from "../interfaces/http/cart/cart-routes.ts";
 import { createHouseholdRouteHandlers } from "../interfaces/http/household/household-routes.ts";
 import { createMatchRouteHandlers } from "../interfaces/http/match/match-routes.ts";
+import { createObservabilityRouteHandlers } from "../interfaces/http/observability/observability-routes.ts";
 import { createSystemRouteHandlers } from "../interfaces/http/system/system-routes.ts";
 import { createWeekRouteHandlers } from "../interfaces/http/week/week-routes.ts";
 import { PersistentStateStore } from "../integrations/storage/persistent-state-store.ts";
@@ -202,7 +205,19 @@ test("e2e smoke: household -> week -> match -> cart -> system operations", async
       now: () => "2026-02-25T00:30:00.000Z",
       auditTrail,
     });
-    const systemRoutes = createSystemRouteHandlers(system);
+    const telemetry = new OperationalTelemetryService({
+      now: () => "2026-02-25T00:30:00.000Z",
+    });
+    const securityPolicy = new RequestSecurityPolicy({
+      telemetry,
+      nowEpochSeconds: () => 2_200_000_000,
+      rateLimitMaxRequests: 20,
+    });
+    const systemRoutes = createSystemRouteHandlers(system, {
+      telemetry,
+      securityPolicy,
+      nowMs: () => 2_200_000_000 * 1000,
+    });
     const adminSession = parseSessionToken("admin:ops-user:token-smoke:owner");
     const backupReport = systemRoutes.backup(adminSession, {
       operationId: "backup-smoke",
@@ -212,6 +227,14 @@ test("e2e smoke: household -> week -> match -> cart -> system operations", async
     assert.equal(backupReport.ok, true);
     assert.equal(backupReport.data?.mode, "dry-run");
     assert.equal(systemRoutes.jobs().data?.length, 1);
+
+    const observabilityRoutes = createObservabilityRouteHandlers(telemetry);
+    const telemetrySnapshot = observabilityRoutes.snapshot(adminSession);
+    assert.equal(telemetrySnapshot.ok, true);
+    assert.equal((telemetrySnapshot.data?.totals.requests ?? 0) >= 2, true);
+    const prometheus = observabilityRoutes.metrics(adminSession);
+    assert.equal(prometheus.ok, true);
+    assert.equal(prometheus.data?.body.includes("menufit_http_requests_total"), true);
 
     const matchingEvents = auditTrail.list({ category: "matching" });
     const syncEvents = auditTrail.list({ category: "sync" });

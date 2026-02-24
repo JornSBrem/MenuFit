@@ -18,5 +18,7 @@ Current workflow modules:
 - `system/`
 - `audit/`
 - `config/`
+- `observability/`
+- `security/`
 
 Application code should not contain UI concerns.

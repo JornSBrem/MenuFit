@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { OperationalTelemetryService } from "../../../application/observability/operational-telemetry-service.ts";
+import { RequestSecurityPolicy } from "../../../application/security/request-security-policy.ts";
 import { SystemOperationsService } from "../../../application/system/system-operations-service.ts";
 import { createSystemRouteHandlers } from "./system-routes.ts";
 import { parseSessionToken } from "../auth/session-context.ts";
 
 const adminSession = parseSessionToken("admin:ops-user:token-admin:owner");
+const operatorSession = parseSessionToken("admin:ops-user:token-operator:operator");
 const userSession = parseSessionToken("user:end-user:token-user:picnic-user");
 
 test("system routes expose health diagnostics and job status", () => {
@@ -60,4 +63,50 @@ test("system mutating operations are admin-only and support dry-run/execute", ()
 
   const jobsAfter = handlers.jobs();
   assert.equal(jobsAfter.data?.length, 2);
+});
+
+test("system routes enforce restore RBAC and route-level rate limiting when policy is enabled", () => {
+  const service = new SystemOperationsService({
+    now: () => "2026-02-25T00:10:00.000Z",
+  });
+  let now = 2_210_000_000;
+  const telemetry = new OperationalTelemetryService();
+  const securityPolicy = new RequestSecurityPolicy({
+    telemetry,
+    nowEpochSeconds: () => now,
+    rateLimitWindowSeconds: 60,
+    rateLimitMaxRequests: 1,
+  });
+  const handlers = createSystemRouteHandlers(service, {
+    securityPolicy,
+    telemetry,
+    nowMs: () => now * 1000,
+  });
+
+  const forbiddenRestore = handlers.restore(operatorSession, {
+    operationId: "restore-owner-only",
+    mode: "dry-run",
+    target: "db/v3.sqlite",
+  });
+  assert.equal(forbiddenRestore.ok, false);
+  assert.equal(forbiddenRestore.error?.code, "FORBIDDEN_ROLE");
+
+  const firstBackup = handlers.backup(adminSession, {
+    operationId: "backup-rl-1",
+    mode: "dry-run",
+    target: "db/v3.sqlite",
+  });
+  assert.equal(firstBackup.ok, true);
+
+  const secondBackup = handlers.backup(adminSession, {
+    operationId: "backup-rl-2",
+    mode: "dry-run",
+    target: "db/v3.sqlite",
+  });
+  assert.equal(secondBackup.ok, false);
+  assert.equal(secondBackup.error?.code, "RATE_LIMITED");
+
+  const metrics = telemetry.toPrometheusMetrics();
+  assert.equal(metrics.includes('menufit_http_requests_total{route="system.backup",outcome="rate_limited"} 1'), true);
+  assert.equal(metrics.includes('menufit_security_events_total{route="system.restore",event="rbac_forbidden"} 1'), true);
 });

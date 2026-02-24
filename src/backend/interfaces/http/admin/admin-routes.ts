@@ -2,6 +2,8 @@ import {
   AdminOperationsService,
   type CutoverChecklistGateInput,
 } from "../../../application/admin/admin-operations-service.ts";
+import type { OperationalTelemetryService, TelemetryRequestOutcome } from "../../../application/observability/index.ts";
+import type { RequestSecurityPolicy } from "../../../application/security/request-security-policy.ts";
 import {
   type AdminSessionContext,
   type AnySessionContext,
@@ -86,6 +88,80 @@ const withAdminSession = (
       },
     };
   }
+};
+
+export interface AdminRouteRuntimeOptions {
+  securityPolicy?: RequestSecurityPolicy;
+  telemetry?: OperationalTelemetryService;
+  nowMs?: () => number;
+}
+
+const classifyTelemetryOutcome = (result: ApiEnvelope<unknown>): TelemetryRequestOutcome => {
+  if (result.ok) {
+    return "success";
+  }
+
+  const code = result.error?.code;
+  if (code === "FORBIDDEN_SESSION" || code === "FORBIDDEN_ROLE") {
+    return "forbidden";
+  }
+  if (code === "RATE_LIMITED") {
+    return "rate_limited";
+  }
+  if (code === "WAF_BLOCKED") {
+    return "waf_blocked";
+  }
+  if (code === "INVALID_BODY") {
+    return "client_error";
+  }
+  return "server_error";
+};
+
+const recordTelemetry = (
+  routeKey: string,
+  startedAtMs: number,
+  result: ApiEnvelope<unknown>,
+  options?: AdminRouteRuntimeOptions,
+): void => {
+  const nowMs = options?.nowMs ?? Date.now;
+  options?.telemetry?.recordRequest({
+    routeKey,
+    outcome: classifyTelemetryOutcome(result),
+    durationMs: Math.max(0, nowMs() - startedAtMs),
+  });
+};
+
+const enforceSecurityPolicy = (
+  routeKey: string,
+  session: AdminSessionContext,
+  requiredRole: "operator" | "owner",
+  payload: unknown,
+  options?: AdminRouteRuntimeOptions,
+): ApiEnvelope<never> | null => {
+  if (!options?.securityPolicy) {
+    return null;
+  }
+
+  const decision = options.securityPolicy.authorize({
+    routeKey,
+    actorId: session.subjectId,
+    actorRole: session.adminRole,
+    requiredRole,
+    payload,
+  });
+
+  if (decision.ok) {
+    return null;
+  }
+
+  return {
+    ok: false,
+    error: {
+      code: decision.error.code,
+      message: decision.error.message,
+      hint: decision.error.hint,
+    },
+  };
 };
 
 const validateIngestBody = (body: IngestBody): string | null => {
@@ -182,15 +258,28 @@ export const handleAdminIngest = (
   service: AdminOperationsService,
   session: AnySessionContext,
   body: IngestBody,
+  options?: AdminRouteRuntimeOptions,
 ): ApiEnvelope<ReturnType<AdminOperationsService["runIngest"]>> => {
+  const routeKey = "admin.ingest";
+  const startedAtMs = (options?.nowMs ?? Date.now)();
+  const finalize = (result: ApiEnvelope<ReturnType<AdminOperationsService["runIngest"]>>) => {
+    recordTelemetry(routeKey, startedAtMs, result, options);
+    return result;
+  };
+
   const sessionResult = withAdminSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
-    return sessionResult;
+    return finalize(sessionResult);
+  }
+
+  const securityError = enforceSecurityPolicy(routeKey, sessionResult.data, "operator", body, options);
+  if (securityError) {
+    return finalize(securityError);
   }
 
   const validationError = validateIngestBody(body);
   if (validationError) {
-    return invalidBody(validationError);
+    return finalize(invalidBody(validationError));
   }
 
   const report = service.runIngest({
@@ -200,22 +289,35 @@ export const handleAdminIngest = (
     kcals: body.kcals,
     basePersons: body.basePersons,
   });
-  return { ok: true, data: report };
+  return finalize({ ok: true, data: report });
 };
 
 export const handleAdminRecompute = (
   service: AdminOperationsService,
   session: AnySessionContext,
   body: RecomputeBody,
+  options?: AdminRouteRuntimeOptions,
 ): ApiEnvelope<ReturnType<AdminOperationsService["runRecompute"]>> => {
+  const routeKey = "admin.recompute";
+  const startedAtMs = (options?.nowMs ?? Date.now)();
+  const finalize = (result: ApiEnvelope<ReturnType<AdminOperationsService["runRecompute"]>>) => {
+    recordTelemetry(routeKey, startedAtMs, result, options);
+    return result;
+  };
+
   const sessionResult = withAdminSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
-    return sessionResult;
+    return finalize(sessionResult);
+  }
+
+  const securityError = enforceSecurityPolicy(routeKey, sessionResult.data, "operator", body, options);
+  if (securityError) {
+    return finalize(securityError);
   }
 
   const validationError = validateRecomputeBody(body);
   if (validationError) {
-    return invalidBody(validationError);
+    return finalize(invalidBody(validationError));
   }
 
   const report = service.runRecompute({
@@ -226,22 +328,35 @@ export const handleAdminRecompute = (
     kcal: body.kcal,
     basePersons: body.basePersons,
   });
-  return { ok: true, data: report };
+  return finalize({ ok: true, data: report });
 };
 
 export const handleAdminConfigUpdate = (
   service: AdminOperationsService,
   session: AnySessionContext,
   body: ConfigUpdateBody,
+  options?: AdminRouteRuntimeOptions,
 ): ApiEnvelope<ReturnType<AdminOperationsService["updateConfig"]>> => {
+  const routeKey = "admin.configUpdate";
+  const startedAtMs = (options?.nowMs ?? Date.now)();
+  const finalize = (result: ApiEnvelope<ReturnType<AdminOperationsService["updateConfig"]>>) => {
+    recordTelemetry(routeKey, startedAtMs, result, options);
+    return result;
+  };
+
   const sessionResult = withAdminSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
-    return sessionResult;
+    return finalize(sessionResult);
+  }
+
+  const securityError = enforceSecurityPolicy(routeKey, sessionResult.data, "owner", body, options);
+  if (securityError) {
+    return finalize(securityError);
   }
 
   const validationError = validateConfigUpdateBody(body);
   if (validationError) {
-    return invalidBody(validationError);
+    return finalize(invalidBody(validationError));
   }
 
   const report = service.updateConfig({
@@ -250,22 +365,35 @@ export const handleAdminConfigUpdate = (
     key: body.key,
     value: body.value,
   });
-  return { ok: true, data: report };
+  return finalize({ ok: true, data: report });
 };
 
 export const handleAdminCleanup = (
   service: AdminOperationsService,
   session: AnySessionContext,
   body: CleanupBody,
+  options?: AdminRouteRuntimeOptions,
 ): ApiEnvelope<ReturnType<AdminOperationsService["runCleanup"]>> => {
+  const routeKey = "admin.cleanup";
+  const startedAtMs = (options?.nowMs ?? Date.now)();
+  const finalize = (result: ApiEnvelope<ReturnType<AdminOperationsService["runCleanup"]>>) => {
+    recordTelemetry(routeKey, startedAtMs, result, options);
+    return result;
+  };
+
   const sessionResult = withAdminSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
-    return sessionResult;
+    return finalize(sessionResult);
+  }
+
+  const securityError = enforceSecurityPolicy(routeKey, sessionResult.data, "operator", body, options);
+  if (securityError) {
+    return finalize(securityError);
   }
 
   const validationError = validateCleanupBody(body);
   if (validationError) {
-    return invalidBody(validationError);
+    return finalize(invalidBody(validationError));
   }
 
   const report = service.runCleanup({
@@ -274,22 +402,37 @@ export const handleAdminCleanup = (
     dryRun: body.dryRun,
     targets: body.targets,
   });
-  return { ok: true, data: report };
+  return finalize({ ok: true, data: report });
 };
 
 export const handleAdminCutoverChecklist = (
   service: AdminOperationsService,
   session: AnySessionContext,
   body: CutoverChecklistBody,
+  options?: AdminRouteRuntimeOptions,
 ): ApiEnvelope<ReturnType<AdminOperationsService["runCutoverChecklist"]>> => {
+  const routeKey = "admin.cutoverChecklist";
+  const startedAtMs = (options?.nowMs ?? Date.now)();
+  const finalize = (
+    result: ApiEnvelope<ReturnType<AdminOperationsService["runCutoverChecklist"]>>,
+  ) => {
+    recordTelemetry(routeKey, startedAtMs, result, options);
+    return result;
+  };
+
   const sessionResult = withAdminSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
-    return sessionResult;
+    return finalize(sessionResult);
+  }
+
+  const securityError = enforceSecurityPolicy(routeKey, sessionResult.data, "owner", body, options);
+  if (securityError) {
+    return finalize(securityError);
   }
 
   const validationError = validateCutoverChecklistBody(body);
   if (validationError) {
-    return invalidBody(validationError);
+    return finalize(invalidBody(validationError));
   }
 
   const report = service.runCutoverChecklist({
@@ -297,7 +440,7 @@ export const handleAdminCutoverChecklist = (
     performedBy: sessionResult.data.subjectId,
     gates: body.gates,
   });
-  return { ok: true, data: report };
+  return finalize({ ok: true, data: report });
 };
 
 export interface AdminRouteHandlers {
@@ -320,10 +463,13 @@ export interface AdminRouteHandlers {
   ) => ApiEnvelope<ReturnType<AdminOperationsService["runCutoverChecklist"]>>;
 }
 
-export const createAdminRouteHandlers = (service: AdminOperationsService): AdminRouteHandlers => ({
-  ingest: (session, body) => handleAdminIngest(service, session, body),
-  recompute: (session, body) => handleAdminRecompute(service, session, body),
-  configUpdate: (session, body) => handleAdminConfigUpdate(service, session, body),
-  cleanup: (session, body) => handleAdminCleanup(service, session, body),
-  cutoverChecklist: (session, body) => handleAdminCutoverChecklist(service, session, body),
+export const createAdminRouteHandlers = (
+  service: AdminOperationsService,
+  options?: AdminRouteRuntimeOptions,
+): AdminRouteHandlers => ({
+  ingest: (session, body) => handleAdminIngest(service, session, body, options),
+  recompute: (session, body) => handleAdminRecompute(service, session, body, options),
+  configUpdate: (session, body) => handleAdminConfigUpdate(service, session, body, options),
+  cleanup: (session, body) => handleAdminCleanup(service, session, body, options),
+  cutoverChecklist: (session, body) => handleAdminCutoverChecklist(service, session, body, options),
 });

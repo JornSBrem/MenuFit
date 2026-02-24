@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { AdminOperationsService } from "../../../application/admin/admin-operations-service.ts";
+import { OperationalTelemetryService } from "../../../application/observability/operational-telemetry-service.ts";
+import { RequestSecurityPolicy } from "../../../application/security/request-security-policy.ts";
 import { createAdminRouteHandlers } from "./admin-routes.ts";
 import { parseSessionToken } from "../auth/session-context.ts";
 
 const adminSession = parseSessionToken("admin:ops-user:token-1:operator");
+const ownerSession = parseSessionToken("admin:owner-user:token-3:owner");
 const userSession = parseSessionToken("user:end-user:token-2:picnic-user");
 
 test("admin routes reject user sessions", () => {
@@ -137,4 +140,60 @@ test("admin cutover checklist route validates payload and blocks when required g
   assert.equal(blocked.data?.details?.decision, "blocked");
   assert.equal(blocked.data?.details?.rollbackRequired, true);
   assert.deepEqual(blocked.data?.details?.failedGateIds, ["top1"]);
+});
+
+test("admin routes enforce RBAC, rate limit, and WAF when security policy is enabled", () => {
+  const service = new AdminOperationsService({
+    now: () => "2026-02-24T23:30:00.000Z",
+  });
+  let now = 2_200_000_000;
+  const telemetry = new OperationalTelemetryService();
+  const securityPolicy = new RequestSecurityPolicy({
+    telemetry,
+    nowEpochSeconds: () => now,
+    rateLimitWindowSeconds: 60,
+    rateLimitMaxRequests: 1,
+  });
+  const handlers = createAdminRouteHandlers(service, {
+    securityPolicy,
+    telemetry,
+    nowMs: () => now * 1000,
+  });
+
+  const forbiddenConfig = handlers.configUpdate(adminSession, {
+    operationId: "config-owner-only",
+    key: "PG_WEEK_URL_TEMPLATE",
+    value: "https://example.invalid/{week}",
+  });
+  assert.equal(forbiddenConfig.ok, false);
+  assert.equal(forbiddenConfig.error?.code, "FORBIDDEN_ROLE");
+
+  const wafBlocked = handlers.cleanup(ownerSession, {
+    operationId: "cleanup-waf",
+    dryRun: true,
+    targets: ["<script>alert(1)</script>"],
+  });
+  assert.equal(wafBlocked.ok, false);
+  assert.equal(wafBlocked.error?.code, "WAF_BLOCKED");
+
+  const ingestOne = handlers.ingest(ownerSession, {
+    operationId: "ingest-one",
+    weeks: [9],
+    kcals: [1800],
+    basePersons: [2],
+  });
+  assert.equal(ingestOne.ok, true);
+
+  const ingestTwo = handlers.ingest(ownerSession, {
+    operationId: "ingest-two",
+    weeks: [9],
+    kcals: [1800],
+    basePersons: [2],
+  });
+  assert.equal(ingestTwo.ok, false);
+  assert.equal(ingestTwo.error?.code, "RATE_LIMITED");
+
+  const prometheus = telemetry.toPrometheusMetrics();
+  assert.equal(prometheus.includes('menufit_http_requests_total{route="admin.ingest",outcome="rate_limited"} 1'), true);
+  assert.equal(prometheus.includes('menufit_security_events_total{route="admin.cleanup",event="waf_blocked"} 1'), true);
 });
