@@ -4,7 +4,7 @@ import {
   buildPgEndpointUrl,
   PG_ENDPOINT_BY_ENTITY_TYPE,
   type PgEndpointVariables,
-} from "../../integrations/pg/endpoint-contract";
+} from "../../integrations/pg/endpoint-contract.ts";
 import type { IngestMatrixRequest, IngestTask } from "./types";
 
 const DEFAULT_ENTITY_TYPES: BronzeEntityType[] = [

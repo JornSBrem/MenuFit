@@ -1,5 +1,5 @@
-export { projectSilverToGold } from "./projection";
-export { GoldWeekReadService } from "./read-service";
+export { projectSilverToGold } from "./projection.ts";
+export { GoldWeekReadService } from "./read-service.ts";
 export type {
   GoldCartPlanView,
   GoldGroceryReconcileView,
@@ -11,4 +11,4 @@ export type {
   GoldWeekPlanView,
   WeekGroceriesResponse,
   WeekSummaryResponse,
-} from "./types";
+} from "./types.ts";

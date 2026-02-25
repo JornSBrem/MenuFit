@@ -1,7 +1,7 @@
-export { canonicalizeIngredient, normalizeQuantity, normalizeText } from "./normalization";
-export { reconcileComputedIngredientsWithPdf } from "./reconcile";
-export { transformBronzeToSilver } from "./transformer";
-export { reprocessSilverTransforms } from "./reprocess";
+export { canonicalizeIngredient, normalizeQuantity, normalizeText } from "./normalization.ts";
+export { reconcileComputedIngredientsWithPdf } from "./reconcile.ts";
+export { transformBronzeToSilver } from "./transformer.ts";
+export { reprocessSilverTransforms } from "./reprocess.ts";
 export type {
   BronzeLikeMeal,
   BronzeLikeMealIngredient,
@@ -17,4 +17,4 @@ export type {
   SilverTransformOutput,
   SilverWeekRow,
   TransformContext,
-} from "./types";
+} from "./types.ts";
