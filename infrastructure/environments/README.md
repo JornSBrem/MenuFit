@@ -5,6 +5,8 @@ Planned profiles:
 - `local`: compose/self-hosted development.
 - `prod`: internet-facing backend with TLS and managed services.
 
+For production observability stack provisioning, use assets in `infrastructure/observability/`.
+
 Add profile-specific manifests in this folder.
 
 ## Branch Protection Policy-as-Code (WI-212)
@@ -24,3 +26,4 @@ Recommended required status checks in policy:
 
 - `backend-quality`
 - `live-contract-validation`
+- `ios-ui-smoke`

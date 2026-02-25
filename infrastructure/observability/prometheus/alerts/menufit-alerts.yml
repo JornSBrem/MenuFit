@@ -1,0 +1,34 @@
+groups:
+  - name: menufit-backend-observability
+    rules:
+      - alert: MenuFitHighHttpErrorRate
+        expr: |
+          (
+            sum(rate(menufit_http_requests_total{outcome=~"client_error|server_error"}[5m]))
+            /
+            clamp_min(sum(rate(menufit_http_requests_total[5m])), 1)
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "MenuFit HTTP error-rate is above 5%"
+          description: "Error-rate stayed above threshold for 10 minutes. Inspect admin + system route failures and upstream dependencies."
+          runbook: "docs/ops/observability-runbook.md#error-rate"
+
+      - alert: MenuFitHighBlockedRate
+        expr: |
+          (
+            sum(rate(menufit_http_requests_total{outcome=~"forbidden|rate_limited|waf_blocked"}[5m]))
+            /
+            clamp_min(sum(rate(menufit_http_requests_total[5m])), 1)
+          ) > 0.12
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "MenuFit blocked-rate is above 12%"
+          description: "Blocked traffic is elevated. Validate RBAC/rate-limit/WAF policy behavior and suspicious traffic patterns."
+          runbook: "docs/ops/observability-runbook.md#blocked-rate"

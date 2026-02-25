@@ -4,3 +4,7 @@
 # Keep planning artifacts local-only
 #docs/
 #workitems/
+
+# Observability local secrets/config
+infrastructure/observability/.env
+infrastructure/observability/secrets/

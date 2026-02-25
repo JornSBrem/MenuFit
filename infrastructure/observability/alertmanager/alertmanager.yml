@@ -1,0 +1,30 @@
+route:
+  receiver: operations-escalation
+  group_by: [alertname, team, severity]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h
+
+receivers:
+  - name: operations-escalation
+    slack_configs:
+      - send_resolved: true
+        api_url_file: /etc/alertmanager/secrets/slack_webhook_url
+        channel: ${ALERT_SLACK_CHANNEL}
+        title: "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}"
+        text: >-
+          {{ range .Alerts }}
+          *Summary*: {{ .Annotations.summary }}
+          *Description*: {{ .Annotations.description }}
+          *Runbook*: {{ .Annotations.runbook }}
+          {{ end }}
+    webhook_configs:
+      - send_resolved: true
+        url: ${ALERT_WEBHOOK_URL}
+
+inhibit_rules:
+  - source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity = warning
+    equal: [alertname, team]

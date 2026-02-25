@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-222 | type:chore | priority:P2 | status:TODO | title:Externe observability stack provisioning (Prometheus/Grafana) voor productie
-  - context: WI-211 levert interne telemetry export, maar provisioning/operationalisatie van externe observability stack bleef out-of-scope.
-  - acceptance:
-    - Prometheus scrape en Grafana dashboards zijn ingericht voor backend route/security/job metrics.
-    - Alertregels voor fout- en blocked-rates zijn gekoppeld aan operationele escalatiekanalen.
-
 - [ ] WI-223 | type:chore | priority:P2 | status:TODO | title:Netwerk-level WAF/CDN policy configuratie voor productie ingress
   - context: WI-211 levert applicatie-level WAF guards; edge/network WAF policies zijn nog niet ingericht.
   - acceptance:
@@ -50,6 +44,18 @@
     - Snapshot-baseline voor kernschermen kan geautomatiseerd vergeleken worden in CI.
     - Regressies op layout/styling leveren expliciete diffs en failen de quality gate.
 
+- [ ] WI-230 | type:chore | priority:P2 | status:TODO | title:Managed cloud observability provisioning als IaC
+  - context: WI-222 levert compose-based externe observability stack; managed cloud provisioning (vendor-specifieke IaC) bleef out-of-scope.
+  - acceptance:
+    - Prometheus/Grafana/alerting equivalenten zijn als reproduceerbare IaC modules beschikbaar voor productie.
+    - Provisioning ondersteunt environment-specifieke configuratie en gecontroleerde rollout/rollback.
+
+- [ ] WI-231 | type:spike | priority:P3 | status:TODO | title:Langetermijnretentie en multi-cluster observability federatieontwerp
+  - context: WI-222 sluit retention tuning en multi-cluster federatie expliciet uit.
+  - acceptance:
+    - Ontwerp beschrijft retentiebeleid (kosten/prestatie/SLA) met operationele trade-offs.
+    - Federatiestrategie voor meerdere clusters/omgevingen bevat query-, alerting- en failover-impact.
+
 - [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
   - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
   - acceptance:
@@ -91,6 +97,12 @@
 _None_
 
 ## Done
+
+- [x] WI-222 | type:chore | priority:P2 | status:DONE | title:Externe observability stack provisioning (Prometheus/Grafana) voor productie
+  - context: WI-211 levert interne telemetry export, maar provisioning/operationalisatie van externe observability stack bleef out-of-scope.
+  - acceptance:
+    - Prometheus scrape en Grafana dashboards zijn ingericht voor backend route/security/job metrics.
+    - Alertregels voor fout- en blocked-rates zijn gekoppeld aan operationele escalatiekanalen.
 
 - [x] WI-215 | type:chore | priority:P3 | status:DONE | title:iOS UI testautomatisering via Xcode simulator in CI
   - context: Teststrategie-plan sluit volledige mobile UI test automation expliciet uit.
