@@ -3,21 +3,33 @@
  *
  * Start:  node --experimental-strip-types src/backend/server.ts
  *
- * Op opstarten wordt een dev admin token geprint naar de console en
- * geschreven naar out/dev-admin-token.txt.
+ * Op opstarten wordt een dev admin token én een dev user token geprint naar de
+ * console en geschreven naar:
+ *   out/dev-admin-token.txt
+ *   out/dev-user-token.txt
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { createDefaultRuntimeConfig } from "../../shared/config/index.ts";
 import { AuditTrailService } from "./application/audit/audit-trail-service.ts";
 import { AdminOperationsService } from "./application/admin/admin-operations-service.ts";
 import { AdminDataService } from "./application/admin/admin-data-service.ts";
 import { SystemOperationsService } from "./application/system/system-operations-service.ts";
 import { SessionLifecycleService } from "./application/auth/session-lifecycle-service.ts";
+import { HouseholdService } from "./application/household/household-service.ts";
+import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
+import { reprocessSilverTransforms } from "./application/silver/index.ts";
+import { createIngestPlan } from "./application/ingest/ingest-planner.ts";
+import { runBronzeIngestTasks, type FetchJson } from "./application/ingest/bronze-runner.ts";
+import { fetchPgJson } from "./integrations/pg/pg-fetch.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
-import { authorizeAdminFromBearerHeader } from "./interfaces/http/auth/session-middleware.ts";
+import {
+  authorizeAdminFromBearerHeader,
+  authorizeUserFromBearerHeader,
+} from "./interfaces/http/auth/session-middleware.ts";
 import {
   handleAdminIngest,
   handleAdminRecompute,
@@ -39,15 +51,36 @@ import {
   handleSystemDiagnostics,
   handleSystemJobs,
 } from "./interfaces/http/system/system-routes.ts";
+import { handleWeekSummary, handleWeekGroceries } from "./interfaces/http/week/week-routes.ts";
+import {
+  handleHouseholdBootstrap,
+  handleHouseholdStatus,
+  handleHouseholdInvite,
+  handleHouseholdAccept,
+  handleHouseholdRevoke,
+  handleHouseholdInvitations,
+} from "./interfaces/http/household/household-routes.ts";
 
 // ---- Config ----------------------------------------------------------------
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const PORT = Number(process.env["APP_PORT"] ?? 3000);
-const STATE_PATH = process.env["STATE_STORE_PATH"] ?? join(ROOT, "out", "v3", "state", "server-state.json");
+const STATE_PATH =
+  process.env["STATE_STORE_PATH"] ?? join(ROOT, "out", "v3", "state", "server-state.json");
 const TOKEN_PATH = join(ROOT, "out", "dev-admin-token.txt");
+const USER_TOKEN_PATH = join(ROOT, "out", "dev-user-token.txt");
 const DEV_OPERATOR_ID = process.env["DEV_OPERATOR_ID"] ?? "dev-admin";
-const DEV_TOKEN_TTL = 24 * 60 * 60; // 24 hours
+const DEV_USER_ID = process.env["DEV_USER_ID"] ?? "ios-user";
+const DEV_PICNIC_ACCOUNT_ID = process.env["DEV_PICNIC_ACCOUNT_ID"] ?? "picnic-default";
+const DEV_TOKEN_TTL = 30 * 24 * 60 * 60; // 30 days
+
+// ---- Runtime Config --------------------------------------------------------
+
+const config = createDefaultRuntimeConfig(
+  Object.fromEntries(
+    Object.entries(process.env).filter(([, v]) => v !== undefined),
+  ) as Record<string, string>,
+);
 
 // ---- Services --------------------------------------------------------------
 
@@ -57,20 +90,121 @@ const lifecycle = new SessionLifecycleService({ stateStore, adminTtlSeconds: DEV
 const adminOps = new AdminOperationsService({ auditTrail });
 const adminData = new AdminDataService({ auditTrail });
 const systemOps = new SystemOperationsService({ auditTrail });
+const householdService = new HouseholdService({ stateStore });
+const goldReadService = new GoldWeekReadService({ stateStore });
 
-// ---- Dev admin token -------------------------------------------------------
+// ---- Dev tokens ------------------------------------------------------------
 
-async function bootstrapDevToken(): Promise<string> {
-  const { token } = lifecycle.issueAdminSession({
+async function bootstrapDevTokens(): Promise<{ adminToken: string; userToken: string }> {
+  const { token: adminToken } = lifecycle.issueAdminSession({
     subjectId: DEV_OPERATOR_ID,
     adminRole: "owner",
     ttlSeconds: DEV_TOKEN_TTL,
   });
 
-  await mkdir(join(ROOT, "out"), { recursive: true });
-  await writeFile(TOKEN_PATH, token, "utf8");
+  const { token: userToken } = lifecycle.issueUserSession({
+    subjectId: DEV_USER_ID,
+    picnicAccountId: DEV_PICNIC_ACCOUNT_ID,
+    ttlSeconds: DEV_TOKEN_TTL,
+  });
 
-  return token;
+  await mkdir(join(ROOT, "out"), { recursive: true });
+  await writeFile(TOKEN_PATH, adminToken, "utf8");
+  await writeFile(USER_TOKEN_PATH, userToken, "utf8");
+
+  return { adminToken, userToken };
+}
+
+// ---- Real ingest pipeline --------------------------------------------------
+
+const TRANSFORM_VERSION = "1.0.0";
+const CANONICAL_RULESET_VERSION = "1.0.0";
+const SYNONYM_DICT_VERSION = "1.0.0";
+
+async function runRealIngest(
+  weeks: number[],
+  kcals: number[],
+  basePersons: number[],
+): Promise<{ tasksRan: number; goldProjected: number; errors: string[] }> {
+  const matrix = { weeks, kcals, basePersons };
+  const tasks = createIngestPlan(matrix, config);
+  const capturedPayloads = new Map<string, unknown>();
+  const errors: string[] = [];
+
+  const capturingFetch: FetchJson = async (url, task) => {
+    const payload = await fetchPgJson(task, config);
+    capturedPayloads.set(
+      `${task.week}:${task.kcal}:${task.basePersons}:${task.entityType}`,
+      payload,
+    );
+    return payload;
+  };
+
+  await runBronzeIngestTasks(tasks, config, capturingFetch);
+
+  const year = new Date().getUTCFullYear();
+  let goldProjected = 0;
+
+  for (const task of tasks) {
+    if (task.entityType !== "pg.week_menu") {
+      continue;
+    }
+    const rawPayload = capturedPayloads.get(
+      `${task.week}:${task.kcal}:${task.basePersons}:${task.entityType}`,
+    );
+    if (!rawPayload) {
+      errors.push(`Missing captured payload for week=${task.week} kcal=${task.kcal}`);
+      continue;
+    }
+
+    try {
+      // PG response shape: { data: { meals: [...], groceries: [...] } }
+      const pgData =
+        (rawPayload as Record<string, unknown>)["data"] ??
+        rawPayload;
+
+      const silverOutputs = reprocessSilverTransforms(
+        [
+          {
+            sourceObjectId: task.requestUrl,
+            payload: pgData as Parameters<typeof reprocessSilverTransforms>[0][number]["payload"],
+            year,
+            week: task.week,
+            kcal: task.kcal,
+            basePersons: task.basePersons,
+          },
+        ],
+        {
+          transformVersion: TRANSFORM_VERSION,
+          canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
+          synonymDictVersion: SYNONYM_DICT_VERSION,
+          stateStore,
+        },
+      );
+
+      for (const silver of silverOutputs) {
+        const context = {
+          sourceObjectId: task.requestUrl,
+          year,
+          week: task.week,
+          kcal: task.kcal,
+          basePersons: task.basePersons,
+          transformVersion: TRANSFORM_VERSION,
+          canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
+          synonymDictVersion: SYNONYM_DICT_VERSION,
+        };
+        const gold = projectSilverToGold({ silver, context });
+        goldReadService.upsert(gold);
+        goldProjected += 1;
+      }
+    } catch (err) {
+      errors.push(
+        `Silver/Gold pipeline failed for week=${task.week}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  return { tasksRan: tasks.length, goldProjected, errors };
 }
 
 // ---- HTTP helpers ----------------------------------------------------------
@@ -116,13 +250,35 @@ function getAuthHeader(req: IncomingMessage): string {
   return typeof h === "string" ? h : "";
 }
 
-function getSession(req: IncomingMessage) {
+function getAdminSession(req: IncomingMessage) {
   return authorizeAdminFromBearerHeader(lifecycle, getAuthHeader(req));
+}
+
+function getUserSession(req: IncomingMessage) {
+  return authorizeUserFromBearerHeader(lifecycle, getAuthHeader(req));
+}
+
+/** Accepts either a user or admin bearer token (for public-ish data endpoints). */
+function getAnySession(req: IncomingMessage) {
+  const adminResult = getAdminSession(req);
+  if (adminResult.ok) {
+    return adminResult;
+  }
+  return getUserSession(req);
 }
 
 function queryParam(req: IncomingMessage, name: string): string | undefined {
   const url = new URL(req.url ?? "/", "http://localhost");
   return url.searchParams.get(name) ?? undefined;
+}
+
+function numericParam(req: IncomingMessage, name: string): number | undefined {
+  const raw = queryParam(req, name);
+  if (raw === undefined) {
+    return undefined;
+  }
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
 }
 
 // ---- Router ----------------------------------------------------------------
@@ -146,19 +302,141 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     return;
   }
 
-  // All other routes require auth
-  const authResult = getSession(req);
-  if (!authResult.ok || !authResult.data) {
-    json(res, 401, {
-      ok: false,
-      error: authResult.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
-    });
-    return;
-  }
-  const session = authResult.data;
-
   try {
     const body = method === "POST" ? await readBody(req) : {};
+
+    // ---- Week routes (user or admin auth) ----
+    if (path === "/api/v3/week/summary" && method === "GET") {
+      const authResult = getAnySession(req);
+      if (!authResult.ok || !authResult.data) {
+        json(res, 401, {
+          ok: false,
+          error: authResult.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
+        });
+        return;
+      }
+      const query = {
+        year: numericParam(req, "year") ?? new Date().getUTCFullYear(),
+        week: numericParam(req, "week") ?? 1,
+        kcal: numericParam(req, "kcal") ?? 2000,
+        basePersons: numericParam(req, "basePersons") ?? 2,
+      };
+      json(res, 200, handleWeekSummary(goldReadService, query));
+      return;
+    }
+
+    if (path === "/api/v3/week/groceries" && method === "GET") {
+      const authResult = getAnySession(req);
+      if (!authResult.ok || !authResult.data) {
+        json(res, 401, {
+          ok: false,
+          error: authResult.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
+        });
+        return;
+      }
+      const query = {
+        year: numericParam(req, "year") ?? new Date().getUTCFullYear(),
+        week: numericParam(req, "week") ?? 1,
+        kcal: numericParam(req, "kcal") ?? 2000,
+        basePersons: numericParam(req, "basePersons") ?? 2,
+      };
+      json(res, 200, handleWeekGroceries(goldReadService, query));
+      return;
+    }
+
+    // ---- Household routes (user auth) ----
+    if (path === "/api/v3/household/bootstrap" && method === "POST") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, {
+          ok: false,
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+        });
+        return;
+      }
+      json(res, 200, handleHouseholdBootstrap(householdService, userAuth.data));
+      return;
+    }
+
+    if (path === "/api/v3/household/me" && method === "GET") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, {
+          ok: false,
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+        });
+        return;
+      }
+      json(res, 200, handleHouseholdStatus(householdService, userAuth.data));
+      return;
+    }
+
+    if (path === "/api/v3/household/invite" && method === "POST") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, {
+          ok: false,
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+        });
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      json(res, 200, handleHouseholdInvite(householdService, userAuth.data, body as any));
+      return;
+    }
+
+    if (path === "/api/v3/household/accept" && method === "POST") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, {
+          ok: false,
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+        });
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      json(res, 200, handleHouseholdAccept(householdService, userAuth.data, body as any));
+      return;
+    }
+
+    if (path === "/api/v3/household/revoke" && method === "POST") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, {
+          ok: false,
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+        });
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      json(res, 200, handleHouseholdRevoke(householdService, userAuth.data, body as any));
+      return;
+    }
+
+    if (path === "/api/v3/household/invitations" && method === "GET") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, {
+          ok: false,
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+        });
+        return;
+      }
+      const householdId = queryParam(req, "householdId") ?? "";
+      json(res, 200, handleHouseholdInvitations(householdService, userAuth.data, { householdId }));
+      return;
+    }
+
+    // All remaining routes require admin auth
+    const authResult = getAdminSession(req);
+    if (!authResult.ok || !authResult.data) {
+      json(res, 401, {
+        ok: false,
+        error: authResult.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
+      });
+      return;
+    }
+    const session = authResult.data;
 
     // ---- System routes ----
     if (path === "/api/v3/system/diagnostics" && method === "GET") {
@@ -173,19 +451,68 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     // ---- Admin operations ----
     if (path === "/api/v3/admin/ingest" && method === "POST") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      json(res, 200, handleAdminIngest(adminOps, session, body as any));
+      const result = handleAdminIngest(adminOps, session, body as any);
+      if (!result.ok) {
+        json(res, 200, result);
+        return;
+      }
+
+      // Run the real pipeline asynchronously — run and report results
+      const ingestBody = body as { weeks?: number[]; kcals?: number[]; basePersons?: number[] };
+      const ingestWeeks = Array.isArray(ingestBody.weeks) ? ingestBody.weeks : [];
+      const ingestKcals = Array.isArray(ingestBody.kcals) ? ingestBody.kcals : [];
+      const ingestBasePersons = Array.isArray(ingestBody.basePersons) ? ingestBody.basePersons : [];
+
+      try {
+        const pipelineResult = await runRealIngest(ingestWeeks, ingestKcals, ingestBasePersons);
+        json(res, 200, {
+          ...result,
+          data: {
+            ...result.data,
+            pipeline: pipelineResult,
+          },
+        });
+      } catch (err) {
+        // Return the admin op report but note the pipeline error
+        json(res, 200, {
+          ...result,
+          data: {
+            ...result.data,
+            pipeline: {
+              tasksRan: 0,
+              goldProjected: 0,
+              errors: [err instanceof Error ? err.message : String(err)],
+            },
+          },
+        });
+      }
       return;
     }
+
     if (path === "/api/v3/admin/recompute" && method === "POST") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       json(res, 200, handleAdminRecompute(adminOps, session, body as any));
       return;
     }
+
     if (path === "/api/v3/admin/config" && method === "POST") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      json(res, 200, handleAdminConfigUpdate(adminOps, session, body as any));
+      const result = handleAdminConfigUpdate(adminOps, session, body as any);
+      if (result.ok) {
+        // Also update the live runtime config so PG headers etc. take effect immediately
+        const configBody = body as { key?: string; value?: unknown };
+        if (typeof configBody.key === "string" && configBody.key) {
+          try {
+            config.set(configBody.key, configBody.value);
+          } catch {
+            // Key not in runtime config definitions — ignore
+          }
+        }
+      }
+      json(res, 200, result);
       return;
     }
+
     if (path === "/api/v3/admin/cleanup" && method === "POST") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       json(res, 200, handleAdminCleanup(adminOps, session, body as any));
@@ -250,11 +577,17 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
     if (path === "/api/v3/admin/households/invite-resend" && method === "POST") {
-      json(res, 200, { ok: false, error: { code: "NOT_IMPLEMENTED", message: "WI-260 implementeert deze route." } });
+      json(res, 200, {
+        ok: false,
+        error: { code: "NOT_IMPLEMENTED", message: "WI-260 implementeert deze route." },
+      });
       return;
     }
     if (path === "/api/v3/admin/households/session-reset" && method === "POST") {
-      json(res, 200, { ok: false, error: { code: "NOT_IMPLEMENTED", message: "WI-260 implementeert deze route." } });
+      json(res, 200, {
+        ok: false,
+        error: { code: "NOT_IMPLEMENTED", message: "WI-260 implementeert deze route." },
+      });
       return;
     }
     if (path === "/api/v3/admin/households/session-diagnose" && method === "GET") {
@@ -280,33 +613,56 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
 // ---- Main ------------------------------------------------------------------
 
-const token = await bootstrapDevToken();
+const { adminToken, userToken } = await bootstrapDevTokens();
 
 const server = createServer((req, res) => {
   void handleRequest(req, res);
 });
 
 server.listen(PORT, () => {
+  const expiresAt = new Date(
+    (Math.floor(Date.now() / 1000) + DEV_TOKEN_TTL) * 1000,
+  ).toLocaleDateString("nl-NL");
+
   console.log("");
   console.log("╔════════════════════════════════════════════════════════════════╗");
   console.log("║           MenuFit Admin Backend — dev server                  ║");
   console.log("╠════════════════════════════════════════════════════════════════╣");
   console.log(`║  Luistert op  http://localhost:${PORT}                            ║`);
   console.log("║                                                                ║");
-  console.log("║  DEV ADMIN TOKEN (24 uur geldig):                             ║");
-  console.log(`║  ${token.slice(0, 60)}  ║`);
-  if (token.length > 60) {
-    console.log(`║  ${token.slice(60).padEnd(60, " ")}  ║`);
+  console.log(`║  Tokens geldig tot: ${expiresAt.padEnd(43)}║`);
+  console.log("║                                                                ║");
+  console.log("║  DEV ADMIN TOKEN:                                             ║");
+  console.log(`║  ${adminToken.slice(0, 60)}  ║`);
+  if (adminToken.length > 60) {
+    console.log(`║  ${adminToken.slice(60).padEnd(60, " ")}  ║`);
   }
   console.log("║                                                                ║");
-  console.log(`║  Opgeslagen in: out/dev-admin-token.txt                       ║`);
+  console.log("║  DEV USER TOKEN (voor iOS app):                               ║");
+  console.log(`║  ${userToken.slice(0, 60)}  ║`);
+  if (userToken.length > 60) {
+    console.log(`║  ${userToken.slice(60).padEnd(60, " ")}  ║`);
+  }
+  console.log("║                                                                ║");
+  console.log("║  Opgeslagen in:                                               ║");
+  console.log("║    out/dev-admin-token.txt                                    ║");
+  console.log("║    out/dev-user-token.txt                                     ║");
   console.log("║                                                                ║");
   console.log("║  Admin UI:  http://localhost:5173  (na npm run dev in app/)   ║");
   console.log("╚════════════════════════════════════════════════════════════════╝");
   console.log("");
-  console.log(`  Gebruik in admin UI:`);
+  console.log("  Gebruik in admin UI:");
   console.log(`  - Backend URL:  http://localhost:${PORT}`);
   console.log(`  - Operator ID:  ${DEV_OPERATOR_ID}`);
-  console.log(`  - Token:        (zie boven of out/dev-admin-token.txt)`);
+  console.log(`  - Admin Token:  (zie boven of out/dev-admin-token.txt)`);
+  console.log("");
+  console.log("  Gebruik in iOS app (Info.plist):");
+  console.log(`  - MenuFitBackendBaseURL:  http://localhost:${PORT}`);
+  console.log(`  - MenuFitUserAccessToken: (zie boven of out/dev-user-token.txt)`);
+  console.log(`  - MenuFitUserSubjectId:   ${DEV_USER_ID}`);
+  console.log("");
+  console.log(
+    "  PG API ingest: stel PG_EXTRA_HEADERS_JSON in via /api/v3/admin/config met je PG cookie.",
+  );
   console.log("");
 });
