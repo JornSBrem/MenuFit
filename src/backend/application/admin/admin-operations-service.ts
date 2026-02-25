@@ -147,6 +147,7 @@ export class AdminOperationsService {
     value: unknown;
   }): AdminOperationReport {
     const updatedAt = this.now();
+    const previous = this.configStore.get(input.key);
     this.configStore.set(input.key, {
       key: input.key,
       value: input.value,
@@ -160,6 +161,8 @@ export class AdminOperationsService {
       performedBy: input.performedBy,
       details: {
         key: input.key,
+        before: previous?.value ?? null,
+        after: input.value,
       },
     });
   }
