@@ -43,9 +43,39 @@
 
 If docs conflict with code: add a bug/chore in `workitems/workitems.md`.
 
-## 5) Source of Detailed Rules
+## 5) Tracking Discipline (Mandatory)
+
+Every workitem MUST have matching files before the commit:
+- **Plan**: `.copilot-tracking/plans/YYYY-MM-DD-wi-NNN-<slug>-plan.md`
+- **Changes**: `.copilot-tracking/changes/YYYY-MM-DD-wi-NNN-<slug>-changes.md`
+
+Use templates in `.copilot-tracking/templates/`. Include both files in the same commit as the implementation. Use the `wi-done` skill to automate this ceremony.
+
+## 6) iOS Workitems
+
+Workitems targeting `src/ios-user-app/` require Xcode + Simulator for test execution. When working on iOS items:
+- Write the Swift/SwiftUI code as normal
+- Note in the changes file: `⚠️ requires-xcode — runtime tests not locally verified`
+- CI (`ios-ui-smoke` job) validates on push via GitHub Actions
+
+## 7) Backlog Discipline
+
+When moving a workitem to DONE:
+1. Change `[ ]` → `[x]` and `status:TODO` → `status:DONE` on the existing backlog entry
+2. Add the same entry to `## Done (recent additions)`
+3. No stale `status:TODO` duplicates — one canonical entry per WI
+
+## 8) Available Skills
+
+Use these skills during the session:
+- `.agents/skills/test-all/SKILL.md` — run full test suite before committing
+- `.agents/skills/wi-done/SKILL.md` — complete DONE ceremony (tracking + commit + push)
+- `.agents/skills/pr/SKILL.md` — create GitHub PR via `gh` CLI
+- `.agents/skills/menufit-workflow/SKILL.md` — general workflow guardrails
+
+## 9) Source of Detailed Rules
 
 - `.github/copilot-instructions.md`
 - `.github/instructions/*.instructions.md`
-- `.github/agents/*.agent.md`
-- `.agents/skills/menufit-workflow/SKILL.md`
+- `.github/agents/*.agent.md` (GitHub Copilot / VS Code only — not used in Claude Code sessions)
+- `.agents/skills/*/SKILL.md` (Claude Code skills — active in this session)
