@@ -25,6 +25,7 @@ import { reprocessSilverTransforms } from "./application/silver/index.ts";
 import { createIngestPlan } from "./application/ingest/ingest-planner.ts";
 import { runBronzeIngestTasks, type FetchJson } from "./application/ingest/bronze-runner.ts";
 import { fetchPgJson } from "./integrations/pg/pg-fetch.ts";
+import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
 import {
   authorizeAdminFromBearerHeader,
@@ -495,6 +496,62 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
+    // ---- PG login (haalt automatisch cookie op en zet PG_EXTRA_HEADERS_JSON) ----
+    if (path === "/api/v3/admin/pg-login" && method === "POST") {
+      const loginBody = body as { email?: string; password?: string; operationId?: string };
+      if (!loginBody.email?.trim() || !loginBody.password) {
+        json(res, 400, {
+          ok: false,
+          error: { code: "INVALID_BODY", message: "email en password zijn vereist." },
+        });
+        return;
+      }
+
+      try {
+        const loginUrl = config.get<string>("PG_LOGIN_URL");
+        const loginResult = await loginToPg(
+          { email: loginBody.email, password: loginBody.password },
+          loginUrl,
+        );
+
+        // Sla de cookies op in de live runtime config
+        config.set("PG_EXTRA_HEADERS_JSON", loginResult.extraHeaders);
+
+        // Registreer ook als admin config voor audit trail
+        adminOps.updateConfig({
+          operationId: loginBody.operationId ?? `pg-login-${Date.now()}`,
+          performedBy: session.subjectId,
+          key: "PG_EXTRA_HEADERS_JSON",
+          value: loginResult.extraHeaders,
+        });
+
+        json(res, 200, {
+          ok: true,
+          data: {
+            message: "Succesvol ingelogd bij Project Gezond.",
+            cookieNames: loginResult.cookieNames,
+            statusCode: loginResult.statusCode,
+          },
+        });
+      } catch (err) {
+        if (err instanceof PgLoginError) {
+          json(res, 200, {
+            ok: false,
+            error: { code: err.code, message: err.message },
+          });
+        } else {
+          json(res, 500, {
+            ok: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: err instanceof Error ? err.message : "Onverwachte fout bij PG login.",
+            },
+          });
+        }
+      }
+      return;
+    }
+
     if (path === "/api/v3/admin/config" && method === "POST") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = handleAdminConfigUpdate(adminOps, session, body as any);
@@ -662,7 +719,10 @@ server.listen(PORT, () => {
   console.log(`  - MenuFitUserSubjectId:   ${DEV_USER_ID}`);
   console.log("");
   console.log(
-    "  PG API ingest: stel PG_EXTRA_HEADERS_JSON in via /api/v3/admin/config met je PG cookie.",
+    "  PG inloggen (vereist voor ingest):",
+  );
+  console.log(
+    "    node --experimental-strip-types scripts/pg-login.ts <email> <password>",
   );
   console.log("");
 });
