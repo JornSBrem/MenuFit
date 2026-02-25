@@ -110,12 +110,6 @@
     - JWT tokens worden server-side gevalideerd op handtekening, issuer, audience en expiry.
     - Sleutelrotatie (JWKS) wordt ondersteund zonder downtime.
 
-- [ ] WI-249 | type:feature | priority:P1 | status:IN-PROGRESS | title:Admin web data beheerpanelen voor recepten, weekmenu's en mapping overrides
-  - context: Voor een werkbare V1 hebben operators direct beheer nodig op kernproductdata i.p.v. alleen technische operatieschermen.
-  - acceptance:
-    - Web-app ondersteunt CRUD/workflows voor kernentiteiten (recepten, weekmenu's, mapping overrides) met veilige validatieregels.
-    - Wijzigingen zijn direct zichtbaar in user flow of via expliciete publish/recompute stap met traceerbare status.
-
 - [ ] WI-248 | type:feature | priority:P1 | status:DONE | title:Admin web configuratiepanel met runtime settings, validatie en audit
   - context: Configuratie bestaat backendmatig maar mist een bruikbaar web-configuratiepanel voor operators.
   - acceptance:
@@ -202,9 +196,27 @@
     - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
     - Admin web kan auditgeschiedenis ophalen en filteren zonder verlies na restart/deploy.
 
+- [ ] WI-263 | type:feature | priority:P2 | status:TODO | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
+  - context: WI-249 levert controller/API-contracten voor databeheer, maar nog geen zichtbare operator-UI componenten.
+  - acceptance:
+    - Admin web toont concrete beheercomponenten (tabellen/formulieren) voor recepten, weekmenu's en mapping overrides.
+    - Operators kunnen via UI CRUD-acties uitvoeren met duidelijke validatie en statusfeedback.
+
+- [ ] WI-264 | type:feature | priority:P2 | status:TODO | title:Backend endpointimplementatie voor admin data beheercontracten
+  - context: WI-249 definieert admin-web contracts voor recepten/weekmenu/mapping beheer, maar backend routes/service-persistentie ontbreken.
+  - acceptance:
+    - Backend biedt beveiligde admin endpoints voor list/upsert/delete op recepten, weekmenu's en mapping overrides.
+    - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
+
 ## In Progress
 
 ## Done
+
+- [x] WI-249 | type:feature | priority:P1 | status:DONE | title:Admin web data beheerpanelen voor recepten, weekmenu's en mapping overrides
+  - context: Voor een werkbare V1 hebben operators direct beheer nodig op kernproductdata i.p.v. alleen technische operatieschermen.
+  - acceptance:
+    - Web-app ondersteunt CRUD/workflows voor kernentiteiten (recepten, weekmenu's, mapping overrides) met veilige validatieregels.
+    - Wijzigingen zijn direct zichtbaar in user flow of via expliciete publish/recompute stap met traceerbare status.
 
 - [x] WI-248 | type:feature | priority:P1 | status:DONE | title:Admin web configuratiepanel met runtime settings, validatie en audit
   - context: Configuratie bestaat backendmatig maar mist een bruikbaar web-configuratiepanel voor operators.

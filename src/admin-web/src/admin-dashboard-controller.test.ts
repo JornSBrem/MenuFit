@@ -6,7 +6,10 @@ import {
   type AdminDashboardApi,
 } from "./admin-dashboard-controller.ts";
 import type {
+  AdminMappingOverrideRecord,
   AdminOperationReport,
+  AdminRecipeRecord,
+  AdminWeekMenuRecord,
   ApiEnvelope,
   HouseholdInvitationRecord,
   HouseholdOperationsStatus,
@@ -66,6 +69,43 @@ const defaultSessionDiagnostic: UserSessionDiagnostic = {
   lastValidatedAt: "2026-02-25T00:00:00.000Z",
 };
 
+const defaultRecipes: AdminRecipeRecord[] = [
+  {
+    recipeId: "recipe-1",
+    slug: "vegetarische-pasta",
+    title: "Vegetarische pasta",
+    visibility: "household",
+    prepMinutes: 25,
+    tags: ["vegetarisch", "snel"],
+    updatedAt: "2026-02-25T00:00:00.000Z",
+    updatedBy: "ops-1",
+  },
+];
+
+const defaultWeekMenus: AdminWeekMenuRecord[] = [
+  {
+    weekMenuId: "wm-1",
+    householdId: "household-1",
+    week: 9,
+    kcal: 1800,
+    basePersons: 2,
+    mealCount: 7,
+    updatedAt: "2026-02-25T00:00:00.000Z",
+    updatedBy: "ops-1",
+  },
+];
+
+const defaultMappingOverrides: AdminMappingOverrideRecord[] = [
+  {
+    overrideId: "override-1",
+    sourceKey: "kipfilet",
+    targetKey: "kipfilet rauw",
+    note: "gestandaardiseerde mapping",
+    updatedAt: "2026-02-25T00:00:00.000Z",
+    updatedBy: "ops-1",
+  },
+];
+
 const createApi = (
   overrides?: Partial<AdminDashboardApi>,
 ): AdminDashboardApi => ({
@@ -92,6 +132,42 @@ const createApi = (
   getJobs: async () => ({
     ok: true,
     data: [],
+  }),
+  listRecipes: async () => ({
+    ok: true,
+    data: defaultRecipes,
+  }),
+  upsertRecipe: async () => ({
+    ok: true,
+    data: createReport("recipe-upsert-1", "config_update"),
+  }),
+  deleteRecipe: async () => ({
+    ok: true,
+    data: createReport("recipe-delete-1", "cleanup"),
+  }),
+  listWeekMenus: async () => ({
+    ok: true,
+    data: defaultWeekMenus,
+  }),
+  upsertWeekMenu: async () => ({
+    ok: true,
+    data: createReport("weekmenu-upsert-1", "config_update"),
+  }),
+  deleteWeekMenu: async () => ({
+    ok: true,
+    data: createReport("weekmenu-delete-1", "cleanup"),
+  }),
+  listMappingOverrides: async () => ({
+    ok: true,
+    data: defaultMappingOverrides,
+  }),
+  upsertMappingOverride: async () => ({
+    ok: true,
+    data: createReport("override-upsert-1", "config_update"),
+  }),
+  deleteMappingOverride: async () => ({
+    ok: true,
+    data: createReport("override-delete-1", "cleanup"),
   }),
   listHouseholdStatuses: async () => ({
     ok: true,
@@ -369,4 +445,73 @@ test("admin dashboard operations supports household status, invite resend and se
   state = controller.getState();
   assert.equal(state.views.operations.status, "success");
   assert.equal(state.views.operations.data?.history.length, 2);
+});
+
+test("admin dashboard data management supports recipe, weekmenu and mapping override workflows", async () => {
+  const controller = new AdminDashboardController(createApi());
+
+  await controller.loadDataManagement();
+  let state = controller.getState();
+  assert.equal(state.views.data.status, "success");
+  assert.equal(state.views.data.data?.recipes.length, 1);
+  assert.equal(state.views.data.data?.weekMenus.length, 1);
+  assert.equal(state.views.data.data?.mappingOverrides.length, 1);
+
+  await controller.upsertRecipe({
+    operationId: "recipe-upsert-2",
+    recipe: {
+      recipeId: "recipe-2",
+      slug: "snelle-curry",
+      title: "Snelle curry",
+      visibility: "shared",
+      prepMinutes: 20,
+      tags: ["kruidig"],
+    },
+  });
+  await controller.upsertWeekMenu({
+    operationId: "weekmenu-upsert-2",
+    weekMenu: {
+      weekMenuId: "wm-2",
+      householdId: "household-1",
+      week: 10,
+      kcal: 2000,
+      basePersons: 2,
+      mealCount: 7,
+    },
+  });
+  await controller.upsertMappingOverride({
+    operationId: "override-upsert-2",
+    override: {
+      overrideId: "override-2",
+      sourceKey: "tomaten",
+      targetKey: "tomaat",
+      note: "enkelvoud normalisatie",
+    },
+  });
+  state = controller.getState();
+  assert.equal(state.views.data.data?.recipes.length, 2);
+  assert.equal(state.views.data.data?.weekMenus.length, 2);
+  assert.equal(state.views.data.data?.mappingOverrides.length, 2);
+
+  await controller.deleteRecipe({
+    operationId: "recipe-delete-2",
+    recipeId: "recipe-1",
+  });
+  await controller.deleteWeekMenu({
+    operationId: "weekmenu-delete-2",
+    weekMenuId: "wm-1",
+  });
+  await controller.deleteMappingOverride({
+    operationId: "override-delete-2",
+    overrideId: "override-1",
+  });
+
+  state = controller.getState();
+  assert.equal(state.views.data.status, "success");
+  assert.equal(state.views.data.data?.recipes.length, 1);
+  assert.equal(state.views.data.data?.recipes[0]?.recipeId, "recipe-2");
+  assert.equal(state.views.data.data?.weekMenus.length, 1);
+  assert.equal(state.views.data.data?.weekMenus[0]?.weekMenuId, "wm-2");
+  assert.equal(state.views.data.data?.mappingOverrides.length, 1);
+  assert.equal(state.views.data.data?.mappingOverrides[0]?.overrideId, "override-2");
 });

@@ -1,14 +1,20 @@
 import type {
+  AdminMappingOverrideRecord,
   AdminConfigAuditEntry,
   AdminApiError,
   AdminAsyncViewState,
   AdminDashboardUiState,
   AdminOperationReport,
+  AdminRecipeRecord,
   AdminSettingsEntry,
   AdminTab,
+  AdminWeekMenuRecord,
   ApiEnvelope,
   CleanupRequest,
   ConfigUpdateRequest,
+  DeleteMappingOverrideRequest,
+  DeleteRecipeRequest,
+  DeleteWeekMenuRequest,
   HouseholdInvitationRecord,
   HouseholdInvitationsQuery,
   HouseholdInviteResendRequest,
@@ -18,6 +24,9 @@ import type {
   RecomputeRequest,
   SystemDiagnosticsSummary,
   SystemJobRecord,
+  UpsertMappingOverrideRequest,
+  UpsertRecipeRequest,
+  UpsertWeekMenuRequest,
   UserSessionDiagnostic,
 } from "./types.ts";
 
@@ -28,6 +37,19 @@ export interface AdminDashboardApi {
   runCleanup(body: CleanupRequest): Promise<ApiEnvelope<AdminOperationReport>>;
   getDiagnostics(): Promise<ApiEnvelope<SystemDiagnosticsSummary>>;
   getJobs(): Promise<ApiEnvelope<SystemJobRecord[]>>;
+  listRecipes(): Promise<ApiEnvelope<AdminRecipeRecord[]>>;
+  upsertRecipe(body: UpsertRecipeRequest): Promise<ApiEnvelope<AdminOperationReport>>;
+  deleteRecipe(body: DeleteRecipeRequest): Promise<ApiEnvelope<AdminOperationReport>>;
+  listWeekMenus(): Promise<ApiEnvelope<AdminWeekMenuRecord[]>>;
+  upsertWeekMenu(body: UpsertWeekMenuRequest): Promise<ApiEnvelope<AdminOperationReport>>;
+  deleteWeekMenu(body: DeleteWeekMenuRequest): Promise<ApiEnvelope<AdminOperationReport>>;
+  listMappingOverrides(): Promise<ApiEnvelope<AdminMappingOverrideRecord[]>>;
+  upsertMappingOverride(
+    body: UpsertMappingOverrideRequest,
+  ): Promise<ApiEnvelope<AdminOperationReport>>;
+  deleteMappingOverride(
+    body: DeleteMappingOverrideRequest,
+  ): Promise<ApiEnvelope<AdminOperationReport>>;
   listHouseholdStatuses(): Promise<ApiEnvelope<HouseholdOperationsStatus[]>>;
   listHouseholdInvitations(
     query: HouseholdInvitationsQuery,
@@ -117,6 +139,9 @@ export class AdminDashboardController {
 
   private readonly settingsByKey = new Map<string, AdminSettingsEntry>();
   private readonly settingsAuditTrail: AdminConfigAuditEntry[] = [];
+  private recipesById = new Map<string, AdminRecipeRecord>();
+  private weekMenusById = new Map<string, AdminWeekMenuRecord>();
+  private mappingOverridesById = new Map<string, AdminMappingOverrideRecord>();
 
   private readonly api: AdminDashboardApi;
 
@@ -140,9 +165,25 @@ export class AdminDashboardController {
     this.state.views.data = createLoadingView(this.state.views.data.data);
     try {
       const diagnostics = this.unwrapEnvelope(await this.api.getDiagnostics());
+      const recipes = this.listRecipesEntries();
+      const weekMenus = this.listWeekMenuEntries();
+      const mappingOverrides = this.listMappingOverrideEntries();
       const data = { diagnostics };
-      const hasData = diagnostics.totalJobs > 0 || diagnostics.reportsGenerated > 0;
-      this.state.views.data = hasData ? createSuccessView(data) : createEmptyView(data);
+      const hasData =
+        diagnostics.totalJobs > 0 ||
+        diagnostics.reportsGenerated > 0 ||
+        recipes.length > 0 ||
+        weekMenus.length > 0 ||
+        mappingOverrides.length > 0;
+      const dataWithEntities = {
+        ...data,
+        recipes,
+        weekMenus,
+        mappingOverrides,
+      };
+      this.state.views.data = hasData
+        ? createSuccessView(dataWithEntities)
+        : createEmptyView(dataWithEntities);
     } catch (error) {
       this.state.views.data = createErrorView(toAdminApiError(error), this.state.views.data.data);
     }
@@ -253,6 +294,105 @@ export class AdminDashboardController {
     return this.loadDataView();
   }
 
+  async loadDataManagement(): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.data.data;
+    this.state.views.data = createLoadingView(previous);
+    try {
+      const diagnostics = previous?.diagnostics ?? this.unwrapEnvelope(await this.api.getDiagnostics());
+      const recipes = this.unwrapEnvelope(await this.api.listRecipes());
+      const weekMenus = this.unwrapEnvelope(await this.api.listWeekMenus());
+      const mappingOverrides = this.unwrapEnvelope(await this.api.listMappingOverrides());
+
+      this.recipesById = new Map(recipes.map((entry) => [entry.recipeId, entry]));
+      this.weekMenusById = new Map(weekMenus.map((entry) => [entry.weekMenuId, entry]));
+      this.mappingOverridesById = new Map(mappingOverrides.map((entry) => [entry.overrideId, entry]));
+
+      const data = {
+        diagnostics,
+        recipes: this.listRecipesEntries(),
+        weekMenus: this.listWeekMenuEntries(),
+        mappingOverrides: this.listMappingOverrideEntries(),
+      };
+      const hasData =
+        data.diagnostics.totalJobs > 0 ||
+        data.diagnostics.reportsGenerated > 0 ||
+        data.recipes.length > 0 ||
+        data.weekMenus.length > 0 ||
+        data.mappingOverrides.length > 0;
+      this.state.views.data = hasData ? createSuccessView(data) : createEmptyView(data);
+    } catch (error) {
+      this.state.views.data = createErrorView(toAdminApiError(error), previous);
+    }
+
+    return this.getState();
+  }
+
+  async upsertRecipe(body: UpsertRecipeRequest): Promise<AdminDashboardUiState> {
+    const report = await this.executeOperation(() => this.api.upsertRecipe(body));
+    if (report) {
+      this.recipesById.set(body.recipe.recipeId, {
+        ...body.recipe,
+        updatedAt: report.createdAt,
+        updatedBy: report.performedBy,
+      });
+      await this.refreshDataViewEntities();
+    }
+    return this.getState();
+  }
+
+  async deleteRecipe(body: DeleteRecipeRequest): Promise<AdminDashboardUiState> {
+    const report = await this.executeOperation(() => this.api.deleteRecipe(body));
+    if (report) {
+      this.recipesById.delete(body.recipeId);
+      await this.refreshDataViewEntities();
+    }
+    return this.getState();
+  }
+
+  async upsertWeekMenu(body: UpsertWeekMenuRequest): Promise<AdminDashboardUiState> {
+    const report = await this.executeOperation(() => this.api.upsertWeekMenu(body));
+    if (report) {
+      this.weekMenusById.set(body.weekMenu.weekMenuId, {
+        ...body.weekMenu,
+        updatedAt: report.createdAt,
+        updatedBy: report.performedBy,
+      });
+      await this.refreshDataViewEntities();
+    }
+    return this.getState();
+  }
+
+  async deleteWeekMenu(body: DeleteWeekMenuRequest): Promise<AdminDashboardUiState> {
+    const report = await this.executeOperation(() => this.api.deleteWeekMenu(body));
+    if (report) {
+      this.weekMenusById.delete(body.weekMenuId);
+      await this.refreshDataViewEntities();
+    }
+    return this.getState();
+  }
+
+  async upsertMappingOverride(body: UpsertMappingOverrideRequest): Promise<AdminDashboardUiState> {
+    const report = await this.executeOperation(() => this.api.upsertMappingOverride(body));
+    if (report) {
+      this.mappingOverridesById.set(body.override.overrideId, {
+        ...body.override,
+        updatedAt: report.createdAt,
+        updatedBy: report.performedBy,
+      });
+      await this.refreshDataViewEntities();
+    }
+    return this.getState();
+  }
+
+  async deleteMappingOverride(body: DeleteMappingOverrideRequest): Promise<AdminDashboardUiState> {
+    const report = await this.executeOperation(() => this.api.deleteMappingOverride(body));
+    if (report) {
+      this.mappingOverridesById.delete(body.overrideId);
+      await this.refreshDataViewEntities();
+    }
+    return this.getState();
+  }
+
   async loadHouseholdOperations(householdId?: string): Promise<AdminDashboardUiState> {
     const previous = this.state.views.operations.data;
     this.state.views.operations = createLoadingView(previous);
@@ -356,6 +496,45 @@ export class AdminDashboardController {
 
   private listSettingsAuditTrail(): AdminConfigAuditEntry[] {
     return this.settingsAuditTrail.map((entry) => structuredClone(entry));
+  }
+
+  private listRecipesEntries(): AdminRecipeRecord[] {
+    return Array.from(this.recipesById.values())
+      .map((entry) => structuredClone(entry))
+      .sort((left, right) => left.title.localeCompare(right.title));
+  }
+
+  private listWeekMenuEntries(): AdminWeekMenuRecord[] {
+    return Array.from(this.weekMenusById.values())
+      .map((entry) => structuredClone(entry))
+      .sort((left, right) => left.week - right.week);
+  }
+
+  private listMappingOverrideEntries(): AdminMappingOverrideRecord[] {
+    return Array.from(this.mappingOverridesById.values())
+      .map((entry) => structuredClone(entry))
+      .sort((left, right) => left.sourceKey.localeCompare(right.sourceKey));
+  }
+
+  private async refreshDataViewEntities(): Promise<void> {
+    const existing = this.state.views.data.data;
+    const diagnostics =
+      existing?.diagnostics ??
+      this.unwrapEnvelope(await this.api.getDiagnostics());
+
+    const data = {
+      diagnostics,
+      recipes: this.listRecipesEntries(),
+      weekMenus: this.listWeekMenuEntries(),
+      mappingOverrides: this.listMappingOverrideEntries(),
+    };
+    const hasData =
+      data.diagnostics.totalJobs > 0 ||
+      data.diagnostics.reportsGenerated > 0 ||
+      data.recipes.length > 0 ||
+      data.weekMenus.length > 0 ||
+      data.mappingOverrides.length > 0;
+    this.state.views.data = hasData ? createSuccessView(data) : createEmptyView(data);
   }
 
   private validateConfigUpdate(body: ConfigUpdateRequest): AdminApiError | null {

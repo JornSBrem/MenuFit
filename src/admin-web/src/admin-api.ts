@@ -1,9 +1,15 @@
 import type {
+  AdminMappingOverrideRecord,
   AdminOperationReport,
+  AdminRecipeRecord,
   AdminSession,
+  AdminWeekMenuRecord,
   ApiEnvelope,
   CleanupRequest,
   ConfigUpdateRequest,
+  DeleteMappingOverrideRequest,
+  DeleteRecipeRequest,
+  DeleteWeekMenuRequest,
   HouseholdInvitationRecord,
   HouseholdInvitationsQuery,
   HouseholdInviteResendRequest,
@@ -13,6 +19,9 @@ import type {
   RecomputeRequest,
   SystemDiagnosticsSummary,
   SystemJobRecord,
+  UpsertMappingOverrideRequest,
+  UpsertRecipeRequest,
+  UpsertWeekMenuRequest,
   UserSessionDiagnostic,
 } from "./types.ts";
 
@@ -48,6 +57,46 @@ export class AdminApiClient {
 
   getJobs(): Promise<ApiEnvelope<SystemJobRecord[]>> {
     return this.get("/api/v3/system/jobs");
+  }
+
+  listRecipes(): Promise<ApiEnvelope<AdminRecipeRecord[]>> {
+    return this.get("/api/v3/admin/data/recipes");
+  }
+
+  upsertRecipe(body: UpsertRecipeRequest): Promise<ApiEnvelope<AdminOperationReport>> {
+    return this.post("/api/v3/admin/data/recipes/upsert", body);
+  }
+
+  deleteRecipe(body: DeleteRecipeRequest): Promise<ApiEnvelope<AdminOperationReport>> {
+    return this.post("/api/v3/admin/data/recipes/delete", body);
+  }
+
+  listWeekMenus(): Promise<ApiEnvelope<AdminWeekMenuRecord[]>> {
+    return this.get("/api/v3/admin/data/week-menus");
+  }
+
+  upsertWeekMenu(body: UpsertWeekMenuRequest): Promise<ApiEnvelope<AdminOperationReport>> {
+    return this.post("/api/v3/admin/data/week-menus/upsert", body);
+  }
+
+  deleteWeekMenu(body: DeleteWeekMenuRequest): Promise<ApiEnvelope<AdminOperationReport>> {
+    return this.post("/api/v3/admin/data/week-menus/delete", body);
+  }
+
+  listMappingOverrides(): Promise<ApiEnvelope<AdminMappingOverrideRecord[]>> {
+    return this.get("/api/v3/admin/data/mapping-overrides");
+  }
+
+  upsertMappingOverride(
+    body: UpsertMappingOverrideRequest,
+  ): Promise<ApiEnvelope<AdminOperationReport>> {
+    return this.post("/api/v3/admin/data/mapping-overrides/upsert", body);
+  }
+
+  deleteMappingOverride(
+    body: DeleteMappingOverrideRequest,
+  ): Promise<ApiEnvelope<AdminOperationReport>> {
+    return this.post("/api/v3/admin/data/mapping-overrides/delete", body);
   }
 
   listHouseholdStatuses(): Promise<ApiEnvelope<HouseholdOperationsStatus[]>> {

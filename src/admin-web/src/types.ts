@@ -56,6 +56,9 @@ export interface AdminSettingsEntry {
 
 export interface AdminDataViewData {
   diagnostics: SystemDiagnosticsSummary;
+  recipes: AdminRecipeRecord[];
+  weekMenus: AdminWeekMenuRecord[];
+  mappingOverrides: AdminMappingOverrideRecord[];
 }
 
 export interface AdminSettingsViewData {
@@ -98,6 +101,86 @@ export interface IngestRequest {
   weeks: number[];
   kcals: number[];
   basePersons: number[];
+}
+
+export interface AdminRecipeRecord {
+  recipeId: string;
+  slug: string;
+  title: string;
+  visibility: "private" | "household" | "shared";
+  prepMinutes?: number;
+  tags: string[];
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export interface AdminWeekMenuRecord {
+  weekMenuId: string;
+  householdId: string;
+  week: number;
+  kcal: number;
+  basePersons: number;
+  mealCount: number;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export interface AdminMappingOverrideRecord {
+  overrideId: string;
+  sourceKey: string;
+  targetKey: string;
+  note?: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export interface UpsertRecipeRequest {
+  operationId: string;
+  recipe: {
+    recipeId: string;
+    slug: string;
+    title: string;
+    visibility: "private" | "household" | "shared";
+    prepMinutes?: number;
+    tags: string[];
+  };
+}
+
+export interface DeleteRecipeRequest {
+  operationId: string;
+  recipeId: string;
+}
+
+export interface UpsertWeekMenuRequest {
+  operationId: string;
+  weekMenu: {
+    weekMenuId: string;
+    householdId: string;
+    week: number;
+    kcal: number;
+    basePersons: number;
+    mealCount: number;
+  };
+}
+
+export interface DeleteWeekMenuRequest {
+  operationId: string;
+  weekMenuId: string;
+}
+
+export interface UpsertMappingOverrideRequest {
+  operationId: string;
+  override: {
+    overrideId: string;
+    sourceKey: string;
+    targetKey: string;
+    note?: string;
+  };
+}
+
+export interface DeleteMappingOverrideRequest {
+  operationId: string;
+  overrideId: string;
 }
 
 export interface RecomputeRequest {

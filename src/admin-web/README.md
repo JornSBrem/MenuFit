@@ -36,3 +36,13 @@ Admin dashboard controller ondersteunt nu:
 - allowlist-validatie voor runtime config keys
 - type-validatie voor runtime config values
 - settings audit trail met `operationId`, key, value, actor en timestamp
+
+## WI-249 Data Beheercontracten
+
+Data-tab controller/API contracts ondersteunen nu beheerworkflows voor:
+
+- recepten (`list`, `upsert`, `delete`)
+- weekmenu's (`list`, `upsert`, `delete`)
+- mapping overrides (`list`, `upsert`, `delete`)
+
+Wijzigingen worden direct doorgezet naar data-view state zodat vervolgflows (bijv. recompute/publicatie) traceerbaar aan operation history gekoppeld kunnen worden.
