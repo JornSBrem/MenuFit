@@ -208,6 +208,14 @@
     - Backend biedt beveiligde admin endpoints voor list/upsert/delete op recepten, weekmenu's en mapping overrides.
     - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
 
+## Done (recent additions)
+
+- [x] WI-221 | type:chore | priority:P1 | status:DONE | title:JWT handtekeningverificatie tegen externe IdP sleutels
+  - context: WI-207 sluit cryptografische JWT-verificatie tegen externe IdP keys expliciet uit.
+  - acceptance:
+    - JWT tokens worden server-side gevalideerd op handtekening, issuer, audience en expiry.
+    - Sleutelrotatie (JWKS) wordt ondersteund zonder downtime.
+
 ## In Progress
 
 ## Done
