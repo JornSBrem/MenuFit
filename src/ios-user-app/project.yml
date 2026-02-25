@@ -36,3 +36,24 @@ targets:
         CODE_SIGNING_ALLOWED: YES
         CODE_SIGNING_REQUIRED: YES
         TARGETED_DEVICE_FAMILY: "1,2"
+  MenuFitUserAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: MenuFitUserApp
+    settings:
+      base:
+        TEST_TARGET_NAME: MenuFitUserApp
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGNING_REQUIRED: YES
+
+schemes:
+  MenuFitUserApp:
+    build:
+      targets:
+        MenuFitUserApp: all
+    test:
+      targets:
+        - name: MenuFitUserAppUITests

@@ -12,6 +12,10 @@
 - `src/backend/tests/e2e-smoke.test.ts`
 - Covers baseline flow: week transform -> match -> cart sync -> system operation.
 
+4. iOS UI smoke test
+- `src/ios-user-app/UITests/MenuFitUserAppUITests.swift`
+- Covers primary mobile tab flow: Week -> Match -> Bestellen.
+
 ## CI Execution
 
 Workflow: `.github/workflows/ci.yml`
@@ -21,6 +25,8 @@ Steps:
 2. Run e2e smoke test.
 3. Evaluate KPI release gates from metrics JSON.
 4. Run live contract validation against configured external backend endpoints.
+5. Run iOS simulator UI smoke test job.
+   - job selects an available iPhone simulator dynamically and executes `xcodebuild test` against that simulator id.
 
 ## KPI Release Gates
 

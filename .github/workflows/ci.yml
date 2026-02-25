@@ -46,3 +46,41 @@ jobs:
           LIVE_CONTRACT_AUTH_TOKEN: ${{ secrets.LIVE_CONTRACT_AUTH_TOKEN }}
           LIVE_CONTRACT_REQUIRE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'true' || 'false' }}
         run: node --experimental-strip-types infrastructure/release-gates/check-live-contracts.ts
+
+  ios-ui-smoke:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate iOS project
+        run: xcodegen generate --spec src/ios-user-app/project.yml
+
+      - name: Run iOS UI smoke tests
+        run: |
+          set -euo pipefail
+          SIM_ID=$(
+            xcrun simctl list devices available -j | jq -r '
+              .devices
+              | to_entries
+              | map(select(.key | startswith("com.apple.CoreSimulator.SimRuntime.iOS-")))
+              | sort_by(.key)
+              | reverse
+              | map(.value[] | select(.isAvailable == true and (.name | startswith("iPhone"))))
+              | .[0].udid // empty
+            '
+          )
+          if [ -z "$SIM_ID" ]; then
+            echo "No available iPhone simulator found."
+            exit 1
+          fi
+          xcrun simctl boot "$SIM_ID" || true
+          xcrun simctl bootstatus "$SIM_ID" -b
+          xcodebuild \
+            -project src/ios-user-app/MenuFitUserApp.xcodeproj \
+            -scheme MenuFitUserApp \
+            -destination "platform=iOS Simulator,id=$SIM_ID" \
+            test CODE_SIGNING_ALLOWED=NO

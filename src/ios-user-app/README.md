@@ -54,3 +54,35 @@ Runtime configuration keys in `Info.plist`:
 - `MenuFitPicnicAccountId`
 - `MenuFitHouseholdId`
 - `MenuFitUserTokenExpiryEpochSeconds`
+
+## WI-215 UI Smoke Automation
+
+- UI smoke test file: `UITests/MenuFitUserAppUITests.swift`
+- Scope: tab-based primary flow checks (`Week -> Match -> Bestellen`)
+
+Local run (after `xcodegen generate --spec src/ios-user-app/project.yml`):
+
+```bash
+SIM_ID=$(
+  xcrun simctl list devices available -j | jq -r '
+    .devices
+    | to_entries
+    | map(select(.key | startswith("com.apple.CoreSimulator.SimRuntime.iOS-")))
+    | sort_by(.key)
+    | reverse
+    | map(.value[] | select(.isAvailable == true and (.name | startswith("iPhone"))))
+    | .[0].udid // empty
+  '
+)
+if [ -z "$SIM_ID" ]; then
+  echo "No available iPhone simulator found."
+  exit 1
+fi
+xcrun simctl boot "$SIM_ID" || true
+xcrun simctl bootstatus "$SIM_ID" -b
+xcodebuild \
+  -project src/ios-user-app/MenuFitUserApp.xcodeproj \
+  -scheme MenuFitUserApp \
+  -destination "platform=iOS Simulator,id=$SIM_ID" \
+  test CODE_SIGNING_ALLOWED=NO
+```

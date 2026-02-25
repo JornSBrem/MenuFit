@@ -38,11 +38,17 @@
     - Lock acquire/timeout/stale-reclaim metrics zijn zichtbaar in operationele dashboards.
     - Alerts bestaan voor verhoogde lock contention en timeouts.
 
-- [ ] WI-215 | type:chore | priority:P3 | status:TODO | title:iOS UI testautomatisering via Xcode simulator in CI
-  - context: Teststrategie-plan sluit volledige mobile UI test automation expliciet uit.
+- [ ] WI-228 | type:chore | priority:P3 | status:TODO | title:Uitgebreide iOS E2E testsuite met backend mocks en netwerkvirtualisatie
+  - context: WI-215 levert alleen baseline UI smoke automation; volledige mobiele E2E suite met gecontroleerde backend-/netwerksimulatie bleef out-of-scope.
   - acceptance:
-    - Baseline iOS UI smoke-tests draaien geautomatiseerd op simulator in CI.
-    - Regressies op primaire flow (Week -> Match -> Bestellen) worden in pipeline gedetecteerd.
+    - iOS testsuite dekt kernscenario's en foutpaden met deterministische backend mocks.
+    - Netwerkvirtualisatie voorkomt flaky tests door externe afhankelijkheden.
+
+- [ ] WI-229 | type:chore | priority:P3 | status:TODO | title:Visual regression snapshot tooling voor iOS UI
+  - context: WI-215 sluit visual regression snapshot tooling expliciet uit.
+  - acceptance:
+    - Snapshot-baseline voor kernschermen kan geautomatiseerd vergeleken worden in CI.
+    - Regressies op layout/styling leveren expliciete diffs en failen de quality gate.
 
 - [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
   - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
@@ -85,6 +91,12 @@
 _None_
 
 ## Done
+
+- [x] WI-215 | type:chore | priority:P3 | status:DONE | title:iOS UI testautomatisering via Xcode simulator in CI
+  - context: Teststrategie-plan sluit volledige mobile UI test automation expliciet uit.
+  - acceptance:
+    - Baseline iOS UI smoke-tests draaien geautomatiseerd op simulator in CI.
+    - Regressies op primaire flow (Week -> Match -> Bestellen) worden in pipeline gedetecteerd.
 
 - [x] WI-214 | type:chore | priority:P2 | status:DONE | title:Distributed locking en multi-process write coördinatie
   - context: WI-206 sluit gelijktijdige multi-process write coördinatie expliciet uit.
