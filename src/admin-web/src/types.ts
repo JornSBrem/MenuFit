@@ -60,6 +60,7 @@ export interface AdminDataViewData {
 
 export interface AdminSettingsViewData {
   entries: AdminSettingsEntry[];
+  auditTrail: AdminConfigAuditEntry[];
 }
 
 export interface AdminExtractViewData {
@@ -69,6 +70,9 @@ export interface AdminExtractViewData {
 export interface AdminOperationsViewData {
   history: AdminOperationReport[];
   lastReport?: AdminOperationReport;
+  householdStatuses: HouseholdOperationsStatus[];
+  invitations: HouseholdInvitationRecord[];
+  sessionStatuses: UserSessionDiagnostic[];
 }
 
 export interface AdminAsyncViewState<T> {
@@ -110,10 +114,57 @@ export interface ConfigUpdateRequest {
   value: unknown;
 }
 
+export interface AdminConfigAuditEntry {
+  operationId: string;
+  key: string;
+  value: unknown;
+  updatedAt: string;
+  updatedBy: string;
+}
+
 export interface CleanupRequest {
   operationId: string;
   dryRun: boolean;
   targets: string[];
+}
+
+export interface HouseholdOperationsStatus {
+  householdId: string;
+  memberCount: number;
+  pendingInvitationCount: number;
+  updatedAt: string;
+}
+
+export interface HouseholdInvitationRecord {
+  invitationId: string;
+  householdId: string;
+  invitedUserId: string;
+  invitedByUserId: string;
+  status: "pending" | "accepted" | "revoked";
+  createdAt: string;
+  respondedAt?: string;
+}
+
+export interface UserSessionDiagnostic {
+  subjectId: string;
+  householdId: string;
+  hasActiveSession: boolean;
+  expiresAtEpochSeconds?: number;
+  lastValidatedAt: string;
+}
+
+export interface HouseholdInvitationsQuery {
+  householdId: string;
+}
+
+export interface HouseholdInviteResendRequest {
+  householdId: string;
+  invitedUserId: string;
+}
+
+export interface HouseholdSessionResetRequest {
+  householdId: string;
+  subjectId: string;
 }
 
 export interface AdminApiError {

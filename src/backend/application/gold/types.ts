@@ -12,6 +12,13 @@ export interface GoldWeekPlanView {
   generatedAt: string;
 }
 
+export interface GoldMealView {
+  mealId: string;
+  dayLabel: string;
+  mealLabel: string;
+  recipeId?: string;
+}
+
 export interface GoldGroceryTotalView {
   canonicalName: string;
   totalAmount?: number;
@@ -42,6 +49,7 @@ export interface GoldCartPlanView {
 
 export interface GoldReadModel {
   weekPlan: GoldWeekPlanView;
+  meals: GoldMealView[];
   groceries: GoldGroceryTotalView[];
   groceryReconcile: GoldGroceryReconcileView[];
   matchStatus: GoldMatchStatusView;
@@ -55,6 +63,7 @@ export interface GoldProjectionInput {
 
 export interface WeekSummaryResponse {
   weekPlan: GoldWeekPlanView;
+  meals: GoldMealView[];
   matchStatus: GoldMatchStatusView;
   cartPlan: GoldCartPlanView;
 }

@@ -64,6 +64,10 @@ final class BackendAPI {
     try await get(path: "/api/v3/match/queue")
   }
 
+  func fetchHouseholdStatus() async throws -> HouseholdStatusResponse {
+    try await get(path: "/api/v3/households/me")
+  }
+
   func evaluateMatch(body: MatchEvaluateRequestBody) async throws -> MatchWorkflowEvaluateResponse {
     try await post(path: "/api/v3/match/evaluate", body: body)
   }

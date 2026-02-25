@@ -90,6 +90,46 @@ enum L10nKey: String {
   case matchMapNeedsCandidate
   case yes
   case no
+  case onboardingTitle
+  case onboardingSubtitle
+  case onboardingTokenLabel
+  case onboardingSubjectLabel
+  case onboardingPicnicLabel
+  case onboardingHouseholdLabel
+  case onboardingExpiryLabel
+  case onboardingStartSessionButton
+  case onboardingRefreshSessionButton
+  case onboardingClearSessionButton
+  case onboardingSessionExpiredTitle
+  case onboardingSessionExpiredMessage
+  case onboardingSessionReadyButton
+  case onboardingTokenRequired
+  case onboardingSubjectRequired
+  case onboardingPicnicRequired
+  case onboardingHouseholdRequired
+  case onboardingExpiryInvalid
+  case householdMembersSection
+  case weekMenuSection
+  case todayMenuSection
+  case weekPreviousButton
+  case weekNextButton
+  case selectedMemberLabel
+  case noMealsForSelectedDay
+  case weekDaysSection
+  case groceriesProgress
+  case groceriesOpenSection
+  case groceriesCompletedSection
+  case groceriesCategoryOther
+  case orderPreflightSection
+  case orderExpectedAction
+  case orderExpectedActionExecute
+  case orderExpectedActionReview
+  case orderConfirmSyncButton
+  case orderSyncStatusSection
+  case orderSyncSuccess
+  case orderSyncPartial
+  case orderSyncFailed
+  case orderRecoveryRetryButton
 }
 
 struct AppStrings {
@@ -181,6 +221,46 @@ struct AppStrings {
     .matchMapNeedsCandidate: "Map actie vereist een (suggested) candidate.",
     .yes: "ja",
     .no: "nee",
+    .onboardingTitle: "Welkom bij MenuFit",
+    .onboardingSubtitle: "Voer je sessiegegevens in om je weekmenu en boodschappen te laden.",
+    .onboardingTokenLabel: "Access token",
+    .onboardingSubjectLabel: "Gebruiker ID",
+    .onboardingPicnicLabel: "Picnic account ID",
+    .onboardingHouseholdLabel: "Huishouden ID",
+    .onboardingExpiryLabel: "Token expiry (epoch, optioneel)",
+    .onboardingStartSessionButton: "Start sessie",
+    .onboardingRefreshSessionButton: "Sessie vernieuwen",
+    .onboardingClearSessionButton: "Verwijder sessie",
+    .onboardingSessionExpiredTitle: "Sessie verlopen",
+    .onboardingSessionExpiredMessage: "Je opgeslagen sessie is verlopen. Vernieuw je token om door te gaan.",
+    .onboardingSessionReadyButton: "Ga verder",
+    .onboardingTokenRequired: "Access token is verplicht.",
+    .onboardingSubjectRequired: "Gebruiker ID is verplicht.",
+    .onboardingPicnicRequired: "Picnic account ID is verplicht.",
+    .onboardingHouseholdRequired: "Huishouden ID is verplicht.",
+    .onboardingExpiryInvalid: "Token expiry moet een geldig positief geheel getal zijn.",
+    .householdMembersSection: "Gezin",
+    .weekMenuSection: "Weekmenu",
+    .todayMenuSection: "Dagmenu",
+    .weekPreviousButton: "Vorige week",
+    .weekNextButton: "Volgende week",
+    .selectedMemberLabel: "Actief profiel: %@",
+    .noMealsForSelectedDay: "Geen menu-items voor deze dag.",
+    .weekDaysSection: "Dagen",
+    .groceriesProgress: "Afgerond: %d/%d",
+    .groceriesOpenSection: "Open",
+    .groceriesCompletedSection: "Klaar",
+    .groceriesCategoryOther: "Overig",
+    .orderPreflightSection: "Bestelcontrole",
+    .orderExpectedAction: "Verwachte actie: %@",
+    .orderExpectedActionExecute: "Direct syncen naar Picnic",
+    .orderExpectedActionReview: "Eerst open issues controleren",
+    .orderConfirmSyncButton: "Bevestig en sync",
+    .orderSyncStatusSection: "Sync status",
+    .orderSyncSuccess: "Bestelling succesvol gesynchroniseerd.",
+    .orderSyncPartial: "Sync deels gelukt: sommige items zijn niet verwerkt.",
+    .orderSyncFailed: "Sync mislukt. Controleer je verbinding en probeer opnieuw.",
+    .orderRecoveryRetryButton: "Opnieuw proberen",
   ]
 
   static func text(_ key: L10nKey, _ arguments: CVarArg...) -> String {

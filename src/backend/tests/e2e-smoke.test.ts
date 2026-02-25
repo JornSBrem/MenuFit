@@ -79,6 +79,7 @@ test("e2e smoke: household -> week -> match -> cart -> system operations", async
         transformVersion: "gold-v1",
         generatedAt: "2026-02-25T00:30:00.000Z",
       },
+      meals: [],
       groceries: [
         {
           canonicalName: "volkoren pasta",

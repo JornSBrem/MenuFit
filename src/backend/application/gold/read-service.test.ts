@@ -24,6 +24,7 @@ test("gold read service persists and reloads week models", () => {
         transformVersion: "gold-v1",
         generatedAt: "2026-02-25T00:00:00.000Z",
       },
+      meals: [],
       groceries: [],
       groceryReconcile: [],
       matchStatus: {
@@ -63,6 +64,7 @@ test("gold read service derives dynamic kcal profile from closest baseline", () 
       transformVersion: "gold-v1",
       generatedAt: "2026-02-25T00:00:00.000Z",
     },
+    meals: [],
     groceries: [
       {
         canonicalName: "volkoren pasta",
@@ -118,6 +120,7 @@ test("gold read service uses deterministic tie-break and keeps not-found boundar
       transformVersion: "gold-v1",
       generatedAt: "2026-02-25T00:00:00.000Z",
     },
+    meals: [],
     groceries: [],
     groceryReconcile: [],
     matchStatus: {
@@ -146,6 +149,7 @@ test("gold read service uses deterministic tie-break and keeps not-found boundar
       transformVersion: "gold-v1",
       generatedAt: "2026-02-25T00:00:00.000Z",
     },
+    meals: [],
     groceries: [],
     groceryReconcile: [],
     matchStatus: {

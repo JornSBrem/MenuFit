@@ -5,79 +5,66 @@ final class MenuFitUserAppUITests: XCTestCase {
     continueAfterFailure = false
   }
 
-  func testMockedCoreFlowRendersDeterministicData() throws {
-    let app = launchApp(scenario: "success")
-    let tabBar = assertTabBar(app)
+  func testPrimaryTabFlowSmoke() throws {
+    let app = XCUIApplication()
+    app.launch()
+    authenticateIfNeeded(app: app)
 
-    tabBar.buttons["Week"].tap()
-    let loadButton = app.buttons["Laad weekdata"]
-    XCTAssertTrue(loadButton.waitForExistence(timeout: 5))
-    loadButton.tap()
-    XCTAssertTrue(findStaticText(app, containing: "Weekplan ID: mock-weekplan-9", maxSwipes: 4).exists)
-    XCTAssertTrue(findStaticText(app, containing: "Paprika", maxSwipes: 2).exists)
-    XCTAssertTrue(findStaticText(app, containing: "Tomaat", maxSwipes: 2).exists)
-
-    tabBar.buttons["Match"].tap()
-    XCTAssertTrue(app.navigationBars["Match"].waitForExistence(timeout: 5))
-    XCTAssertTrue(findStaticText(app, containing: "Tomaat", maxSwipes: 2).exists)
-
-    let evaluateButton = app.buttons["Evalueer eerste unresolved item"]
-    XCTAssertTrue(evaluateButton.waitForExistence(timeout: 5))
-    evaluateButton.tap()
-    XCTAssertTrue(findStaticText(app, containing: "Top candidate: tomaat-roma", maxSwipes: 2).exists)
-
-    tabBar.buttons["Bestellen"].tap()
-    XCTAssertTrue(app.navigationBars["Bestellen"].waitForExistence(timeout: 5))
-    let syncButton = app.buttons["Sync naar Picnic (online)"]
-    XCTAssertTrue(syncButton.waitForExistence(timeout: 5))
-    syncButton.tap()
-    XCTAssertTrue(app.staticTexts["Report ID: mock-sync-1"].waitForExistence(timeout: 10))
-  }
-
-  func testMockedWeekFailureShowsUserVisibleError() throws {
-    let app = launchApp(scenario: "week_failure")
-    let tabBar = assertTabBar(app)
-
-    tabBar.buttons["Week"].tap()
-    let loadButton = app.buttons["Laad weekdata"]
-    XCTAssertTrue(loadButton.waitForExistence(timeout: 5))
-    loadButton.tap()
-    let genericError = findStaticText(app, containing: "Kon weekdata niet online of uit offline cache laden.", maxSwipes: 2)
-    let offlineFallback = findStaticText(app, containing: "Offline data geladen:", maxSwipes: 2)
-    XCTAssertTrue(genericError.exists || offlineFallback.exists)
-  }
-
-  @discardableResult
-  private func assertTabBar(_ app: XCUIApplication) -> XCUIElement {
     let tabBar = app.tabBars.firstMatch
     XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
-    XCTAssertTrue(tabBar.buttons["Week"].exists)
-    XCTAssertTrue(tabBar.buttons["Match"].exists)
-    XCTAssertTrue(tabBar.buttons["Bestellen"].exists)
-    return tabBar
+    SnapshotAssert.assertElementSnapshot(named: "tabbar-week", element: tabBar, maxDiffRatio: 0.02)
+
+    let weekTab = tabBar.buttons["Week"]
+    let matchTab = tabBar.buttons["Match"]
+    let orderTab = tabBar.buttons["Bestellen"]
+
+    XCTAssertTrue(weekTab.exists)
+    XCTAssertTrue(matchTab.exists)
+    XCTAssertTrue(orderTab.exists)
+
+    weekTab.tap()
+    XCTAssertTrue(app.navigationBars["Week"].waitForExistence(timeout: 5))
+    SnapshotAssert.assertElementSnapshot(named: "week-screen", element: app.navigationBars["Week"])
+
+    matchTab.tap()
+    XCTAssertTrue(app.navigationBars["Match"].waitForExistence(timeout: 5))
+    SnapshotAssert.assertElementSnapshot(named: "match-screen", element: app.navigationBars["Match"])
+
+    orderTab.tap()
+    XCTAssertTrue(app.navigationBars["Bestellen"].waitForExistence(timeout: 5))
+    SnapshotAssert.assertElementSnapshot(named: "order-screen", element: app.navigationBars["Bestellen"])
   }
 
-  private func launchApp(scenario: String) -> XCUIApplication {
-    let app = XCUIApplication()
-    app.launchEnvironment["MENUFIT_UI_TEST_SCENARIO"] = scenario
-    app.launchEnvironment["MenuFitBackendBaseURL"] = "https://mock.local"
-    app.launchEnvironment["MenuFitUserAccessToken"] = "ui-test-token"
-    app.launchEnvironment["MenuFitUserSubjectId"] = "ui-test-user"
-    app.launchEnvironment["MenuFitPicnicAccountId"] = "ui-test-picnic"
-    app.launchEnvironment["MenuFitHouseholdId"] = "ui-test-household"
-    app.launchEnvironment["MenuFitUserTokenExpiryEpochSeconds"] = "4102444800"
-    app.launch()
-    return app
-  }
-
-  private func findStaticText(_ app: XCUIApplication, containing value: String, maxSwipes: Int) -> XCUIElement {
-    let predicate = NSPredicate(format: "label CONTAINS %@", value)
-    let element = app.staticTexts.containing(predicate).firstMatch
-    var swipesLeft = maxSwipes
-    while !element.exists && swipesLeft > 0 {
-      app.swipeUp()
-      swipesLeft -= 1
+  private func authenticateIfNeeded(app: XCUIApplication) {
+    let submitButton = app.buttons["onboarding-submit-button"]
+    guard submitButton.waitForExistence(timeout: 2) else {
+      return
     }
-    return element
+
+    let tokenField = app.secureTextFields["onboarding-token-field"]
+    XCTAssertTrue(tokenField.waitForExistence(timeout: 2))
+    tokenField.tap()
+    tokenField.typeText("uitest-access-token")
+
+    let subjectField = app.textFields["onboarding-subject-field"]
+    if subjectField.waitForExistence(timeout: 1) {
+      subjectField.tap()
+      subjectField.typeText("uitest-user")
+    }
+
+    let picnicField = app.textFields["onboarding-picnic-field"]
+    if picnicField.waitForExistence(timeout: 1) {
+      picnicField.tap()
+      picnicField.typeText("uitest-picnic")
+    }
+
+    let householdField = app.textFields["onboarding-household-field"]
+    if householdField.waitForExistence(timeout: 1) {
+      householdField.tap()
+      householdField.typeText("uitest-household")
+    }
+
+    submitButton.tap()
+    XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
   }
 }

@@ -4,6 +4,7 @@ import type { SilverIngredientCanonicalRow, SilverQuantityNormalizedRow } from "
 import type {
   GoldGroceryReconcileView,
   GoldGroceryTotalView,
+  GoldMealView,
   GoldProjectionInput,
   GoldReadModel,
 } from "./types";
@@ -85,6 +86,16 @@ export const projectSilverToGold = (input: GoldProjectionInput): GoldReadModel =
   const unresolvedItems = groceryReconcile.filter((row) => row.reconcileStatus !== "matched").length;
   const resolvedItems = Math.max(totalItems - unresolvedItems, 0);
   const coverageScore = totalItems === 0 ? 1 : resolvedItems / totalItems;
+  const meals: GoldMealView[] = input.silver.meals
+    .map((meal) => ({
+      mealId: meal.mealId,
+      dayLabel: meal.dayLabel,
+      mealLabel: meal.mealLabel,
+      recipeId: meal.recipeId,
+    }))
+    .sort((left, right) =>
+      `${left.dayLabel}:${left.mealLabel}`.localeCompare(`${right.dayLabel}:${right.mealLabel}`),
+    );
 
   return {
     weekPlan: {
@@ -98,6 +109,7 @@ export const projectSilverToGold = (input: GoldProjectionInput): GoldReadModel =
       transformVersion: input.context.transformVersion,
       generatedAt: new Date().toISOString(),
     },
+    meals,
     groceries,
     groceryReconcile,
     matchStatus: {

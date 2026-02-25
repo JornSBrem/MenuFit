@@ -43,6 +43,7 @@ export class GoldWeekReadService {
 
     return {
       weekPlan: model.weekPlan,
+      meals: model.meals,
       matchStatus: model.matchStatus,
       cartPlan: model.cartPlan,
     };

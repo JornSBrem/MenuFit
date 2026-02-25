@@ -6,6 +6,72 @@ struct WeekScreen: View {
   var body: some View {
     NavigationView {
       List {
+        Section(AppStrings.text(.householdMembersSection)) {
+          ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+              ForEach(viewModel.householdMembers) { member in
+                Button(member.userId) {
+                  viewModel.selectMember(member.userId)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(viewModel.selectedMemberId == member.userId ? .blue : .gray)
+              }
+            }
+            .padding(.vertical, 4)
+          }
+          Text(AppStrings.text(.selectedMemberLabel, viewModel.selectedMemberId))
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+
+        Section(AppStrings.text(.weekMenuSection)) {
+          HStack {
+            Button(AppStrings.text(.weekPreviousButton)) {
+              viewModel.goToPreviousWeek()
+            }
+            Spacer()
+            Text("J\(viewModel.selection.year) • W\(viewModel.selection.week)")
+              .font(.headline)
+            Spacer()
+            Button(AppStrings.text(.weekNextButton)) {
+              viewModel.goToNextWeek()
+            }
+          }
+        }
+
+        Section(AppStrings.text(.weekDaysSection)) {
+          ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+              ForEach(viewModel.availableDayLabels, id: \.self) { dayLabel in
+                Button(dayLabel.capitalized) {
+                  viewModel.selectDay(dayLabel)
+                }
+                .buttonStyle(.bordered)
+                .tint(viewModel.selectedDayLabel == dayLabel ? .blue : .gray)
+              }
+            }
+            .padding(.vertical, 4)
+          }
+        }
+
+        Section("\(AppStrings.text(.todayMenuSection)): \(viewModel.selectedDayLabel.capitalized)") {
+          if viewModel.selectedDayMeals.isEmpty {
+            Text(AppStrings.text(.noMealsForSelectedDay))
+              .foregroundColor(.secondary)
+          } else {
+            ForEach(viewModel.selectedDayMeals) { meal in
+              VStack(alignment: .leading, spacing: 4) {
+                Text(meal.mealLabel)
+                if let recipeId = meal.recipeId, !recipeId.isEmpty {
+                  Text(recipeId)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+              }
+            }
+          }
+        }
+
         Section(AppStrings.text(.weekSettingsSection)) {
           Stepper(
             AppStrings.text(.yearStepper, viewModel.selection.year),
@@ -79,16 +145,39 @@ struct WeekScreen: View {
           }
         }
 
-        if let groceries = viewModel.groceries {
+        if viewModel.groceries != nil {
           Section(AppStrings.text(.groceriesSection)) {
-            ForEach(groceries.groceries) { item in
-              VStack(alignment: .leading, spacing: 4) {
-                Text(item.canonicalName)
-                Text(
-                  "\(item.totalAmount.map { String(format: "%.2f", $0) } ?? "-") \(item.unit ?? "")"
-                )
-                .font(.caption)
-                .foregroundColor(.secondary)
+            let progress = viewModel.groceryProgress
+            Text(AppStrings.text(.groceriesProgress, progress.done, progress.total))
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+
+            ForEach(viewModel.groceryGroups.keys.sorted(), id: \.self) { category in
+              let items = viewModel.groceryGroups[category] ?? []
+              let openItems = items.filter { !viewModel.isGroceryChecked($0.canonicalName) }
+              let doneItems = items.filter { viewModel.isGroceryChecked($0.canonicalName) }
+
+              VStack(alignment: .leading, spacing: 8) {
+                Text(category)
+                  .font(.headline)
+
+                if !openItems.isEmpty {
+                  Text(AppStrings.text(.groceriesOpenSection))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                  ForEach(openItems) { item in
+                    groceryRow(item: item, checked: false)
+                  }
+                }
+
+                if !doneItems.isEmpty {
+                  Text(AppStrings.text(.groceriesCompletedSection))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                  ForEach(doneItems) { item in
+                    groceryRow(item: item, checked: true)
+                  }
+                }
               }
             }
           }
@@ -96,5 +185,28 @@ struct WeekScreen: View {
       }
       .navigationTitle(AppStrings.text(.weekNavigationTitle))
     }
+  }
+
+  @ViewBuilder
+  private func groceryRow(item: GoldGroceryTotalView, checked: Bool) -> some View {
+    Button {
+      viewModel.toggleGroceryChecked(item.canonicalName)
+    } label: {
+      HStack(alignment: .top, spacing: 10) {
+        Image(systemName: checked ? "checkmark.circle.fill" : "circle")
+          .foregroundColor(checked ? .green : .gray)
+
+        VStack(alignment: .leading, spacing: 4) {
+          Text(item.canonicalName)
+            .strikethrough(checked)
+          Text(
+            "\(item.totalAmount.map { String(format: "%.2f", $0) } ?? "-") \(item.unit ?? "")"
+          )
+          .font(.caption)
+          .foregroundColor(.secondary)
+        }
+      }
+    }
+    .buttonStyle(.plain)
   }
 }

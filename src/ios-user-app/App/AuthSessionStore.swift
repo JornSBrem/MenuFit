@@ -4,6 +4,12 @@ protocol AccessTokenProvider {
   func accessToken() throws -> String
 }
 
+enum AuthSessionState {
+  case missing
+  case expired(UserAuthSession)
+  case valid(UserAuthSession)
+}
+
 enum AuthSessionStoreError: Error, LocalizedError {
   case missingSession
   case expiredSession
@@ -50,6 +56,16 @@ final class AuthSessionStore: AccessTokenProvider {
       throw AuthSessionStoreError.expiredSession
     }
     return session.accessToken
+  }
+
+  func currentState() -> AuthSessionState {
+    guard let session else {
+      return .missing
+    }
+    if let expiry = session.expiresAtEpochSeconds, expiry <= nowEpochSeconds() {
+      return .expired(session)
+    }
+    return .valid(session)
   }
 
   func save(session: UserAuthSession) {

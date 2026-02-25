@@ -5,6 +5,7 @@ export type {
   GoldGroceryReconcileView,
   GoldGroceryTotalView,
   GoldMatchStatusView,
+  GoldMealView,
   GoldProjectionInput,
   GoldReadModel,
   GoldWeekPlanView,

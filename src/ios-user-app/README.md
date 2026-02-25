@@ -87,24 +87,42 @@ xcodebuild \
   test CODE_SIGNING_ALLOWED=NO
 ```
 
-## WI-228 Deterministische E2E met Netwerkvirtualisatie
+## WI-229 Visual Regression Snapshots
 
-- `App/UITestNetworkMock.swift` voegt URLProtocol-gebaseerde mockresponses toe voor:
-  - `/api/v3/week/summary`
-  - `/api/v3/week/groceries`
-  - `/api/v3/match/queue`
-  - `/api/v3/match/evaluate`
-  - `/api/v3/match/review-action`
-  - `/api/v3/cart/sync`
-- Activatie via launch environment `MENUFIT_UI_TEST_SCENARIO`:
-  - `success`: complete primaire flow met deterministic data
-  - `week_failure`: simuleert fout op week summary endpoint
-- `AppEnvironment` accepteert runtime overrides via process environment voor:
-  - `MenuFitBackendBaseURL`
-  - `MenuFitUserAccessToken`
-  - `MenuFitUserSubjectId`
-  - `MenuFitPicnicAccountId`
-  - `MenuFitHouseholdId`
-  - `MenuFitUserTokenExpiryEpochSeconds`
-- UI-tests zetten `MenuFitBackendBaseURL=https://mock.local`; requests naar `mock.local` worden onderschept door de mock URLProtocol zodat de suite geen externe backend nodig heeft.
-- In UITest-mode gebruikt de app een geïsoleerde `UserDefaults` suite (`menufit.ui-tests`) om sessiestate deterministisch te houden tussen runs.
+- Snapshot helper: `UITests/SnapshotAssert.swift`
+- Baseline files: `UITests/Snapshots/*.png`
+- UI smoke test (`UITests/MenuFitUserAppUITests.swift`) vergelijkt snapshots van:
+  - tab bar in week context
+  - week navigation bar
+  - match navigation bar
+  - bestellen navigation bar
+
+Lokale baseline opname:
+
+```bash
+MENUFIT_SNAPSHOT_RECORD=1 xcodebuild \
+  -project src/ios-user-app/MenuFitUserApp.xcodeproj \
+  -scheme MenuFitUserApp \
+  -destination "platform=iOS Simulator,id=$SIM_ID" \
+  test CODE_SIGNING_ALLOWED=NO
+```
+
+Zonder `MENUFIT_SNAPSHOT_RECORD` draait de test in verify mode en faalt CI bij visuele afwijkingen.
+
+## WI-242 Onboarding en sessie-herstel
+
+- App root gebruikt een auth-gate:
+  - geen sessie -> onboarding/sessie startscherm
+  - verlopen sessie -> sessie-herstel scherm met expliciete vernieuwactie
+  - geldige sessie -> normale tabflow (Week/Match/Bestellen)
+- Onboarding schrijft een `UserAuthSession` naar `AuthSessionStore`; daarna start de app automatisch de eerste data-load.
+- UI smoke test ondersteunt beide paden en voert onboarding alleen uit wanneer dit scherm zichtbaar is.
+
+## WI-243 Weekmenu-first home-flow
+
+- `WeekScreen` focust op weekmenu consumptie:
+  - gekoppelde gezinsleden bovenin selecteerbaar op `userId`
+  - vorige/volgende week navigatieknoppen
+  - dagtabs met standaard focus op de dag van vandaag
+  - dagmenu-items op basis van `summary.meals`
+- Household context wordt opgehaald via `GET /api/v3/households/me`.

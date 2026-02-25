@@ -1,4 +1,5 @@
 import type {
+  AdminConfigAuditEntry,
   AdminApiError,
   AdminAsyncViewState,
   AdminDashboardUiState,
@@ -8,10 +9,16 @@ import type {
   ApiEnvelope,
   CleanupRequest,
   ConfigUpdateRequest,
+  HouseholdInvitationRecord,
+  HouseholdInvitationsQuery,
+  HouseholdInviteResendRequest,
+  HouseholdOperationsStatus,
+  HouseholdSessionResetRequest,
   IngestRequest,
   RecomputeRequest,
   SystemDiagnosticsSummary,
   SystemJobRecord,
+  UserSessionDiagnostic,
 } from "./types.ts";
 
 export interface AdminDashboardApi {
@@ -21,6 +28,17 @@ export interface AdminDashboardApi {
   runCleanup(body: CleanupRequest): Promise<ApiEnvelope<AdminOperationReport>>;
   getDiagnostics(): Promise<ApiEnvelope<SystemDiagnosticsSummary>>;
   getJobs(): Promise<ApiEnvelope<SystemJobRecord[]>>;
+  listHouseholdStatuses(): Promise<ApiEnvelope<HouseholdOperationsStatus[]>>;
+  listHouseholdInvitations(
+    query: HouseholdInvitationsQuery,
+  ): Promise<ApiEnvelope<HouseholdInvitationRecord[]>>;
+  resendHouseholdInvitation(
+    body: HouseholdInviteResendRequest,
+  ): Promise<ApiEnvelope<AdminOperationReport>>;
+  resetHouseholdSession(
+    body: HouseholdSessionResetRequest,
+  ): Promise<ApiEnvelope<AdminOperationReport>>;
+  diagnoseUserSession(subjectId: string): Promise<ApiEnvelope<UserSessionDiagnostic>>;
 }
 
 const createEmptyView = <T>(data?: T): AdminAsyncViewState<T> => ({
@@ -81,12 +99,16 @@ export class AdminDashboardController {
       data: createEmptyView(),
       settings: createEmptyView({
         entries: [],
+        auditTrail: [],
       }),
       extract: createEmptyView({
         jobs: [],
       }),
       operations: createEmptyView({
         history: [],
+        householdStatuses: [],
+        invitations: [],
+        sessionStatuses: [],
       }),
     },
   };
@@ -94,6 +116,7 @@ export class AdminDashboardController {
   private readonly operationHistory: AdminOperationReport[] = [];
 
   private readonly settingsByKey = new Map<string, AdminSettingsEntry>();
+  private readonly settingsAuditTrail: AdminConfigAuditEntry[] = [];
 
   private readonly api: AdminDashboardApi;
 
@@ -134,9 +157,11 @@ export class AdminDashboardController {
       entries.length === 0
         ? createEmptyView({
             entries: [],
+            auditTrail: this.listSettingsAuditTrail(),
           })
         : createSuccessView({
             entries,
+            auditTrail: this.listSettingsAuditTrail(),
           });
     return this.getState();
   }
@@ -165,10 +190,16 @@ export class AdminDashboardController {
       history.length === 0
         ? createEmptyView({
             history: [],
+            householdStatuses: [],
+            invitations: [],
+            sessionStatuses: [],
           })
         : createSuccessView({
             history,
             lastReport: history[history.length - 1],
+            householdStatuses: this.state.views.operations.data?.householdStatuses ?? [],
+            invitations: this.state.views.operations.data?.invitations ?? [],
+            sessionStatuses: this.state.views.operations.data?.sessionStatuses ?? [],
           });
     return this.getState();
   }
@@ -184,6 +215,12 @@ export class AdminDashboardController {
   }
 
   async updateConfig(body: ConfigUpdateRequest): Promise<AdminDashboardUiState> {
+    const validationError = this.validateConfigUpdate(body);
+    if (validationError) {
+      this.state.views.operations = createErrorView(validationError, this.state.views.operations.data);
+      return this.getState();
+    }
+
     const report = await this.executeOperation(() => this.api.updateConfig(body));
     if (report) {
       this.settingsByKey.set(body.key, {
@@ -192,6 +229,16 @@ export class AdminDashboardController {
         updatedAt: report.createdAt,
         updatedBy: report.performedBy,
       });
+      this.settingsAuditTrail.push({
+        operationId: body.operationId,
+        key: body.key,
+        value: body.value,
+        updatedAt: report.createdAt,
+        updatedBy: report.performedBy,
+      });
+      if (this.settingsAuditTrail.length > 200) {
+        this.settingsAuditTrail.shift();
+      }
       await this.loadSettingsView();
     }
     return this.getState();
@@ -204,6 +251,68 @@ export class AdminDashboardController {
 
   async runDiagnostics(): Promise<AdminDashboardUiState> {
     return this.loadDataView();
+  }
+
+  async loadHouseholdOperations(householdId?: string): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.operations.data;
+    this.state.views.operations = createLoadingView(previous);
+
+    try {
+      const statuses = this.unwrapEnvelope(await this.api.listHouseholdStatuses());
+      const invitations = householdId
+        ? this.unwrapEnvelope(await this.api.listHouseholdInvitations({ householdId }))
+        : [];
+
+      const nextData = {
+        history: previous?.history ?? this.listOperationHistory(),
+        lastReport: previous?.lastReport,
+        householdStatuses: statuses,
+        invitations,
+        sessionStatuses: previous?.sessionStatuses ?? [],
+      };
+      const hasData = statuses.length > 0 || invitations.length > 0 || nextData.history.length > 0;
+      this.state.views.operations = hasData ? createSuccessView(nextData) : createEmptyView(nextData);
+    } catch (error) {
+      this.state.views.operations = createErrorView(toAdminApiError(error), previous);
+    }
+
+    return this.getState();
+  }
+
+  async resendInvitation(body: HouseholdInviteResendRequest): Promise<AdminDashboardUiState> {
+    await this.executeOperation(() => this.api.resendHouseholdInvitation(body));
+    return this.getState();
+  }
+
+  async resetSession(body: HouseholdSessionResetRequest): Promise<AdminDashboardUiState> {
+    await this.executeOperation(() => this.api.resetHouseholdSession(body));
+    return this.getState();
+  }
+
+  async diagnoseSession(subjectId: string): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.operations.data;
+    this.state.views.operations = createLoadingView(previous);
+
+    try {
+      const diagnostic = this.unwrapEnvelope(await this.api.diagnoseUserSession(subjectId));
+      const existing = previous?.sessionStatuses ?? [];
+      const merged = [
+        diagnostic,
+        ...existing.filter((entry) => entry.subjectId !== diagnostic.subjectId),
+      ];
+      const nextData = {
+        history: previous?.history ?? this.listOperationHistory(),
+        lastReport: previous?.lastReport,
+        householdStatuses: previous?.householdStatuses ?? [],
+        invitations: previous?.invitations ?? [],
+        sessionStatuses: merged,
+      };
+      this.state.views.operations = createSuccessView(nextData);
+    } catch (error) {
+      this.state.views.operations = createErrorView(toAdminApiError(error), previous);
+    }
+
+    return this.getState();
   }
 
   private async executeOperation(
@@ -243,5 +352,38 @@ export class AdminDashboardController {
     return Array.from(this.settingsByKey.values())
       .map((entry) => structuredClone(entry))
       .sort((left, right) => left.key.localeCompare(right.key));
+  }
+
+  private listSettingsAuditTrail(): AdminConfigAuditEntry[] {
+    return this.settingsAuditTrail.map((entry) => structuredClone(entry));
+  }
+
+  private validateConfigUpdate(body: ConfigUpdateRequest): AdminApiError | null {
+    const rules: Record<string, "string" | "number" | "boolean"> = {
+      "feature.toggle": "boolean",
+      "matching.highConfidenceMin": "number",
+      "matching.autoAcceptMin": "number",
+      "llm.model": "string",
+      "llm.provider": "string",
+    };
+
+    const expectedType = rules[body.key];
+    if (!expectedType) {
+      return {
+        code: "INVALID_CONFIG_KEY",
+        message: "Config key is not allowed.",
+        hint: `Allowed keys: ${Object.keys(rules).join(", ")}`,
+      };
+    }
+
+    if (typeof body.value !== expectedType) {
+      return {
+        code: "INVALID_CONFIG_VALUE",
+        message: "Config value has invalid type.",
+        hint: `Expected ${expectedType} for key ${body.key}.`,
+      };
+    }
+
+    return null;
   }
 }

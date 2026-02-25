@@ -1,5 +1,25 @@
 import Foundation
 
+enum AuthGateState {
+  case onboarding
+  case expired
+  case ready
+}
+
+enum OrderSyncOutcome {
+  case success
+  case partialFailure
+  case failed
+}
+
+struct AuthSessionDraft {
+  var accessToken: String
+  var subjectId: String
+  var picnicAccountId: String
+  var householdId: String
+  var expiresAtEpochText: String
+}
+
 @MainActor
 final class UserFlowViewModel: ObservableObject {
   @Published var selection = WeekSelection(year: 2026, week: 9, kcal: 1800, basePersons: 2)
@@ -14,26 +34,132 @@ final class UserFlowViewModel: ObservableObject {
   @Published var matchQueue: [MatchReviewQueueItem] = []
   @Published var lastMatchEvaluation: MatchWorkflowEvaluateResponse?
   @Published var lastMatchReview: MatchReviewActionResponse?
+  @Published var authGateState: AuthGateState = .onboarding
+  @Published var authDraft = AuthSessionDraft(
+    accessToken: "",
+    subjectId: "ios-user",
+    picnicAccountId: "picnic-default",
+    householdId: "default-household",
+    expiresAtEpochText: ""
+  )
+  @Published var householdMembers: [HouseholdMember] = []
+  @Published var selectedMemberId = ""
+  @Published var selectedDayLabel = ""
+  @Published var checkedGroceryItemIds = Set<String>()
 
   private let api: BackendAPI
   private let cache: OfflineCacheStore
   private let authStore: AuthSessionStore
   private let fallbackHouseholdId: String
+  private let defaults: UserDefaults
+  private var didBootstrap = false
 
   init(
     api: BackendAPI,
     cache: OfflineCacheStore,
     authStore: AuthSessionStore,
+    defaults: UserDefaults = .standard,
     fallbackHouseholdId: String = "default-household"
   ) {
     self.api = api
     self.cache = cache
     self.authStore = authStore
+    self.defaults = defaults
     self.authSession = authStore.session
     self.fallbackHouseholdId = fallbackHouseholdId
+    refreshAuthState()
+  }
+
+  func bootstrapIfNeeded() async {
+    guard authGateState == .ready, !didBootstrap else {
+      return
+    }
+    didBootstrap = true
+    await loadHouseholdStatus()
+    await loadWeekBundle()
+    await loadMatchQueue()
+  }
+
+  func refreshAuthState() {
+    switch authStore.currentState() {
+    case .missing:
+      authSession = nil
+      authGateState = .onboarding
+      didBootstrap = false
+    case let .expired(session):
+      authSession = session
+      authGateState = .expired
+      preloadAuthDraft(from: session)
+      didBootstrap = false
+    case let .valid(session):
+      authSession = session
+      authGateState = .ready
+      preloadAuthDraft(from: session)
+    }
+  }
+
+  func saveAuthSessionFromDraft() -> Bool {
+    let token = authDraft.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+    let subjectId = authDraft.subjectId.trimmingCharacters(in: .whitespacesAndNewlines)
+    let picnicAccountId = authDraft.picnicAccountId.trimmingCharacters(in: .whitespacesAndNewlines)
+    let householdId = authDraft.householdId.trimmingCharacters(in: .whitespacesAndNewlines)
+    let expiryText = authDraft.expiresAtEpochText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !token.isEmpty else {
+      lastError = AppStrings.text(.onboardingTokenRequired)
+      return false
+    }
+    guard !subjectId.isEmpty else {
+      lastError = AppStrings.text(.onboardingSubjectRequired)
+      return false
+    }
+    guard !picnicAccountId.isEmpty else {
+      lastError = AppStrings.text(.onboardingPicnicRequired)
+      return false
+    }
+    guard !householdId.isEmpty else {
+      lastError = AppStrings.text(.onboardingHouseholdRequired)
+      return false
+    }
+
+    var expiry: Int?
+    if !expiryText.isEmpty {
+      guard let parsed = Int(expiryText), parsed > 0 else {
+        lastError = AppStrings.text(.onboardingExpiryInvalid)
+        return false
+      }
+      expiry = parsed
+    }
+
+    authStore.save(
+      session: UserAuthSession(
+        accessToken: token,
+        subjectId: subjectId,
+        picnicAccountId: picnicAccountId,
+        householdId: householdId,
+        expiresAtEpochSeconds: expiry
+      )
+    )
+
+    clearLoadedData()
+    lastError = nil
+    refreshAuthState()
+    return true
+  }
+
+  func clearAuthSession() {
+    authStore.clear()
+    clearLoadedData()
+    refreshAuthState()
+    lastError = nil
   }
 
   func loadWeekBundle() async {
+    guard authGateState == .ready else {
+      lastError = AppStrings.text(.authSessionRequired)
+      return
+    }
+
     isLoading = true
     defer { isLoading = false }
     lastError = nil
@@ -48,6 +174,8 @@ final class UserFlowViewModel: ObservableObject {
       summary = summaryPayload
       groceries = groceriesPayload
       isUsingOfflineCache = false
+      updateDaySelectionAfterWeekLoad()
+      loadChecklistProgress()
 
       let bundle = CachedWeekBundle(
         selection: selection,
@@ -62,6 +190,8 @@ final class UserFlowViewModel: ObservableObject {
         summary = cached.summary
         groceries = cached.groceries
         isUsingOfflineCache = true
+        updateDaySelectionAfterWeekLoad()
+        loadChecklistProgress()
         lastError = AppStrings.text(.offlineDataLoaded, error.localizedDescription)
       } catch {
         lastError = AppStrings.text(.loadWeekOnlineOrOfflineFailed)
@@ -69,7 +199,77 @@ final class UserFlowViewModel: ObservableObject {
     }
   }
 
+  func selectMember(_ memberId: String) {
+    guard selectedMemberId != memberId else {
+      return
+    }
+    selectedMemberId = memberId
+    checkedGroceryItemIds = []
+    Task {
+      await loadWeekBundle()
+    }
+  }
+
+  func selectDay(_ dayLabel: String) {
+    selectedDayLabel = dayLabel
+  }
+
+  func goToPreviousWeek() {
+    if selection.week == 1 {
+      selection.week = 53
+      selection.year -= 1
+    } else {
+      selection.week -= 1
+    }
+    checkedGroceryItemIds = []
+    Task {
+      await loadWeekBundle()
+    }
+  }
+
+  func goToNextWeek() {
+    if selection.week >= 53 {
+      selection.week = 1
+      selection.year += 1
+    } else {
+      selection.week += 1
+    }
+    checkedGroceryItemIds = []
+    Task {
+      await loadWeekBundle()
+    }
+  }
+
+  func toggleGroceryChecked(_ groceryName: String) {
+    if checkedGroceryItemIds.contains(groceryName) {
+      checkedGroceryItemIds.remove(groceryName)
+    } else {
+      checkedGroceryItemIds.insert(groceryName)
+    }
+    persistChecklistProgress()
+  }
+
+  func isGroceryChecked(_ groceryName: String) -> Bool {
+    checkedGroceryItemIds.contains(groceryName)
+  }
+
+  var groceryProgress: (done: Int, total: Int) {
+    let total = groceries?.groceries.count ?? 0
+    let done = checkedGroceryItemIds.count
+    return (done, total)
+  }
+
+  var groceryGroups: [String: [GoldGroceryTotalView]] {
+    let items = groceries?.groceries ?? []
+    return Dictionary(grouping: items, by: { groceryCategory(for: $0.canonicalName) })
+  }
+
   func syncCartOnlineOnly() async {
+    guard authGateState == .ready else {
+      lastError = AppStrings.text(.authSessionRequired)
+      return
+    }
+
     lastError = nil
     guard let summary, let groceries else {
       lastError = AppStrings.text(.loadWeekFirst)
@@ -97,11 +297,40 @@ final class UserFlowViewModel: ObservableObject {
     do {
       lastSyncReport = try await api.syncCart(body: request)
     } catch {
+      lastSyncReport = nil
       lastError = AppStrings.text(.cartSyncFailedOnlineOnly, error.localizedDescription)
     }
   }
 
+  var orderExpectedActionText: String {
+    guard let summary else {
+      return AppStrings.text(.orderExpectedActionReview)
+    }
+    if summary.cartPlan.unresolvedCount > 0 {
+      return AppStrings.text(.orderExpectedActionReview)
+    }
+    return AppStrings.text(.orderExpectedActionExecute)
+  }
+
+  var orderSyncOutcome: OrderSyncOutcome? {
+    if let report = lastSyncReport {
+      if report.failedCount > 0 {
+        return .partialFailure
+      }
+      return .success
+    }
+    if lastError != nil {
+      return .failed
+    }
+    return nil
+  }
+
   func loadMatchQueue() async {
+    guard authGateState == .ready else {
+      lastError = AppStrings.text(.authSessionRequired)
+      return
+    }
+
     isMatchLoading = true
     defer { isMatchLoading = false }
     lastError = nil
@@ -114,6 +343,11 @@ final class UserFlowViewModel: ObservableObject {
   }
 
   func evaluateFirstUnresolvedMatch() async {
+    guard authGateState == .ready else {
+      lastError = AppStrings.text(.authSessionRequired)
+      return
+    }
+
     isMatchLoading = true
     defer { isMatchLoading = false }
     lastError = nil
@@ -148,6 +382,11 @@ final class UserFlowViewModel: ObservableObject {
   }
 
   func applyMatchAction(item: MatchReviewQueueItem, action: String) async {
+    guard authGateState == .ready else {
+      lastError = AppStrings.text(.authSessionRequired)
+      return
+    }
+
     isMatchLoading = true
     defer { isMatchLoading = false }
     lastError = nil
@@ -221,5 +460,160 @@ final class UserFlowViewModel: ObservableObject {
       .lowercased()
       .replacingOccurrences(of: "[^a-z0-9]+", with: "-", options: .regularExpression)
       .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+  }
+
+  private func preloadAuthDraft(from session: UserAuthSession) {
+    authDraft = AuthSessionDraft(
+      accessToken: session.accessToken,
+      subjectId: session.subjectId,
+      picnicAccountId: session.picnicAccountId,
+      householdId: session.householdId,
+      expiresAtEpochText: session.expiresAtEpochSeconds.map(String.init) ?? ""
+    )
+  }
+
+  private func clearLoadedData() {
+    summary = nil
+    groceries = nil
+    matchQueue = []
+    lastSyncReport = nil
+    lastMatchEvaluation = nil
+    lastMatchReview = nil
+    isUsingOfflineCache = false
+    householdMembers = []
+    selectedMemberId = ""
+    selectedDayLabel = ""
+    checkedGroceryItemIds = []
+    didBootstrap = false
+  }
+
+  private func loadHouseholdStatus() async {
+    guard authGateState == .ready else {
+      return
+    }
+
+    do {
+      let response = try await api.fetchHouseholdStatus()
+      let members = response.household?.members ?? []
+      householdMembers = members
+
+      if selectedMemberId.isEmpty {
+        let currentSubject = authSession?.subjectId ?? authDraft.subjectId
+        selectedMemberId = members.first(where: { $0.userId == currentSubject })?.userId
+          ?? members.first?.userId
+          ?? currentSubject
+      }
+    } catch {
+      let fallbackMember = HouseholdMember(
+        userId: authSession?.subjectId ?? authDraft.subjectId,
+        role: "head",
+        joinedAt: ""
+      )
+      householdMembers = [fallbackMember]
+      if selectedMemberId.isEmpty {
+        selectedMemberId = fallbackMember.userId
+      }
+    }
+  }
+
+  var availableDayLabels: [String] {
+    let meals = summary?.meals ?? []
+    var ordered: [String] = []
+    var seen = Set<String>()
+    for meal in meals {
+      if seen.insert(meal.dayLabel).inserted {
+        ordered.append(meal.dayLabel)
+      }
+    }
+    return ordered
+  }
+
+  var selectedDayMeals: [GoldWeekMealView] {
+    guard !selectedDayLabel.isEmpty else {
+      return []
+    }
+    return (summary?.meals ?? []).filter { normalizeDayLabel($0.dayLabel) == normalizeDayLabel(selectedDayLabel) }
+  }
+
+  private func updateDaySelectionAfterWeekLoad() {
+    let dayLabels = availableDayLabels
+    guard !dayLabels.isEmpty else {
+      selectedDayLabel = todayDayLabel()
+      return
+    }
+
+    if dayLabels.contains(where: { normalizeDayLabel($0) == normalizeDayLabel(selectedDayLabel) }) {
+      return
+    }
+
+    if let todayMatch = dayLabels.first(where: { normalizeDayLabel($0) == normalizeDayLabel(todayDayLabel()) }) {
+      selectedDayLabel = todayMatch
+    } else {
+      selectedDayLabel = dayLabels[0]
+    }
+  }
+
+  private func todayDayLabel() -> String {
+    let weekday = Calendar(identifier: .gregorian).component(.weekday, from: Date())
+    switch weekday {
+    case 2: return "maandag"
+    case 3: return "dinsdag"
+    case 4: return "woensdag"
+    case 5: return "donderdag"
+    case 6: return "vrijdag"
+    case 7: return "zaterdag"
+    case 1: return "zondag"
+    default: return "maandag"
+    }
+  }
+
+  private func normalizeDayLabel(_ value: String) -> String {
+    value
+      .lowercased()
+      .folding(options: [.diacriticInsensitive, .widthInsensitive], locale: Locale(identifier: "nl_NL"))
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  private func checklistStorageKey() -> String? {
+    guard let weekPlanId = summary?.weekPlan.weekPlanId else {
+      return nil
+    }
+    let member = selectedMemberId.isEmpty ? (authSession?.subjectId ?? "default-member") : selectedMemberId
+    return "menufit.grocery-checklist.\(member).\(weekPlanId)"
+  }
+
+  private func loadChecklistProgress() {
+    guard let key = checklistStorageKey() else {
+      checkedGroceryItemIds = []
+      return
+    }
+
+    let stored = defaults.array(forKey: key) as? [String] ?? []
+    let validNames = Set((groceries?.groceries ?? []).map(\.canonicalName))
+    checkedGroceryItemIds = Set(stored).intersection(validNames)
+  }
+
+  private func persistChecklistProgress() {
+    guard let key = checklistStorageKey() else {
+      return
+    }
+    defaults.set(Array(checkedGroceryItemIds).sorted(), forKey: key)
+  }
+
+  private func groceryCategory(for canonicalName: String) -> String {
+    let value = canonicalName.lowercased()
+    if value.contains("tomaat") || value.contains("groente") || value.contains("sla") || value.contains("komkommer") {
+      return "Groente"
+    }
+    if value.contains("appel") || value.contains("banaan") || value.contains("fruit") || value.contains("citroen") {
+      return "Fruit"
+    }
+    if value.contains("melk") || value.contains("yoghurt") || value.contains("kaas") || value.contains("boter") {
+      return "Zuivel"
+    }
+    if value.contains("brood") || value.contains("pasta") || value.contains("rijst") || value.contains("meel") {
+      return "Basis"
+    }
+    return AppStrings.text(.groceriesCategoryOther)
   }
 }

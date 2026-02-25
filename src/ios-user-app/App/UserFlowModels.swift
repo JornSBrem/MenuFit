@@ -31,6 +31,7 @@ struct WeekSummaryResponse: Codable {
   let weekPlan: GoldWeekPlanView
   let matchStatus: GoldMatchStatusView
   let cartPlan: GoldCartPlanView
+  let meals: [GoldWeekMealView]?
 }
 
 struct WeekGroceriesResponse: Codable {
@@ -49,6 +50,15 @@ struct GoldWeekPlanView: Codable {
   let sourceObjectId: String
   let transformVersion: String
   let generatedAt: String
+}
+
+struct GoldWeekMealView: Codable, Identifiable {
+  let mealId: String
+  let dayLabel: String
+  let mealLabel: String
+  let recipeId: String?
+
+  var id: String { mealId }
 }
 
 struct GoldMatchStatusView: Codable {
@@ -209,6 +219,38 @@ struct MatchReviewActionResponse: Codable {
   }
 
   let queueItem: QueueItem
+}
+
+struct HouseholdStatusResponse: Codable {
+  let household: HouseholdRecord?
+  let pendingInvitations: [HouseholdInvitation]
+}
+
+struct HouseholdRecord: Codable {
+  let householdId: String
+  let createdAt: String
+  let updatedAt: String
+  let members: [HouseholdMember]
+}
+
+struct HouseholdMember: Codable, Identifiable {
+  let userId: String
+  let role: String
+  let joinedAt: String
+
+  var id: String { userId }
+}
+
+struct HouseholdInvitation: Codable, Identifiable {
+  let invitationId: String
+  let householdId: String
+  let invitedUserId: String
+  let invitedByUserId: String
+  let status: String
+  let createdAt: String
+  let respondedAt: String?
+
+  var id: String { invitationId }
 }
 
 struct CachedWeekBundle: Codable {

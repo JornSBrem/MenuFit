@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-229 | type:chore | priority:P3 | status:IN-PROGRESS | title:Visual regression snapshot tooling voor iOS UI
-  - context: WI-215 sluit visual regression snapshot tooling expliciet uit.
-  - acceptance:
-    - Snapshot-baseline voor kernschermen kan geautomatiseerd vergeleken worden in CI.
-    - Regressies op layout/styling leveren expliciete diffs en failen de quality gate.
-
 - [ ] WI-230 | type:chore | priority:P2 | status:TODO | title:Managed cloud observability provisioning als IaC
   - context: WI-222 levert compose-based externe observability stack; managed cloud provisioning (vendor-specifieke IaC) bleef out-of-scope.
   - acceptance:
@@ -116,9 +110,150 @@
     - JWT tokens worden server-side gevalideerd op handtekening, issuer, audience en expiry.
     - Sleutelrotatie (JWKS) wordt ondersteund zonder downtime.
 
+- [ ] WI-249 | type:feature | priority:P1 | status:IN-PROGRESS | title:Admin web data beheerpanelen voor recepten, weekmenu's en mapping overrides
+  - context: Voor een werkbare V1 hebben operators direct beheer nodig op kernproductdata i.p.v. alleen technische operatieschermen.
+  - acceptance:
+    - Web-app ondersteunt CRUD/workflows voor kernentiteiten (recepten, weekmenu's, mapping overrides) met veilige validatieregels.
+    - Wijzigingen zijn direct zichtbaar in user flow of via expliciete publish/recompute stap met traceerbare status.
+
+- [ ] WI-248 | type:feature | priority:P1 | status:DONE | title:Admin web configuratiepanel met runtime settings, validatie en audit
+  - context: Configuratie bestaat backendmatig maar mist een bruikbaar web-configuratiepanel voor operators.
+  - acceptance:
+    - Web-app toont configureerbare runtime-instellingen met duidelijke validatie en foutafhandeling.
+    - Wijzigingen worden versieerbaar/auditbaar vastgelegd inclusief wie/wanneer/wat.
+
+- [ ] WI-250 | type:feature | priority:P1 | status:TODO | title:iOS receptenpagina met bibliotheek, zoeken, filteren en favorieten
+  - context: Voor dagelijkse waarde moet de app naast weekmenu ook een bruikbare receptenbibliotheek bieden.
+  - acceptance:
+    - Receptenpagina toont alle bekende recepten met bruikbare lijst/kaartweergave.
+    - Gebruiker kan zoeken en filteren (bijv. type/ingrediënt/tijd) met duidelijke lege-resultaat status.
+    - Gebruiker kan recepten favoriet maken/ontfavorieten en favorieten apart terugvinden.
+
+- [ ] WI-251 | type:feature | priority:P1 | status:TODO | title:iOS receptbeheer met toevoegen en deel/privacy-instellingen
+  - context: Gebruiker moet recepten kunnen toevoegen en bewust bepalen of die privé, gedeeld met gezin of gedeeld met andere gebruikers zijn.
+  - acceptance:
+    - Gebruiker kan nieuw recept aanmaken/bewerken vanuit de app met basisvalidatie.
+    - Per recept kan zichtbaarheid ingesteld worden op `privé`, `gezin`, of `gedeeld met geselecteerde gebruikers`.
+    - Delen/privacyinstellingen worden consequent afgedwongen in receptenlijst, detail en zoekresultaten.
+
+- [ ] WI-252 | type:chore | priority:P3 | status:TODO | title:Multi-device snapshot baseline matrix voor iOS visual regression
+  - context: WI-229 sluit multi-device baseline matrices expliciet uit.
+  - acceptance:
+    - Snapshot tooling ondersteunt baseline-sets per minimaal iPhone compact en regulier formaat.
+    - CI kan per geconfigureerd device-type regressies detecteren zonder baseline-conflicten.
+
+- [ ] WI-253 | type:spike | priority:P3 | status:TODO | title:Verkenning externe visual regression service voor iOS UI
+  - context: WI-229 sluit externe visual regression services expliciet uit.
+  - acceptance:
+    - Vergelijking documenteert ten minste twee externe opties op integratiecomplexiteit, kosten en dataprivacy.
+    - Aanbeveling bevat adoptiepad inclusief rollback naar interne snapshot tooling.
+
+- [ ] WI-254 | type:feature | priority:P2 | status:TODO | title:Server-gedreven refresh token exchange voor iOS sessie-herstel
+  - context: WI-242 levert handmatige sessieherstel UX, maar automatische/server-gedreven token refresh bleef out-of-scope.
+  - acceptance:
+    - iOS flow kan verlopen access tokens vernieuwen via backend refresh endpoint zonder handmatige tokeninvoer.
+    - Fallbackpad bij refresh failure toont expliciete herauthenticatie actie zonder silent failure.
+
+- [ ] WI-255 | type:feature | priority:P2 | status:TODO | title:Member-specifieke weekmenu filtering in backend read-routes
+  - context: WI-243 levert frontend-gezinsswitch, maar backend levert nog geen member-specifieke weekmenu varianten per geselecteerde gebruiker.
+  - acceptance:
+    - Week read-routes ondersteunen member-context zodat menuresultaten per geselecteerd gezinslid kunnen verschillen.
+    - iOS member-switch toont aantoonbaar member-specifieke menu-uitkomsten i.p.v. alleen UI-contextwissel.
+
+- [ ] WI-256 | type:feature | priority:P3 | status:TODO | title:Backend-gedreven categorie/pad taxonomie voor boodschappen
+  - context: WI-244 gebruikt lokale heuristische groepering; centrale backend-taxonomie voor winkelpad/categorie bleef out-of-scope.
+  - acceptance:
+    - Backend levert gestandaardiseerde categorie/pad metadata per boodschappenitem.
+    - iOS checklist gebruikt backend-categorieën i.p.v. lokale heuristiek.
+
+- [ ] WI-257 | type:feature | priority:P3 | status:TODO | title:Cross-device sync voor checklist voortgang
+  - context: WI-244 slaat checkliststatus alleen lokaal op; synchronisatie over devices/account ontbreekt.
+  - acceptance:
+    - Afgevinkte status wordt server-side opgeslagen en op meerdere devices consistent hersteld.
+    - Conflictafhandeling bij gelijktijdige updates is gedefinieerd en getest.
+
+- [ ] WI-258 | type:feature | priority:P3 | status:TODO | title:Provider-specifieke line-item retry orchestration voor bestelfouten
+  - context: WI-245 voegt generieke retryknop toe, maar provider-specifieke retries per foutregel bleven out-of-scope.
+  - acceptance:
+    - Foute syncregels kunnen gericht opnieuw aangeboden worden met provider-specifieke validatie.
+    - UI toont retryresultaat per regel inclusief niet-herstelbare fouten.
+
+- [ ] WI-259 | type:chore | priority:P3 | status:TODO | title:Achtergrond auto-retry scheduling voor tijdelijke bestelfouten
+  - context: WI-245 behandelt retries handmatig; geautomatiseerde achtergrond retry scheduling bleef out-of-scope.
+  - acceptance:
+    - Tijdelijke bestelfouten kunnen volgens policy automatisch opnieuw geprobeerd worden.
+    - Operator ziet retry-queue status en kan geplande retries annuleren/hervatten.
+
+- [ ] WI-260 | type:feature | priority:P3 | status:TODO | title:Rendered admin UI componenten voor household/session operations
+  - context: WI-246 levert controller/API-contracten, maar volledige zichtbare webcomponenten voor operators bleven out-of-scope.
+  - acceptance:
+    - Admin web toont huishoudstatus, uitnodigingen en sessiediagnose in concrete UI componenten.
+    - Supportacties (resend/reset/diagnose) zijn via zichtbare UI interacties uitvoerbaar.
+
+- [ ] WI-261 | type:feature | priority:P2 | status:TODO | title:Rendered admin UI componenten voor runtime settings configuratie
+  - context: WI-248 levert controllervalidatie en auditstate, maar nog geen concrete webcomponenten/formulieren voor operators.
+  - acceptance:
+    - Settings tab toont bewerkbare runtime instellingen met inline validatie en duidelijke foutmeldingen.
+    - Operators kunnen instellingen wijzigen via zichtbare UI met bevestiging van toegepaste wijziging.
+
+- [ ] WI-262 | type:feature | priority:P2 | status:TODO | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
+  - context: WI-248 bewaart auditinformatie alleen in-memory in admin-web; persistente historie/querypad ontbreekt.
+  - acceptance:
+    - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
+    - Admin web kan auditgeschiedenis ophalen en filteren zonder verlies na restart/deploy.
+
 ## In Progress
 
 ## Done
+
+- [x] WI-248 | type:feature | priority:P1 | status:DONE | title:Admin web configuratiepanel met runtime settings, validatie en audit
+  - context: Configuratie bestaat backendmatig maar mist een bruikbaar web-configuratiepanel voor operators.
+  - acceptance:
+    - Web-app toont configureerbare runtime-instellingen met duidelijke validatie en foutafhandeling.
+    - Wijzigingen worden versieerbaar/auditbaar vastgelegd inclusief wie/wanneer/wat.
+
+- [x] WI-247 | type:spike | priority:P1 | status:DONE | title:Database platformkeuze en migratiepad (Supabase vs huidige Postgres stack)
+  - context: Voor een eerste werkbare versie is onduidelijk of we doorgaan op eigen Postgres provisioning of overstappen naar Supabase managed stack; die keuze blokkeert UI/feature keuzes in auth, opslag en admin.
+  - acceptance:
+    - Beslisdocument vergelijkt Supabase en huidige stack op auth, RLS/security, operations, kosten en vendor lock-in.
+    - Gekozen richting heeft een concreet migratie-/adoptiepad met scope, risico's en rollbackstrategie.
+
+- [x] WI-246 | type:feature | priority:P2 | status:DONE | title:Admin web operationele UI voor huishoudens, invites en sessiestatus
+  - context: Huishouden/invite en sessiestromen bestaan backendmatig maar missen een operatorvriendelijke beheer-UI voor support en troubleshooting.
+  - acceptance:
+    - Admin kan huishoudens, uitnodigingen en sessiestatus inzien en gericht filteren.
+    - Kritieke support-acties (opnieuw uitnodigen, status reset, sessiediagnose) zijn veilig uitvoerbaar met audit trail.
+
+- [x] WI-245 | type:feature | priority:P2 | status:DONE | title:iOS bestelflow UX met pre-flight validatie en duidelijke bevestiging
+  - context: Bestelactie is technisch beschikbaar maar mist een gebruiksvriendelijke pre-flight en heldere succes/foutbevestiging.
+  - acceptance:
+    - Voor sync ziet gebruiker een samenvatting/controlepunt (items, unresolved, verwachte actie).
+    - Na sync krijgt gebruiker een duidelijke bevestigingsstatus met herstelactie bij gedeeltelijke failure.
+
+- [x] WI-244 | type:feature | priority:P2 | status:DONE | title:iOS boodschappenlijst UX met afvinken, groepering en lokale voortgang
+  - context: Boodschappen worden nu als vlakke lijst getoond zonder interactie; voor dagelijks gebruik is afvinkbare voortgang nodig.
+  - acceptance:
+    - Boodschappenlijst ondersteunt afvinken per item met persistente lokale voortgang.
+    - Items worden logisch gegroepeerd (bijv. categorie/pad) en tonen duidelijke status open/klaar.
+
+- [x] WI-243 | type:feature | priority:P1 | status:DONE | title:iOS weekmenu als primaire home-flow (vandaag + gezinsswitch + weeknavigatie)
+  - context: De app moet primair draaien om weekmenu-consumptie, niet alleen bestellen; gebruiker moet direct eigen dagmenu zien en snel kunnen wisselen binnen het gezin.
+  - acceptance:
+    - Bij openen/login wordt altijd het weekmenu van de ingelogde gebruiker geladen met het menu van vandaag als default focus.
+    - Gebruiker kan vanuit de home/menubalk wisselen naar gekoppelde gezinsleden door op naam te klikken.
+    - Gebruiker kan soepel navigeren naar vorige/volgende weekmenu's zonder verlies van geselecteerde persoon.
+
+- [x] WI-242 | type:feature | priority:P1 | status:DONE | title:iOS eerste-keer onboarding en sessie-herstel flow
+  - context: Huidige iOS flow veronderstelt al geldige sessieconfiguratie; voor een eerste werkbare versie ontbreekt guided onboarding/herstel in de app zelf.
+  - acceptance:
+    - Nieuwe gebruiker krijgt een duidelijke onboarding/login-startflow i.p.v. technische foutstatussen.
+    - Bestaande gebruiker krijgt sessie-herstel/refresh UX met expliciete actie bij verlopen sessie.
+
+- [x] WI-229 | type:chore | priority:P3 | status:DONE | title:Visual regression snapshot tooling voor iOS UI
+  - context: WI-215 sluit visual regression snapshot tooling expliciet uit.
+  - acceptance:
+    - Snapshot-baseline voor kernschermen kan geautomatiseerd vergeleken worden in CI.
+    - Regressies op layout/styling leveren expliciete diffs en failen de quality gate.
 
 - [x] WI-228 | type:chore | priority:P3 | status:DONE | title:Uitgebreide iOS E2E testsuite met backend mocks en netwerkvirtualisatie
   - context: WI-215 levert alleen baseline UI smoke automation; volledige mobiele E2E suite met gecontroleerde backend-/netwerksimulatie bleef out-of-scope.

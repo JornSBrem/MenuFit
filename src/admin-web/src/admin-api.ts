@@ -4,10 +4,16 @@ import type {
   ApiEnvelope,
   CleanupRequest,
   ConfigUpdateRequest,
+  HouseholdInvitationRecord,
+  HouseholdInvitationsQuery,
+  HouseholdInviteResendRequest,
+  HouseholdOperationsStatus,
+  HouseholdSessionResetRequest,
   IngestRequest,
   RecomputeRequest,
   SystemDiagnosticsSummary,
   SystemJobRecord,
+  UserSessionDiagnostic,
 } from "./types.ts";
 
 export class AdminApiClient {
@@ -42,6 +48,34 @@ export class AdminApiClient {
 
   getJobs(): Promise<ApiEnvelope<SystemJobRecord[]>> {
     return this.get("/api/v3/system/jobs");
+  }
+
+  listHouseholdStatuses(): Promise<ApiEnvelope<HouseholdOperationsStatus[]>> {
+    return this.get("/api/v3/admin/households/status");
+  }
+
+  listHouseholdInvitations(
+    query: HouseholdInvitationsQuery,
+  ): Promise<ApiEnvelope<HouseholdInvitationRecord[]>> {
+    const params = new URLSearchParams({ householdId: query.householdId });
+    return this.get(`/api/v3/admin/households/invitations?${params.toString()}`);
+  }
+
+  resendHouseholdInvitation(
+    body: HouseholdInviteResendRequest,
+  ): Promise<ApiEnvelope<AdminOperationReport>> {
+    return this.post("/api/v3/admin/households/invite-resend", body);
+  }
+
+  resetHouseholdSession(
+    body: HouseholdSessionResetRequest,
+  ): Promise<ApiEnvelope<AdminOperationReport>> {
+    return this.post("/api/v3/admin/households/session-reset", body);
+  }
+
+  diagnoseUserSession(subjectId: string): Promise<ApiEnvelope<UserSessionDiagnostic>> {
+    const params = new URLSearchParams({ subjectId });
+    return this.get(`/api/v3/admin/households/session-diagnose?${params.toString()}`);
   }
 
   private async get<T>(path: string): Promise<ApiEnvelope<T>> {
