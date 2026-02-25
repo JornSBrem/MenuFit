@@ -184,19 +184,19 @@
     - Admin web toont huishoudstatus, uitnodigingen en sessiediagnose in concrete UI componenten.
     - Supportacties (resend/reset/diagnose) zijn via zichtbare UI interacties uitvoerbaar.
 
-- [ ] WI-261 | type:feature | priority:P2 | status:TODO | title:Rendered admin UI componenten voor runtime settings configuratie
+- [x] WI-261 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor runtime settings configuratie
   - context: WI-248 levert controllervalidatie en auditstate, maar nog geen concrete webcomponenten/formulieren voor operators.
   - acceptance:
     - Settings tab toont bewerkbare runtime instellingen met inline validatie en duidelijke foutmeldingen.
     - Operators kunnen instellingen wijzigen via zichtbare UI met bevestiging van toegepaste wijziging.
 
-- [ ] WI-262 | type:feature | priority:P2 | status:TODO | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
+- [x] WI-262 | type:feature | priority:P2 | status:DONE | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
   - context: WI-248 bewaart auditinformatie alleen in-memory in admin-web; persistente historie/querypad ontbreekt.
   - acceptance:
     - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
     - Admin web kan auditgeschiedenis ophalen en filteren zonder verlies na restart/deploy.
 
-- [ ] WI-263 | type:feature | priority:P2 | status:TODO | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
+- [x] WI-263 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
   - context: WI-249 levert controller/API-contracten voor databeheer, maar nog geen zichtbare operator-UI componenten.
   - acceptance:
     - Admin web toont concrete beheercomponenten (tabellen/formulieren) voor recepten, weekmenu's en mapping overrides.
@@ -207,6 +207,44 @@
   - acceptance:
     - Backend biedt beveiligde admin endpoints voor list/upsert/delete op recepten, weekmenu's en mapping overrides.
     - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
+
+## Done (recent additions)
+
+- [x] WI-263 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
+  - context: WI-249 levert controller/API-contracten voor databeheer, maar nog geen zichtbare operator-UI componenten.
+  - acceptance:
+    - Admin web toont concrete beheercomponenten (tabellen/formulieren) voor recepten, weekmenu's en mapping overrides.
+    - Operators kunnen via UI CRUD-acties uitvoeren met duidelijke validatie en statusfeedback.
+
+- [x] WI-261 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor runtime settings configuratie
+  - context: WI-248 levert controllervalidatie en auditstate, maar nog geen concrete webcomponenten/formulieren voor operators.
+  - acceptance:
+    - Settings tab toont bewerkbare runtime instellingen met inline validatie en duidelijke foutmeldingen.
+    - Operators kunnen instellingen wijzigen via zichtbare UI met bevestiging van toegepaste wijziging.
+
+- [x] WI-262 | type:feature | priority:P2 | status:DONE | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
+  - context: WI-248 bewaart auditinformatie alleen in-memory in admin-web; persistente historie/querypad ontbreekt.
+  - acceptance:
+    - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
+    - Admin web kan auditgeschiedenis ophalen en filteren zonder verlies na restart/deploy.
+
+- [x] WI-264 | type:feature | priority:P2 | status:DONE | title:Backend endpointimplementatie voor admin data beheercontracten
+  - context: WI-249 definieert admin-web contracts voor recepten/weekmenu/mapping beheer, maar backend routes/service-persistentie ontbreken.
+  - acceptance:
+    - Backend biedt beveiligde admin endpoints voor list/upsert/delete op recepten, weekmenu's en mapping overrides.
+    - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
+
+- [x] WI-220 | type:feature | priority:P1 | status:DONE | title:Volledige OAuth/OpenID provider-integratie voor loginflows
+  - context: WI-207 levert sessie-lifecycle baseline, maar sluit volledige OAuth/OpenID provider-integratie expliciet uit.
+  - acceptance:
+    - Loginflow gebruikt een echte OAuth/OpenID provider met autorisatiecode- en token-uitwisseling.
+    - Provider claims worden veilig vertaald naar user/admin sessies en autorisatieregels.
+
+- [x] WI-221 | type:chore | priority:P1 | status:DONE | title:JWT handtekeningverificatie tegen externe IdP sleutels
+  - context: WI-207 sluit cryptografische JWT-verificatie tegen externe IdP keys expliciet uit.
+  - acceptance:
+    - JWT tokens worden server-side gevalideerd op handtekening, issuer, audience en expiry.
+    - Sleutelrotatie (JWKS) wordt ondersteund zonder downtime.
 
 ## In Progress
 
