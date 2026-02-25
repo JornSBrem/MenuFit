@@ -184,7 +184,7 @@
     - Admin web toont huishoudstatus, uitnodigingen en sessiediagnose in concrete UI componenten.
     - Supportacties (resend/reset/diagnose) zijn via zichtbare UI interacties uitvoerbaar.
 
-- [ ] WI-261 | type:feature | priority:P2 | status:TODO | title:Rendered admin UI componenten voor runtime settings configuratie
+- [x] WI-261 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor runtime settings configuratie
   - context: WI-248 levert controllervalidatie en auditstate, maar nog geen concrete webcomponenten/formulieren voor operators.
   - acceptance:
     - Settings tab toont bewerkbare runtime instellingen met inline validatie en duidelijke foutmeldingen.
@@ -209,6 +209,12 @@
     - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
 
 ## Done (recent additions)
+
+- [x] WI-261 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor runtime settings configuratie
+  - context: WI-248 levert controllervalidatie en auditstate, maar nog geen concrete webcomponenten/formulieren voor operators.
+  - acceptance:
+    - Settings tab toont bewerkbare runtime instellingen met inline validatie en duidelijke foutmeldingen.
+    - Operators kunnen instellingen wijzigen via zichtbare UI met bevestiging van toegepaste wijziging.
 
 - [x] WI-262 | type:feature | priority:P2 | status:DONE | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
   - context: WI-248 bewaart auditinformatie alleen in-memory in admin-web; persistente historie/querypad ontbreekt.
