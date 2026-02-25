@@ -190,7 +190,7 @@
     - Settings tab toont bewerkbare runtime instellingen met inline validatie en duidelijke foutmeldingen.
     - Operators kunnen instellingen wijzigen via zichtbare UI met bevestiging van toegepaste wijziging.
 
-- [ ] WI-262 | type:feature | priority:P2 | status:TODO | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
+- [x] WI-262 | type:feature | priority:P2 | status:DONE | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
   - context: WI-248 bewaart auditinformatie alleen in-memory in admin-web; persistente historie/querypad ontbreekt.
   - acceptance:
     - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
@@ -209,6 +209,12 @@
     - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
 
 ## Done (recent additions)
+
+- [x] WI-262 | type:feature | priority:P2 | status:DONE | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
+  - context: WI-248 bewaart auditinformatie alleen in-memory in admin-web; persistente historie/querypad ontbreekt.
+  - acceptance:
+    - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
+    - Admin web kan auditgeschiedenis ophalen en filteren zonder verlies na restart/deploy.
 
 - [x] WI-264 | type:feature | priority:P2 | status:DONE | title:Backend endpointimplementatie voor admin data beheercontracten
   - context: WI-249 definieert admin-web contracts voor recepten/weekmenu/mapping beheer, maar backend routes/service-persistentie ontbreken.
