@@ -2,13 +2,7 @@
 
 ## Backlog
 
-- [ ] WI-228 | type:chore | priority:P3 | status:TODO | title:Uitgebreide iOS E2E testsuite met backend mocks en netwerkvirtualisatie
-  - context: WI-215 levert alleen baseline UI smoke automation; volledige mobiele E2E suite met gecontroleerde backend-/netwerksimulatie bleef out-of-scope.
-  - acceptance:
-    - iOS testsuite dekt kernscenario's en foutpaden met deterministische backend mocks.
-    - Netwerkvirtualisatie voorkomt flaky tests door externe afhankelijkheden.
-
-- [ ] WI-229 | type:chore | priority:P3 | status:TODO | title:Visual regression snapshot tooling voor iOS UI
+- [ ] WI-229 | type:chore | priority:P3 | status:IN-PROGRESS | title:Visual regression snapshot tooling voor iOS UI
   - context: WI-215 sluit visual regression snapshot tooling expliciet uit.
   - acceptance:
     - Snapshot-baseline voor kernschermen kan geautomatiseerd vergeleken worden in CI.
@@ -80,6 +74,12 @@
     - Ontwerp beschrijft lock-metrics segmentatie per tenant/workload zonder gevoelige data leakage.
     - Benodigde telemetry-uitbreidingen en querypatronen zijn gedefinieerd.
 
+- [ ] WI-241 | type:chore | priority:P3 | status:TODO | title:Contract replay tooling voor iOS E2E op basis van HAR-captures
+  - context: WI-228 sluit contract replay tooling vanuit captured HAR sessies expliciet uit.
+  - acceptance:
+    - Tooling kan backend contractresponses reproduceren vanuit versiebeheerbare HAR/fixture bron.
+    - iOS E2E suite kan scenario's draaien tegen replay-data zonder externe backend afhankelijkheden.
+
 - [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
   - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
   - acceptance:
@@ -118,9 +118,13 @@
 
 ## In Progress
 
-_None_
-
 ## Done
+
+- [x] WI-228 | type:chore | priority:P3 | status:DONE | title:Uitgebreide iOS E2E testsuite met backend mocks en netwerkvirtualisatie
+  - context: WI-215 levert alleen baseline UI smoke automation; volledige mobiele E2E suite met gecontroleerde backend-/netwerksimulatie bleef out-of-scope.
+  - acceptance:
+    - iOS testsuite dekt kernscenario's en foutpaden met deterministische backend mocks.
+    - Netwerkvirtualisatie voorkomt flaky tests door externe afhankelijkheden.
 
 - [x] WI-227 | type:chore | priority:P3 | status:DONE | title:Cluster-wide lock observability dashboards
   - context: WI-214 voegt lockcoördinatie toe, maar cluster-brede lock metrics/dashboards bleven out-of-scope.

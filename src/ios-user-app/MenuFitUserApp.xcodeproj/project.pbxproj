@@ -20,6 +20,7 @@
 		A262BF5AE5D2EAF1128B2BB5 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */; };
 		C309FFCB7BE1147CF6CE9550 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE482EB44234E5DB375E836 /* Localization.swift */; };
 		C7843F6778C2273A38B57C7E /* OrderScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7DC178D1015232B3FA63D01 /* OrderScreen.swift */; };
+		F2E3DC7597FD8226D8F557B5 /* UITestNetworkMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 674A3112E0C923B2668A6822 /* UITestNetworkMock.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,6 +42,7 @@
 		5862F6F0387CA8260E450902 /* BackendAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendAPI.swift; sourceTree = "<group>"; };
 		59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekScreen.swift; sourceTree = "<group>"; };
 		66EA1F50A81D438604490C65 /* MenuFitUserAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitUserAppUITests.swift; sourceTree = "<group>"; };
+		674A3112E0C923B2668A6822 /* UITestNetworkMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestNetworkMock.swift; sourceTree = "<group>"; };
 		7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
 		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7DC178D1015232B3FA63D01 /* OrderScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderScreen.swift; sourceTree = "<group>"; };
@@ -91,6 +93,7 @@
 				FD375DB99A1D8042CD754B02 /* OfflineCacheStore.swift */,
 				B7DC178D1015232B3FA63D01 /* OrderScreen.swift */,
 				D31B5618A6714859B8C35E13 /* RootTabView.swift */,
+				674A3112E0C923B2668A6822 /* UITestNetworkMock.swift */,
 				3941274E4041CB58B8BC8447 /* UserFlowModels.swift */,
 				025733A3A85DF8C0EF97659F /* UserFlowViewModel.swift */,
 				59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */,
@@ -190,6 +193,7 @@
 				28A052B2CAD27C6BD9302D43 /* OfflineCacheStore.swift in Sources */,
 				C7843F6778C2273A38B57C7E /* OrderScreen.swift in Sources */,
 				748342154DC6D5C1CA201765 /* RootTabView.swift in Sources */,
+				F2E3DC7597FD8226D8F557B5 /* UITestNetworkMock.swift in Sources */,
 				586371043F98771AE1CD477A /* UserFlowModels.swift in Sources */,
 				00ED1399B5D2986D86AA615A /* UserFlowViewModel.swift in Sources */,
 				9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */,

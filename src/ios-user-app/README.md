@@ -86,3 +86,25 @@ xcodebuild \
   -destination "platform=iOS Simulator,id=$SIM_ID" \
   test CODE_SIGNING_ALLOWED=NO
 ```
+
+## WI-228 Deterministische E2E met Netwerkvirtualisatie
+
+- `App/UITestNetworkMock.swift` voegt URLProtocol-gebaseerde mockresponses toe voor:
+  - `/api/v3/week/summary`
+  - `/api/v3/week/groceries`
+  - `/api/v3/match/queue`
+  - `/api/v3/match/evaluate`
+  - `/api/v3/match/review-action`
+  - `/api/v3/cart/sync`
+- Activatie via launch environment `MENUFIT_UI_TEST_SCENARIO`:
+  - `success`: complete primaire flow met deterministic data
+  - `week_failure`: simuleert fout op week summary endpoint
+- `AppEnvironment` accepteert runtime overrides via process environment voor:
+  - `MenuFitBackendBaseURL`
+  - `MenuFitUserAccessToken`
+  - `MenuFitUserSubjectId`
+  - `MenuFitPicnicAccountId`
+  - `MenuFitHouseholdId`
+  - `MenuFitUserTokenExpiryEpochSeconds`
+- UI-tests zetten `MenuFitBackendBaseURL=https://mock.local`; requests naar `mock.local` worden onderschept door de mock URLProtocol zodat de suite geen externe backend nodig heeft.
+- In UITest-mode gebruikt de app een geïsoleerde `UserDefaults` suite (`menufit.ui-tests`) om sessiestate deterministisch te houden tussen runs.

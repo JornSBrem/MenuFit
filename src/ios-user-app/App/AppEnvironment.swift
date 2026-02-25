@@ -4,15 +4,17 @@ struct AppEnvironment {
   let baseURL: URL
   let defaultSession: UserAuthSession?
 
-  static func load(bundle: Bundle = .main) -> AppEnvironment {
-    let baseURLString = infoString("MenuFitBackendBaseURL", bundle: bundle) ?? "https://api.menufit.local"
+  static func load(bundle: Bundle = .main, processInfo: ProcessInfo = .processInfo) -> AppEnvironment {
+    let baseURLString = configuredString("MenuFitBackendBaseURL", bundle: bundle, processInfo: processInfo) ?? "https://api.menufit.local"
     let baseURL = URL(string: baseURLString) ?? URL(string: "https://localhost")!
 
-    let token = infoString("MenuFitUserAccessToken", bundle: bundle)?.trimmingCharacters(in: .whitespacesAndNewlines)
-    let subjectId = infoString("MenuFitUserSubjectId", bundle: bundle) ?? "ios-user"
-    let picnicAccountId = infoString("MenuFitPicnicAccountId", bundle: bundle) ?? "picnic-default"
-    let householdId = infoString("MenuFitHouseholdId", bundle: bundle) ?? "default-household"
-    let expiry = infoInt("MenuFitUserTokenExpiryEpochSeconds", bundle: bundle)
+    let token = configuredString("MenuFitUserAccessToken", bundle: bundle, processInfo: processInfo)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let subjectId = configuredString("MenuFitUserSubjectId", bundle: bundle, processInfo: processInfo) ?? "ios-user"
+    let picnicAccountId = configuredString("MenuFitPicnicAccountId", bundle: bundle, processInfo: processInfo) ?? "picnic-default"
+    let householdId = configuredString("MenuFitHouseholdId", bundle: bundle, processInfo: processInfo) ?? "default-household"
+    let expiry = configuredInt("MenuFitUserTokenExpiryEpochSeconds", bundle: bundle, processInfo: processInfo)
+      .flatMap { $0 > 0 ? $0 : nil }
 
     let defaultSession: UserAuthSession?
     if let token, !token.isEmpty {
@@ -28,6 +30,20 @@ struct AppEnvironment {
     }
 
     return AppEnvironment(baseURL: baseURL, defaultSession: defaultSession)
+  }
+
+  private static func configuredString(_ key: String, bundle: Bundle, processInfo: ProcessInfo) -> String? {
+    if let raw = processInfo.environment[key] {
+      return raw
+    }
+    return infoString(key, bundle: bundle)
+  }
+
+  private static func configuredInt(_ key: String, bundle: Bundle, processInfo: ProcessInfo) -> Int? {
+    if let raw = processInfo.environment[key] {
+      return Int(raw)
+    }
+    return infoInt(key, bundle: bundle)
   }
 
   private static func infoString(_ key: String, bundle: Bundle) -> String? {
