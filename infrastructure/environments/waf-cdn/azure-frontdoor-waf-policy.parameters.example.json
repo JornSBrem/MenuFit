@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "policyName": {
+      "value": "menufit-prod-waf-policy"
+    },
+    "enforcementMode": {
+      "value": "Prevention"
+    },
+    "criticalApiRateLimitPerMinute": {
+      "value": 180
+    },
+    "associateWithFrontDoor": {
+      "value": true
+    },
+    "frontDoorProfileName": {
+      "value": "menufit-prod-frontdoor"
+    },
+    "securityPolicyName": {
+      "value": "menufit-prod-security"
+    },
+    "frontDoorDomainResourceIds": {
+      "value": [
+        "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Cdn/profiles/menufit-prod-frontdoor/customDomains/app-projectgezond-nl"
+      ]
+    },
+    "patternsToMatch": {
+      "value": [
+        "/*"
+      ]
+    }
+  }
+}

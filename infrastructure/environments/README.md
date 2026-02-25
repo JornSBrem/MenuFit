@@ -6,6 +6,7 @@ Planned profiles:
 - `prod`: internet-facing backend with TLS and managed services.
 
 For production observability stack provisioning, use assets in `infrastructure/observability/`.
+For production ingress edge policy provisioning, use assets in `infrastructure/environments/waf-cdn/`.
 
 Add profile-specific manifests in this folder.
 

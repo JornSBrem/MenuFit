@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-223 | type:chore | priority:P2 | status:TODO | title:Netwerk-level WAF/CDN policy configuratie voor productie ingress
-  - context: WI-211 levert applicatie-level WAF guards; edge/network WAF policies zijn nog niet ingericht.
-  - acceptance:
-    - Ingress heeft afdwingbare WAF/CDN rulesets voor OWASP-baseline en rate controls op kritieke endpoints.
-    - Deploybare configuratie is traceerbaar versiebeheer met rollbackpad.
-
 - [ ] WI-224 | type:chore | priority:P2 | status:TODO | title:Cloud deployment provisioning voor productie-omgeving
   - context: WI-212 levert delivery guardrails en checks, maar volledige cloud provisioning blijft out-of-scope.
   - acceptance:
@@ -56,6 +50,18 @@
     - Ontwerp beschrijft retentiebeleid (kosten/prestatie/SLA) met operationele trade-offs.
     - Federatiestrategie voor meerdere clusters/omgevingen bevat query-, alerting- en failover-impact.
 
+- [ ] WI-232 | type:chore | priority:P2 | status:TODO | title:Volledige Front Door/CDN topology + certificaat provisioning
+  - context: WI-223 levert WAF/CDN policy-as-code maar sluit volledige Front Door topology en certificaatprovisioning uit.
+  - acceptance:
+    - Front Door endpoints, origin groups, routes en TLS-certificaten zijn als IaC geautomatiseerd.
+    - Uitrol ondersteunt gecontroleerde migratie zonder downtime op productie-ingress.
+
+- [ ] WI-233 | type:chore | priority:P3 | status:TODO | title:Geo/IP allowlist policy tuning per omgeving en tenant
+  - context: WI-223 sluit geo/IP allowlists tuning expliciet uit.
+  - acceptance:
+    - Edge policy ondersteunt omgeving/tenant-specifieke allowlist- en blocklist-rules.
+    - Operationele procedure dekt onboarding en review van allowlist wijzigingen.
+
 - [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
   - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
   - acceptance:
@@ -97,6 +103,12 @@
 _None_
 
 ## Done
+
+- [x] WI-223 | type:chore | priority:P2 | status:DONE | title:Netwerk-level WAF/CDN policy configuratie voor productie ingress
+  - context: WI-211 levert applicatie-level WAF guards; edge/network WAF policies zijn nog niet ingericht.
+  - acceptance:
+    - Ingress heeft afdwingbare WAF/CDN rulesets voor OWASP-baseline en rate controls op kritieke endpoints.
+    - Deploybare configuratie is traceerbaar versiebeheer met rollbackpad.
 
 - [x] WI-222 | type:chore | priority:P2 | status:DONE | title:Externe observability stack provisioning (Prometheus/Grafana) voor productie
   - context: WI-211 levert interne telemetry export, maar provisioning/operationalisatie van externe observability stack bleef out-of-scope.
