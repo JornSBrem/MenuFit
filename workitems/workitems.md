@@ -98,24 +98,6 @@
     - User-facing foutmeldingen zijn via i18n resources gemapt op error codes/hints.
     - Onbekende fouten hebben consistente gelokaliseerde fallback-berichten.
 
-- [ ] WI-220 | type:feature | priority:P1 | status:TODO | title:Volledige OAuth/OpenID provider-integratie voor loginflows
-  - context: WI-207 levert sessie-lifecycle baseline, maar sluit volledige OAuth/OpenID provider-integratie expliciet uit.
-  - acceptance:
-    - Loginflow gebruikt een echte OAuth/OpenID provider met autorisatiecode- en token-uitwisseling.
-    - Provider claims worden veilig vertaald naar user/admin sessies en autorisatieregels.
-
-- [ ] WI-221 | type:chore | priority:P1 | status:TODO | title:JWT handtekeningverificatie tegen externe IdP sleutels
-  - context: WI-207 sluit cryptografische JWT-verificatie tegen externe IdP keys expliciet uit.
-  - acceptance:
-    - JWT tokens worden server-side gevalideerd op handtekening, issuer, audience en expiry.
-    - Sleutelrotatie (JWKS) wordt ondersteund zonder downtime.
-
-- [ ] WI-248 | type:feature | priority:P1 | status:DONE | title:Admin web configuratiepanel met runtime settings, validatie en audit
-  - context: Configuratie bestaat backendmatig maar mist een bruikbaar web-configuratiepanel voor operators.
-  - acceptance:
-    - Web-app toont configureerbare runtime-instellingen met duidelijke validatie en foutafhandeling.
-    - Wijzigingen worden versieerbaar/auditbaar vastgelegd inclusief wie/wanneer/wat.
-
 - [ ] WI-250 | type:feature | priority:P1 | status:TODO | title:iOS receptenpagina met bibliotheek, zoeken, filteren en favorieten
   - context: Voor dagelijkse waarde moet de app naast weekmenu ook een bruikbare receptenbibliotheek bieden.
   - acceptance:
@@ -184,29 +166,53 @@
     - Admin web toont huishoudstatus, uitnodigingen en sessiediagnose in concrete UI componenten.
     - Supportacties (resend/reset/diagnose) zijn via zichtbare UI interacties uitvoerbaar.
 
-- [ ] WI-261 | type:feature | priority:P2 | status:TODO | title:Rendered admin UI componenten voor runtime settings configuratie
-  - context: WI-248 levert controllervalidatie en auditstate, maar nog geen concrete webcomponenten/formulieren voor operators.
-  - acceptance:
-    - Settings tab toont bewerkbare runtime instellingen met inline validatie en duidelijke foutmeldingen.
-    - Operators kunnen instellingen wijzigen via zichtbare UI met bevestiging van toegepaste wijziging.
+## Done (recent additions)
 
-- [ ] WI-262 | type:feature | priority:P2 | status:TODO | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
-  - context: WI-248 bewaart auditinformatie alleen in-memory in admin-web; persistente historie/querypad ontbreekt.
+- [x] WI-265 | type:feature | priority:P1 | status:DONE | title:Admin web Vite+React applicatie shell met tab-navigatie en auth gate
+  - context: src/admin-web bevat alleen framework-agnostische TypeScript library code (controller, renderers, types). Er is geen echte browser-applicatie. Blueprint specificeert React + Vite + TypeScript voor het admin panel. Operator wil een werkbare browser-UI om data, settings, extract en operations te beheren.
   - acceptance:
-    - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
-    - Admin web kan auditgeschiedenis ophalen en filteren zonder verlies na restart/deploy.
+    - src/admin-web/app/ bevat een volledig werkende Vite + React + TypeScript applicatie (package.json, vite.config.ts, index.html, App.tsx).
+    - App toont een auth gate (baseUrl + accessToken + operatorId invoer) voordat het dashboard zichtbaar is.
+    - Tab-navigatie werkt voor de 4 tabs: Data, Instellingen, Extract, Operations.
+    - Elke tab laadt data via AdminDashboardController en toont loading/empty/error/success states.
+    - Dev server proxyt API-calls naar backend op :3000 zodat er geen CORS-issues zijn.
+    - Vite dev server start met `npm run dev` in src/admin-web/app/.
 
-- [ ] WI-263 | type:feature | priority:P2 | status:TODO | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
+- [x] WI-263 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
   - context: WI-249 levert controller/API-contracten voor databeheer, maar nog geen zichtbare operator-UI componenten.
   - acceptance:
     - Admin web toont concrete beheercomponenten (tabellen/formulieren) voor recepten, weekmenu's en mapping overrides.
     - Operators kunnen via UI CRUD-acties uitvoeren met duidelijke validatie en statusfeedback.
 
-- [ ] WI-264 | type:feature | priority:P2 | status:TODO | title:Backend endpointimplementatie voor admin data beheercontracten
+- [x] WI-261 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor runtime settings configuratie
+  - context: WI-248 levert controllervalidatie en auditstate, maar nog geen concrete webcomponenten/formulieren voor operators.
+  - acceptance:
+    - Settings tab toont bewerkbare runtime instellingen met inline validatie en duidelijke foutmeldingen.
+    - Operators kunnen instellingen wijzigen via zichtbare UI met bevestiging van toegepaste wijziging.
+
+- [x] WI-262 | type:feature | priority:P2 | status:DONE | title:Persistente backend auditgeschiedenis voor runtime config wijzigingen
+  - context: WI-248 bewaart auditinformatie alleen in-memory in admin-web; persistente historie/querypad ontbreekt.
+  - acceptance:
+    - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
+    - Admin web kan auditgeschiedenis ophalen en filteren zonder verlies na restart/deploy.
+
+- [x] WI-264 | type:feature | priority:P2 | status:DONE | title:Backend endpointimplementatie voor admin data beheercontracten
   - context: WI-249 definieert admin-web contracts voor recepten/weekmenu/mapping beheer, maar backend routes/service-persistentie ontbreken.
   - acceptance:
     - Backend biedt beveiligde admin endpoints voor list/upsert/delete op recepten, weekmenu's en mapping overrides.
     - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
+
+- [x] WI-220 | type:feature | priority:P1 | status:DONE | title:Volledige OAuth/OpenID provider-integratie voor loginflows
+  - context: WI-207 levert sessie-lifecycle baseline, maar sluit volledige OAuth/OpenID provider-integratie expliciet uit.
+  - acceptance:
+    - Loginflow gebruikt een echte OAuth/OpenID provider met autorisatiecode- en token-uitwisseling.
+    - Provider claims worden veilig vertaald naar user/admin sessies en autorisatieregels.
+
+- [x] WI-221 | type:chore | priority:P1 | status:DONE | title:JWT handtekeningverificatie tegen externe IdP sleutels
+  - context: WI-207 sluit cryptografische JWT-verificatie tegen externe IdP keys expliciet uit.
+  - acceptance:
+    - JWT tokens worden server-side gevalideerd op handtekening, issuer, audience en expiry.
+    - Sleutelrotatie (JWKS) wordt ondersteund zonder downtime.
 
 ## In Progress
 

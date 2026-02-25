@@ -20,7 +20,7 @@ jobs:
 
       - name: Run Unit and Integration Tests
         run: |
-          find src/backend -name '*.test.ts' ! -name 'e2e-smoke.test.ts' -print0 \
+          find src/backend src/admin-web -name '*.test.ts' ! -name 'e2e-smoke.test.ts' -print0 \
             | xargs -0 node --test --experimental-strip-types
 
       - name: Run E2E Smoke Suite
