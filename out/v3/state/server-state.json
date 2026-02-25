@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 4,
+  "silverTransforms": {},
+  "goldReadModels": {},
+  "cartReportsByIdempotencyKey": {},
+  "systemJobs": [],
+  "systemReports": [],
+  "matchingQueue": [],
+  "matchingAuditTrail": [],
+  "matchingOverrides": [],
+  "auditTrail": [],
+  "households": [],
+  "householdInvitations": [],
+  "authSessions": [
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-1",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772044064,
+      "expiresAtEpochSeconds": 1772130464
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-2",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772044072,
+      "expiresAtEpochSeconds": 1772130472
+    }
+  ],
+  "providerSessions": [],
+  "schedulerRuns": [],
+  "retryQueueEntries": [],
+  "updatedAt": "2026-02-25T18:27:52.065Z"
+}
