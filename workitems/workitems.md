@@ -196,7 +196,7 @@
     - Config wijzigingsaudit wordt server-side persistente opgeslagen met actor/timestamp/before-after context.
     - Admin web kan auditgeschiedenis ophalen en filteren zonder verlies na restart/deploy.
 
-- [ ] WI-263 | type:feature | priority:P2 | status:TODO | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
+- [x] WI-263 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
   - context: WI-249 levert controller/API-contracten voor databeheer, maar nog geen zichtbare operator-UI componenten.
   - acceptance:
     - Admin web toont concrete beheercomponenten (tabellen/formulieren) voor recepten, weekmenu's en mapping overrides.
@@ -209,6 +209,12 @@
     - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
 
 ## Done (recent additions)
+
+- [x] WI-263 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
+  - context: WI-249 levert controller/API-contracten voor databeheer, maar nog geen zichtbare operator-UI componenten.
+  - acceptance:
+    - Admin web toont concrete beheercomponenten (tabellen/formulieren) voor recepten, weekmenu's en mapping overrides.
+    - Operators kunnen via UI CRUD-acties uitvoeren met duidelijke validatie en statusfeedback.
 
 - [x] WI-261 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor runtime settings configuratie
   - context: WI-248 levert controllervalidatie en auditstate, maar nog geen concrete webcomponenten/formulieren voor operators.
