@@ -20,6 +20,32 @@ const withTempStateFile = (run: (stateFile: string) => void): void => {
   }
 };
 
+const createMockPostgresExec = (): {
+  exec: (sql: string) => string;
+  calls: string[];
+} => {
+  let encodedPayload = "";
+  const calls: string[] = [];
+  return {
+    exec: (sql) => {
+      calls.push(sql);
+      if (sql.includes("CREATE TABLE IF NOT EXISTS")) {
+        return "";
+      }
+      if (sql.includes("SELECT encode(convert_to")) {
+        return encodedPayload.length > 0 ? `${encodedPayload}\n` : "";
+      }
+      if (sql.includes("INSERT INTO menufit_state_store")) {
+        const match = sql.match(/decode\('([^']+)'/u);
+        encodedPayload = match?.[1] ?? "";
+        return "";
+      }
+      return "";
+    },
+    calls,
+  };
+};
+
 test("persistent state store creates default state when file does not exist", () => {
   withTempStateFile((stateFile) => {
     const store = new PersistentStateStore(stateFile);
@@ -261,6 +287,46 @@ test("persistent state store supports sqlite runtime persistence", () => {
       rmSync(sqlitePath, { force: true });
     }
   });
+});
+
+test("persistent state store supports postgres runtime persistence", () => {
+  const mock = createMockPostgresExec();
+  const store = new PersistentStateStore("out/v3/state/postgres.lock", {
+    driver: "postgres",
+    postgresConnectionString: "postgres://user:secret@localhost:5432/menufit",
+    postgresExec: mock.exec,
+  });
+  store.update((draft) => {
+    draft.systemJobs.push({
+      jobId: "system-job-1",
+      operationId: "backup-1",
+      operationType: "backup",
+      mode: "dry-run",
+      status: "completed",
+      startedAt: "2026-02-25T00:00:00.000Z",
+      finishedAt: "2026-02-25T00:00:01.000Z",
+      actorId: "ops-1",
+      message: "postgres write",
+    });
+  });
+
+  const reloaded = new PersistentStateStore("out/v3/state/postgres.lock", {
+    driver: "postgres",
+    postgresConnectionString: "postgres://user:secret@localhost:5432/menufit",
+    postgresExec: mock.exec,
+  });
+  assert.equal(reloaded.read().systemJobs.length, 1);
+  assert.equal(
+    mock.calls.some((sql) => sql.includes("INSERT INTO menufit_state_store")),
+    true,
+  );
+});
+
+test("postgres driver requires connection string when no command executor is injected", () => {
+  const store = new PersistentStateStore("out/v3/state/postgres.lock", {
+    driver: "postgres",
+  });
+  assert.throws(() => store.read(), /STATE_STORE_POSTGRES_URL/u);
 });
 
 test("persistent sqlite store migrates legacy schema version to current", () => {

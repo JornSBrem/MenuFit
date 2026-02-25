@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-225 | type:feature | priority:P2 | status:TODO | title:Postgres runtime en operationele DB setup voor persistente domeinen
-  - context: WI-213 levert relationele SQLite runtime, maar volledige Postgres runtime/deployment bleef out-of-scope.
-  - acceptance:
-    - Persistente domeinen draaien op Postgres runtime met migraties en veilige connectieconfiguratie.
-    - Operationele runbooks dekken pooling, backup en herstel voor productiegebruik.
-
 - [ ] WI-226 | type:feature | priority:P2 | status:TODO | title:Externe distributed lock backend integratie (Redis/etcd)
   - context: WI-214 levert file lease locks; externe lock backend voor multi-node/cluster scenarios bleef out-of-scope.
   - acceptance:
@@ -68,6 +62,18 @@
     - Deployflow ondersteunt gecontroleerde traffic shift tussen oude en nieuwe revisie.
     - Geautomatiseerde rollback triggert bij health-check regressies.
 
+- [ ] WI-236 | type:feature | priority:P2 | status:TODO | title:Geautomatiseerde sqlite-naar-postgres migratietooling voor live cutover
+  - context: WI-225 voegt postgres runtime toe maar sluit geautomatiseerde live datamigratie expliciet uit.
+  - acceptance:
+    - Tooling migreert persistente state van sqlite naar postgres met validatie en checksum/recordtelling.
+    - Cutoverpad bevat dry-run en hersteloptie zonder dataverlies.
+
+- [ ] WI-237 | type:spike | priority:P3 | status:TODO | title:Sharded/multi-region postgres topologie ontwerp en rolloutpad
+  - context: WI-225 sluit sharded en multi-region postgres topologie expliciet uit.
+  - acceptance:
+    - Ontwerp beschrijft partitionering/replicatie strategie met latency- en failover trade-offs.
+    - Rolloutpad bevat risicoanalyse, observability-eisen en migratiestappen.
+
 - [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
   - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
   - acceptance:
@@ -109,6 +115,12 @@
 _None_
 
 ## Done
+
+- [x] WI-225 | type:feature | priority:P2 | status:DONE | title:Postgres runtime en operationele DB setup voor persistente domeinen
+  - context: WI-213 levert relationele SQLite runtime, maar volledige Postgres runtime/deployment bleef out-of-scope.
+  - acceptance:
+    - Persistente domeinen draaien op Postgres runtime met migraties en veilige connectieconfiguratie.
+    - Operationele runbooks dekken pooling, backup en herstel voor productiegebruik.
 
 - [x] WI-224 | type:chore | priority:P2 | status:DONE | title:Cloud deployment provisioning voor productie-omgeving
   - context: WI-212 levert delivery guardrails en checks, maar volledige cloud provisioning blijft out-of-scope.

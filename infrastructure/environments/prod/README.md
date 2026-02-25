@@ -18,6 +18,7 @@ Versioned Azure production infrastructure baseline for MenuFit.
 - `deploy-prod-infra.sh`: non-interactive deployment wrapper.
 - `validate-prod-infra.sh`: post-deploy resource validation checks.
 - `rollback-prod-infra.sh`: rollback wrapper for redeploying known-good parameters.
+- `postgres/`: Postgres runtime provisioning assets and operational setup scripts.
 
 ## Deploy
 
@@ -50,4 +51,5 @@ infrastructure/environments/prod/rollback-prod-infra.sh \
 
 ## Notes
 
-- Database engine provisioning and migration are intentionally out of scope for WI-224 and covered by WI-225.
+- Database engine provisioning for Postgres runtime is implemented under `postgres/`.
+- Automated sqlite-to-postgres live migration remains out of scope and is tracked separately.

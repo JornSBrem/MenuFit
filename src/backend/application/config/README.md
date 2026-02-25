@@ -2,7 +2,7 @@
 
 - `create-runtime-config.ts`: builds backend runtime config from environment values.
 - `resolve-env-secrets.ts`: resolves secret values via `<KEY>_FILE` fallback.
-- `create-persistent-state-store.ts`: constructs versioned state store from runtime config (`STATE_STORE_PATH`).
+- `create-persistent-state-store.ts`: constructs versioned state store from runtime config (`STATE_STORE_*` keys for file/sqlite/postgres drivers).
 
 Behavior:
 - direct env value (for example `LLM_API_KEY`) has precedence

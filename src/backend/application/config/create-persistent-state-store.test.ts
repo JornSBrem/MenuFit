@@ -49,3 +49,30 @@ test("createPersistentStateStore selects sqlite driver when configured", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("createPersistentStateStore selects postgres driver when configured", () => {
+  const dir = mkdtempSync(join(tmpdir(), "menufit-state-postgres-lock-"));
+  try {
+    const lockPath = join(dir, "state.postgres.lock");
+    const config = createDefaultRuntimeConfig({
+      STATE_STORE_DRIVER: "postgres",
+      STATE_STORE_POSTGRES_URL: "postgres://user:secret@localhost:5432/menufit",
+      STATE_STORE_POSTGRES_LOCK_PATH: lockPath,
+    });
+
+    const store = createPersistentStateStore(config) as unknown as { driver?: string };
+    assert.equal(store.driver, "postgres");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("createPersistentStateStore rejects postgres driver without connection string", () => {
+  const config = createDefaultRuntimeConfig({
+    STATE_STORE_DRIVER: "postgres",
+  });
+  assert.throws(
+    () => createPersistentStateStore(config),
+    /STATE_STORE_POSTGRES_URL is required/u,
+  );
+});

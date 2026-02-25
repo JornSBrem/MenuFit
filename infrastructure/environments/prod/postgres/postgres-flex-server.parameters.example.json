@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "serviceName": {
+      "value": "menufit"
+    },
+    "environmentName": {
+      "value": "prod"
+    },
+    "administratorLogin": {
+      "value": "menufit_admin"
+    },
+    "administratorPassword": {
+      "value": "<use-secret-source>"
+    },
+    "postgresVersion": {
+      "value": "16"
+    },
+    "skuName": {
+      "value": "Standard_D4ds_v5"
+    },
+    "storageGb": {
+      "value": 128
+    },
+    "databaseName": {
+      "value": "menufit"
+    }
+  }
+}

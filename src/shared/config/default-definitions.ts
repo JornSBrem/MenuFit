@@ -31,7 +31,7 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
   },
   {
     key: "STATE_STORE_DRIVER",
-    description: "Persistent state store runtime driver (file or sqlite).",
+    description: "Persistent state store runtime driver (file, sqlite, or postgres).",
     kind: "string",
     defaultValue: "file",
     meta: { hotReload: false, sensitive: false, restartRequired: false },
@@ -41,6 +41,20 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     description: "SQLite state store path when STATE_STORE_DRIVER=sqlite.",
     kind: "string",
     defaultValue: "out/v3/state/menu-fit-state.sqlite",
+    meta: { hotReload: false, sensitive: false, restartRequired: false },
+  },
+  {
+    key: "STATE_STORE_POSTGRES_URL",
+    description: "Postgres connection string when STATE_STORE_DRIVER=postgres.",
+    kind: "string",
+    defaultValue: "",
+    meta: { hotReload: false, sensitive: true, restartRequired: false },
+  },
+  {
+    key: "STATE_STORE_POSTGRES_LOCK_PATH",
+    description: "Lease lock file path used by postgres runtime driver.",
+    kind: "string",
+    defaultValue: "out/v3/state/menu-fit-state.postgres.lock",
     meta: { hotReload: false, sensitive: false, restartRequired: false },
   },
   {

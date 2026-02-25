@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { spawnSync } from "node:child_process";
 import { DatabaseSync } from "node:sqlite";
 import {
   FileLeaseLockCoordinator,
@@ -28,11 +29,13 @@ import type { RetryQueueEntryRecord, SchedulerRunRecord } from "../../jobs/types
 
 export const CURRENT_STATE_SCHEMA_VERSION = 4;
 
-export type PersistentStateStoreDriver = "file" | "sqlite";
+export type PersistentStateStoreDriver = "file" | "sqlite" | "postgres";
 
 export interface PersistentStateStoreOptions {
   driver?: PersistentStateStoreDriver;
   lockCoordinator?: DistributedLockCoordinator;
+  postgresConnectionString?: string;
+  postgresExec?: (sql: string) => string;
 }
 
 export interface PersistentAppState {
@@ -131,6 +134,7 @@ type ArrayCollectionName = (typeof ARRAY_COLLECTIONS)[number];
 
 const SQLITE_META_SCHEMA_VERSION = "schemaVersion";
 const SQLITE_META_UPDATED_AT = "updatedAt";
+const POSTGRES_STATE_TABLE = "menufit_state_store";
 
 const isRecord = (value: unknown): value is UnknownRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -332,6 +336,10 @@ export class PersistentStateStore {
 
   private readonly lockCoordinator: DistributedLockCoordinator;
 
+  private readonly postgresConnectionString?: string;
+
+  private readonly postgresExec?: (sql: string) => string;
+
   private sqliteDb?: DatabaseSync;
 
   constructor(filePath: string, options?: PersistentStateStoreOptions) {
@@ -339,6 +347,8 @@ export class PersistentStateStore {
     this.driver = options?.driver ?? "file";
     this.lockCoordinator =
       options?.lockCoordinator ?? new FileLeaseLockCoordinator(`${this.filePath}.lock`);
+    this.postgresConnectionString = options?.postgresConnectionString?.trim() || undefined;
+    this.postgresExec = options?.postgresExec;
   }
 
   read(): PersistentAppState {
@@ -364,13 +374,27 @@ export class PersistentStateStore {
   }
 
   private loadFromDriver(): PersistentAppState {
-    return this.driver === "sqlite" ? this.loadFromSqlite() : this.loadFromFile();
+    if (this.driver === "sqlite") {
+      return this.loadFromSqlite();
+    }
+    if (this.driver === "postgres") {
+      return this.loadFromPostgres();
+    }
+    return this.loadFromFile();
   }
 
   private readLatestWithoutCache(): PersistentAppState {
     if (this.driver === "sqlite") {
       try {
         return migrateState(this.readRawSqliteState(this.ensureSqliteDb()));
+      } catch {
+        return defaultState();
+      }
+    }
+    if (this.driver === "postgres") {
+      try {
+        this.ensurePostgresSchema();
+        return migrateState(this.readRawPostgresState());
       } catch {
         return defaultState();
       }
@@ -392,6 +416,8 @@ export class PersistentStateStore {
 
     if (this.driver === "sqlite") {
       this.writeToSqlite(normalized);
+    } else if (this.driver === "postgres") {
+      this.writeToPostgres(normalized);
     } else {
       this.writeToFile(normalized);
     }
@@ -447,6 +473,100 @@ export class PersistentStateStore {
       this.write(created);
       return created;
     }
+  }
+
+  private loadFromPostgres(): PersistentAppState {
+    this.ensurePostgresSchema();
+    try {
+      const rawState = this.readRawPostgresState();
+      const migrated = migrateState(rawState);
+      const rawVersion =
+        isRecord(rawState) && typeof rawState.schemaVersion === "number"
+          ? rawState.schemaVersion
+          : 0;
+      if (rawVersion !== CURRENT_STATE_SCHEMA_VERSION) {
+        this.write(migrated);
+      }
+      return migrated;
+    } catch {
+      const created = defaultState();
+      this.write(created);
+      return created;
+    }
+  }
+
+  private ensurePostgresSchema(): void {
+    this.runPostgresSql(`
+      CREATE TABLE IF NOT EXISTS ${POSTGRES_STATE_TABLE} (
+        state_id SMALLINT PRIMARY KEY CHECK (state_id = 1),
+        schema_version INTEGER NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        state_json JSONB NOT NULL
+      );
+    `);
+  }
+
+  private readRawPostgresState(): unknown {
+    const output = this.runPostgresSql(`
+      SELECT encode(convert_to(state_json::text, 'UTF8'), 'base64')
+      FROM ${POSTGRES_STATE_TABLE}
+      WHERE state_id = 1;
+    `);
+
+    const firstLine = output
+      .split(/\r?\n/u)
+      .map((line) => line.trim())
+      .find((line) => line.length > 0);
+    if (!firstLine) {
+      return {};
+    }
+
+    try {
+      const jsonText = Buffer.from(firstLine, "base64").toString("utf8");
+      return JSON.parse(jsonText) as unknown;
+    } catch {
+      return {};
+    }
+  }
+
+  private writeToPostgres(state: PersistentAppState): void {
+    this.ensurePostgresSchema();
+    const payloadBase64 = Buffer.from(JSON.stringify(state), "utf8").toString("base64");
+    this.runPostgresSql(`
+      INSERT INTO ${POSTGRES_STATE_TABLE}(state_id, schema_version, updated_at, state_json)
+      VALUES (
+        1,
+        ${CURRENT_STATE_SCHEMA_VERSION},
+        NOW(),
+        convert_from(decode('${payloadBase64}', 'base64'), 'UTF8')::jsonb
+      )
+      ON CONFLICT (state_id)
+      DO UPDATE SET
+        schema_version = EXCLUDED.schema_version,
+        updated_at = EXCLUDED.updated_at,
+        state_json = EXCLUDED.state_json;
+    `);
+  }
+
+  private runPostgresSql(sql: string): string {
+    if (this.postgresExec) {
+      return this.postgresExec(sql);
+    }
+
+    const connectionString = this.postgresConnectionString;
+    if (!connectionString) {
+      throw new Error("STATE_STORE_POSTGRES_URL is required when STATE_STORE_DRIVER=postgres.");
+    }
+
+    const result = spawnSync(
+      "psql",
+      [connectionString, "-X", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1", "-c", sql],
+      { encoding: "utf8" },
+    );
+    if (result.status !== 0) {
+      throw new Error(result.stderr?.trim() || "Postgres command failed.");
+    }
+    return result.stdout ?? "";
   }
 
   private ensureSqliteDb(): DatabaseSync {
