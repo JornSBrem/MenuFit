@@ -13,7 +13,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createDefaultRuntimeConfig } from "../../shared/config/index.ts";
+import { createDefaultRuntimeConfig } from "../shared/config/index.ts";
 import { AuditTrailService } from "./application/audit/audit-trail-service.ts";
 import { AdminOperationsService } from "./application/admin/admin-operations-service.ts";
 import { AdminDataService } from "./application/admin/admin-data-service.ts";
