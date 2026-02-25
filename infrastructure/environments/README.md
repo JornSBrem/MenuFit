@@ -7,6 +7,7 @@ Planned profiles:
 
 For production observability stack provisioning, use assets in `infrastructure/observability/`.
 For production ingress edge policy provisioning, use assets in `infrastructure/environments/waf-cdn/`.
+For production cloud infrastructure baseline provisioning, use assets in `infrastructure/environments/prod/`.
 
 Add profile-specific manifests in this folder.
 

@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-224 | type:chore | priority:P2 | status:TODO | title:Cloud deployment provisioning voor productie-omgeving
-  - context: WI-212 levert delivery guardrails en checks, maar volledige cloud provisioning blijft out-of-scope.
-  - acceptance:
-    - Productie infrastructuur provisioning (compute/network/secrets/observability basis) is geautomatiseerd en reproduceerbaar.
-    - Provisioningpad bevat rollback/rollback-safe documentatie en validatiechecks.
-
 - [ ] WI-225 | type:feature | priority:P2 | status:TODO | title:Postgres runtime en operationele DB setup voor persistente domeinen
   - context: WI-213 levert relationele SQLite runtime, maar volledige Postgres runtime/deployment bleef out-of-scope.
   - acceptance:
@@ -62,6 +56,18 @@
     - Edge policy ondersteunt omgeving/tenant-specifieke allowlist- en blocklist-rules.
     - Operationele procedure dekt onboarding en review van allowlist wijzigingen.
 
+- [ ] WI-234 | type:feature | priority:P2 | status:TODO | title:Cloud provisioning uitbreiding met database engine migratiepad
+  - context: WI-224 levert productie infra baseline maar sluit database engine migratie en rollout expliciet uit.
+  - acceptance:
+    - Provisioningpad ondersteunt database-engine resources met gecontroleerde migratie- en cutoverstappen.
+    - Runbook dekt rollback-safe herstel bij mislukte migratie.
+
+- [ ] WI-235 | type:chore | priority:P2 | status:TODO | title:Blue/green traffic shifting automatisering voor zero-downtime releases
+  - context: WI-224 sluit blue/green traffic shifting en zero-downtime orchestration expliciet uit.
+  - acceptance:
+    - Deployflow ondersteunt gecontroleerde traffic shift tussen oude en nieuwe revisie.
+    - Geautomatiseerde rollback triggert bij health-check regressies.
+
 - [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
   - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
   - acceptance:
@@ -103,6 +109,12 @@
 _None_
 
 ## Done
+
+- [x] WI-224 | type:chore | priority:P2 | status:DONE | title:Cloud deployment provisioning voor productie-omgeving
+  - context: WI-212 levert delivery guardrails en checks, maar volledige cloud provisioning blijft out-of-scope.
+  - acceptance:
+    - Productie infrastructuur provisioning (compute/network/secrets/observability basis) is geautomatiseerd en reproduceerbaar.
+    - Provisioningpad bevat rollback/rollback-safe documentatie en validatiechecks.
 
 - [x] WI-223 | type:chore | priority:P2 | status:DONE | title:Netwerk-level WAF/CDN policy configuratie voor productie ingress
   - context: WI-211 levert applicatie-level WAF guards; edge/network WAF policies zijn nog niet ingericht.
