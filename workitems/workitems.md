@@ -168,6 +168,16 @@
 
 ## Done (recent additions)
 
+- [x] WI-265 | type:feature | priority:P1 | status:DONE | title:Admin web Vite+React applicatie shell met tab-navigatie en auth gate
+  - context: src/admin-web bevat alleen framework-agnostische TypeScript library code (controller, renderers, types). Er is geen echte browser-applicatie. Blueprint specificeert React + Vite + TypeScript voor het admin panel. Operator wil een werkbare browser-UI om data, settings, extract en operations te beheren.
+  - acceptance:
+    - src/admin-web/app/ bevat een volledig werkende Vite + React + TypeScript applicatie (package.json, vite.config.ts, index.html, App.tsx).
+    - App toont een auth gate (baseUrl + accessToken + operatorId invoer) voordat het dashboard zichtbaar is.
+    - Tab-navigatie werkt voor de 4 tabs: Data, Instellingen, Extract, Operations.
+    - Elke tab laadt data via AdminDashboardController en toont loading/empty/error/success states.
+    - Dev server proxyt API-calls naar backend op :3000 zodat er geen CORS-issues zijn.
+    - Vite dev server start met `npm run dev` in src/admin-web/app/.
+
 - [x] WI-263 | type:feature | priority:P2 | status:DONE | title:Rendered admin UI componenten voor recepten/weekmenu/mapping beheer
   - context: WI-249 levert controller/API-contracten voor databeheer, maar nog geen zichtbare operator-UI componenten.
   - acceptance:
