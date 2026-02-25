@@ -1,15 +1,15 @@
 import { join } from "node:path";
 
 import type { RuntimeConfigStore } from "../../../shared/config";
-import type { BronzeObjectMetadata } from "../../domain/storage/medallion-schema";
-import { DEFAULT_MEDALLION_PATHS } from "../../domain/storage/medallion-schema";
+import type { BronzeObjectMetadata } from "../../domain/storage/medallion-schema.ts";
+import { DEFAULT_MEDALLION_PATHS } from "../../domain/storage/medallion-schema.ts";
 import {
   sha256Hex,
   verifyBronzePayloadChecksum,
   writeBronzeJson,
-} from "../../integrations/storage/bronze-storage";
-import { appendManifestRecord } from "./bronze-manifest";
-import { withRetry } from "./retry";
+} from "../../integrations/storage/bronze-storage.ts";
+import { appendManifestRecord } from "./bronze-manifest.ts";
+import { withRetry } from "./retry.ts";
 import type { IngestTask, IngestTaskResult, IngestRetryPolicy } from "./types";
 
 export type FetchJson = (url: string, task: IngestTask) => Promise<unknown>;
