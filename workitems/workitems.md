@@ -210,6 +210,12 @@
 
 ## Done (recent additions)
 
+- [x] WI-264 | type:feature | priority:P2 | status:DONE | title:Backend endpointimplementatie voor admin data beheercontracten
+  - context: WI-249 definieert admin-web contracts voor recepten/weekmenu/mapping beheer, maar backend routes/service-persistentie ontbreken.
+  - acceptance:
+    - Backend biedt beveiligde admin endpoints voor list/upsert/delete op recepten, weekmenu's en mapping overrides.
+    - Writes zijn traceerbaar via operation reports en direct consumeerbaar door admin data management flow.
+
 - [x] WI-220 | type:feature | priority:P1 | status:DONE | title:Volledige OAuth/OpenID provider-integratie voor loginflows
   - context: WI-207 levert sessie-lifecycle baseline, maar sluit volledige OAuth/OpenID provider-integratie expliciet uit.
   - acceptance:
