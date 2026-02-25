@@ -19,6 +19,7 @@ Versioned Azure production infrastructure baseline for MenuFit.
 - `validate-prod-infra.sh`: post-deploy resource validation checks.
 - `rollback-prod-infra.sh`: rollback wrapper for redeploying known-good parameters.
 - `postgres/`: Postgres runtime provisioning assets and operational setup scripts.
+- `redis/`: Redis provisioning assets for external distributed lock backend.
 
 ## Deploy
 

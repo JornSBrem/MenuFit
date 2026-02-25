@@ -9,6 +9,7 @@ For production observability stack provisioning, use assets in `infrastructure/o
 For production ingress edge policy provisioning, use assets in `infrastructure/environments/waf-cdn/`.
 For production cloud infrastructure baseline provisioning, use assets in `infrastructure/environments/prod/`.
 For production Postgres runtime setup, use assets in `infrastructure/environments/prod/postgres/`.
+For production Redis lock backend setup, use assets in `infrastructure/environments/prod/redis/`.
 
 Add profile-specific manifests in this folder.
 

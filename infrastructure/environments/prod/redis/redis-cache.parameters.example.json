@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "serviceName": {
+      "value": "menufit"
+    },
+    "environmentName": {
+      "value": "prod"
+    },
+    "redisSkuFamily": {
+      "value": "C"
+    },
+    "redisSkuName": {
+      "value": "Standard"
+    },
+    "redisSkuCapacity": {
+      "value": 1
+    },
+    "enableNonSslPort": {
+      "value": false
+    }
+  }
+}

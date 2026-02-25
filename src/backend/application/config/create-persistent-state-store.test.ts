@@ -76,3 +76,26 @@ test("createPersistentStateStore rejects postgres driver without connection stri
     /STATE_STORE_POSTGRES_URL is required/u,
   );
 });
+
+test("createPersistentStateStore supports redis external lock backend wiring", () => {
+  const config = createDefaultRuntimeConfig({
+    STATE_LOCK_BACKEND: "redis",
+    STATE_LOCK_REDIS_URL: "redis://localhost:6379",
+    STATE_LOCK_REDIS_KEY_PREFIX: "menufit:test",
+  });
+
+  const store = createPersistentStateStore(config) as unknown as {
+    lockCoordinator?: { constructor?: { name?: string } };
+  };
+  assert.equal(store.lockCoordinator?.constructor?.name, "ExternalLeaseLockCoordinator");
+});
+
+test("createPersistentStateStore rejects redis lock backend without redis url", () => {
+  const config = createDefaultRuntimeConfig({
+    STATE_LOCK_BACKEND: "redis",
+  });
+  assert.throws(
+    () => createPersistentStateStore(config),
+    /STATE_LOCK_REDIS_URL is required/u,
+  );
+});

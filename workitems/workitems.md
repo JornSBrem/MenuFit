@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-226 | type:feature | priority:P2 | status:TODO | title:Externe distributed lock backend integratie (Redis/etcd)
-  - context: WI-214 levert file lease locks; externe lock backend voor multi-node/cluster scenarios bleef out-of-scope.
-  - acceptance:
-    - Kritieke writes gebruiken configureerbare externe lock backend met lease/renew semantics.
-    - Failover/pad bij lock backend storingen is gedocumenteerd en getest.
-
 - [ ] WI-227 | type:chore | priority:P3 | status:TODO | title:Cluster-wide lock observability dashboards
   - context: WI-214 voegt lockcoördinatie toe, maar cluster-brede lock metrics/dashboards bleven out-of-scope.
   - acceptance:
@@ -74,6 +68,12 @@
     - Ontwerp beschrijft partitionering/replicatie strategie met latency- en failover trade-offs.
     - Rolloutpad bevat risicoanalyse, observability-eisen en migratiestappen.
 
+- [ ] WI-238 | type:feature | priority:P2 | status:TODO | title:Volledige etcd lock-backend implementatie met lease parity
+  - context: WI-226 levert externe lock backend via Redis, maar volledige etcd backend parity bleef out-of-scope.
+  - acceptance:
+    - Etcd backend ondersteunt acquire/renew/release semantiek equivalent aan Redis pad.
+    - Runtime configuratie kan Redis en etcd backends veilig wisselen met regressietests.
+
 - [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
   - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
   - acceptance:
@@ -115,6 +115,12 @@
 _None_
 
 ## Done
+
+- [x] WI-226 | type:feature | priority:P2 | status:DONE | title:Externe distributed lock backend integratie (Redis/etcd)
+  - context: WI-214 levert file lease locks; externe lock backend voor multi-node/cluster scenarios bleef out-of-scope.
+  - acceptance:
+    - Kritieke writes gebruiken configureerbare externe lock backend met lease/renew semantics.
+    - Failover/pad bij lock backend storingen is gedocumenteerd en getest.
 
 - [x] WI-225 | type:feature | priority:P2 | status:DONE | title:Postgres runtime en operationele DB setup voor persistente domeinen
   - context: WI-213 levert relationele SQLite runtime, maar volledige Postgres runtime/deployment bleef out-of-scope.
