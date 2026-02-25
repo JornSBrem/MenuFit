@@ -210,6 +210,12 @@
 
 ## Done (recent additions)
 
+- [x] WI-220 | type:feature | priority:P1 | status:DONE | title:Volledige OAuth/OpenID provider-integratie voor loginflows
+  - context: WI-207 levert sessie-lifecycle baseline, maar sluit volledige OAuth/OpenID provider-integratie expliciet uit.
+  - acceptance:
+    - Loginflow gebruikt een echte OAuth/OpenID provider met autorisatiecode- en token-uitwisseling.
+    - Provider claims worden veilig vertaald naar user/admin sessies en autorisatieregels.
+
 - [x] WI-221 | type:chore | priority:P1 | status:DONE | title:JWT handtekeningverificatie tegen externe IdP sleutels
   - context: WI-207 sluit cryptografische JWT-verificatie tegen externe IdP keys expliciet uit.
   - acceptance:
