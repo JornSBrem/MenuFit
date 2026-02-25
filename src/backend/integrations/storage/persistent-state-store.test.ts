@@ -290,3 +290,85 @@ test("persistent sqlite store migrates legacy schema version to current", () => 
     rmSync(sqlitePath, { force: true });
   }
 });
+
+test("persistent state store update avoids stale-cache overwrite across instances (file driver)", () => {
+  withTempStateFile((stateFile) => {
+    const first = new PersistentStateStore(stateFile);
+    const second = new PersistentStateStore(stateFile);
+
+    // Prime first instance cache so stale-cache overwrite would happen without fresh read in update.
+    first.read();
+
+    second.update((draft) => {
+      draft.auditTrail.push({
+        eventId: "audit-b",
+        category: "system",
+        action: "second-write",
+        outcome: "success",
+        createdAt: "2026-02-25T00:00:00.000Z",
+      });
+    });
+
+    first.update((draft) => {
+      draft.auditTrail.push({
+        eventId: "audit-a",
+        category: "system",
+        action: "first-write",
+        outcome: "success",
+        createdAt: "2026-02-25T00:00:01.000Z",
+      });
+    });
+
+    const finalState = new PersistentStateStore(stateFile).read();
+    assert.equal(finalState.auditTrail.length, 2);
+    assert.equal(finalState.auditTrail.some((event) => event.eventId === "audit-a"), true);
+    assert.equal(finalState.auditTrail.some((event) => event.eventId === "audit-b"), true);
+  });
+});
+
+test("persistent state store update avoids stale-cache overwrite across instances (sqlite driver)", () => {
+  const sqlitePath = join(tmpdir(), `menufit-state-race-${Date.now()}.sqlite`);
+  try {
+    const first = new PersistentStateStore(sqlitePath, { driver: "sqlite" });
+    const second = new PersistentStateStore(sqlitePath, { driver: "sqlite" });
+
+    first.read();
+
+    second.update((draft) => {
+      draft.systemReports.push({
+        reportId: "report-b",
+        jobId: "job-b",
+        operationId: "op-b",
+        operationType: "backup",
+        mode: "dry-run",
+        status: "success",
+        createdAt: "2026-02-25T00:00:00.000Z",
+        actorId: "ops-2",
+        target: "db/v3.sqlite",
+        logs: [],
+      });
+    });
+
+    first.update((draft) => {
+      draft.systemReports.push({
+        reportId: "report-a",
+        jobId: "job-a",
+        operationId: "op-a",
+        operationType: "cleanup",
+        mode: "execute",
+        status: "success",
+        createdAt: "2026-02-25T00:00:01.000Z",
+        actorId: "ops-1",
+        target: "out/v3/tmp",
+        logs: [],
+      });
+    });
+
+    const finalState = new PersistentStateStore(sqlitePath, { driver: "sqlite" }).read();
+    assert.equal(finalState.systemReports.length, 2);
+    assert.equal(finalState.systemReports.some((report) => report.reportId === "report-a"), true);
+    assert.equal(finalState.systemReports.some((report) => report.reportId === "report-b"), true);
+  } finally {
+    rmSync(sqlitePath, { force: true });
+  }
+});

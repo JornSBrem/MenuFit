@@ -26,11 +26,17 @@
     - Persistente domeinen draaien op Postgres runtime met migraties en veilige connectieconfiguratie.
     - Operationele runbooks dekken pooling, backup en herstel voor productiegebruik.
 
-- [ ] WI-214 | type:chore | priority:P2 | status:TODO | title:Distributed locking en multi-process write coördinatie
-  - context: WI-206 sluit gelijktijdige multi-process write coördinatie expliciet uit.
+- [ ] WI-226 | type:feature | priority:P2 | status:TODO | title:Externe distributed lock backend integratie (Redis/etcd)
+  - context: WI-214 levert file lease locks; externe lock backend voor multi-node/cluster scenarios bleef out-of-scope.
   - acceptance:
-    - Kritieke write-paden hebben distributed locking of equivalente lease/coördinatie.
-    - Gelijktijdige writes veroorzaken geen dubbele of corrupte state-overgangen.
+    - Kritieke writes gebruiken configureerbare externe lock backend met lease/renew semantics.
+    - Failover/pad bij lock backend storingen is gedocumenteerd en getest.
+
+- [ ] WI-227 | type:chore | priority:P3 | status:TODO | title:Cluster-wide lock observability dashboards
+  - context: WI-214 voegt lockcoördinatie toe, maar cluster-brede lock metrics/dashboards bleven out-of-scope.
+  - acceptance:
+    - Lock acquire/timeout/stale-reclaim metrics zijn zichtbaar in operationele dashboards.
+    - Alerts bestaan voor verhoogde lock contention en timeouts.
 
 - [ ] WI-215 | type:chore | priority:P3 | status:TODO | title:iOS UI testautomatisering via Xcode simulator in CI
   - context: Teststrategie-plan sluit volledige mobile UI test automation expliciet uit.
@@ -79,6 +85,12 @@
 _None_
 
 ## Done
+
+- [x] WI-214 | type:chore | priority:P2 | status:DONE | title:Distributed locking en multi-process write coördinatie
+  - context: WI-206 sluit gelijktijdige multi-process write coördinatie expliciet uit.
+  - acceptance:
+    - Kritieke write-paden hebben distributed locking of equivalente lease/coördinatie.
+    - Gelijktijdige writes veroorzaken geen dubbele of corrupte state-overgangen.
 
 - [x] WI-213 | type:feature | priority:P2 | status:DONE | title:Relationele database runtime-integratie voor persistente domeinen
   - context: WI-206 noemt volledige relationele database-integratie expliciet als out-of-scope.

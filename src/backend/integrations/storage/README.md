@@ -7,6 +7,7 @@ Storage adapter helpers for medallion files:
 - checksum helpers for integrity validation
 - versioned persistent state store with schema migration support for silver/gold/jobs/idempotency/audit/households/auth sessions
 - runtime driver selection for persistent state: `file` JSON or relational `sqlite`
+- lease-based distributed write lock coordination for multi-process update safety
 
 Config keys for state runtime:
 

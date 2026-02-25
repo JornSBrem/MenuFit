@@ -1,6 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import {
+  FileLeaseLockCoordinator,
+  type DistributedLockCoordinator,
+} from "./distributed-lock.ts";
 
 import type { AuditEvent } from "../../application/audit/types.ts";
 import type {
@@ -28,6 +32,7 @@ export type PersistentStateStoreDriver = "file" | "sqlite";
 
 export interface PersistentStateStoreOptions {
   driver?: PersistentStateStoreDriver;
+  lockCoordinator?: DistributedLockCoordinator;
 }
 
 export interface PersistentAppState {
@@ -325,11 +330,15 @@ export class PersistentStateStore {
 
   private readonly driver: PersistentStateStoreDriver;
 
+  private readonly lockCoordinator: DistributedLockCoordinator;
+
   private sqliteDb?: DatabaseSync;
 
   constructor(filePath: string, options?: PersistentStateStoreOptions) {
     this.filePath = filePath;
     this.driver = options?.driver ?? "file";
+    this.lockCoordinator =
+      options?.lockCoordinator ?? new FileLeaseLockCoordinator(`${this.filePath}.lock`);
   }
 
   read(): PersistentAppState {
@@ -340,6 +349,41 @@ export class PersistentStateStore {
   }
 
   write(next: PersistentAppState): void {
+    this.withWriteLock(() => {
+      this.writeUnsafe(next);
+    });
+  }
+
+  update(mutator: (draft: PersistentAppState) => void): PersistentAppState {
+    return this.withWriteLock(() => {
+      const latest = this.readLatestWithoutCache();
+      mutator(latest);
+      const persisted = this.writeUnsafe(latest);
+      return structuredClone(persisted);
+    });
+  }
+
+  private loadFromDriver(): PersistentAppState {
+    return this.driver === "sqlite" ? this.loadFromSqlite() : this.loadFromFile();
+  }
+
+  private readLatestWithoutCache(): PersistentAppState {
+    if (this.driver === "sqlite") {
+      try {
+        return migrateState(this.readRawSqliteState(this.ensureSqliteDb()));
+      } catch {
+        return defaultState();
+      }
+    }
+
+    try {
+      return migrateState(JSON.parse(readFileSync(this.filePath, "utf8")) as unknown);
+    } catch {
+      return defaultState();
+    }
+  }
+
+  private writeUnsafe(next: PersistentAppState): PersistentAppState {
     const normalized: PersistentAppState = {
       ...next,
       schemaVersion: CURRENT_STATE_SCHEMA_VERSION,
@@ -353,17 +397,11 @@ export class PersistentStateStore {
     }
 
     this.stateCache = normalized;
+    return normalized;
   }
 
-  update(mutator: (draft: PersistentAppState) => void): PersistentAppState {
-    const draft = this.read();
-    mutator(draft);
-    this.write(draft);
-    return this.read();
-  }
-
-  private loadFromDriver(): PersistentAppState {
-    return this.driver === "sqlite" ? this.loadFromSqlite() : this.loadFromFile();
+  private withWriteLock<T>(criticalSection: () => T): T {
+    return this.lockCoordinator.runExclusive(criticalSection);
   }
 
   private loadFromFile(): PersistentAppState {
