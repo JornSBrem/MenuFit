@@ -2,6 +2,15 @@
 
 ## Backlog
 
+- [x] WI-266 | type:feature | priority:P0 | status:DONE | title:Backend HTTP server entry point met dev admin token bootstrap
+  - context: Er is geen server.ts — de backend heeft alleen route handlers maar geen draaiende HTTP server. WI-265 bouwde een admin web app die naar :3000 proxyt maar de backend draait niet. Voor lokale ontwikkeling moet de operator een token kunnen krijgen zonder OAuth-flow.
+  - acceptance:
+    - `node --experimental-strip-types src/backend/server.ts` start een HTTP server op poort 3000.
+    - Bij opstarten print de server een dev admin token naar de console (TTL 24 uur).
+    - Alle admin routes die de WI-265 web app aanroept zijn bereikbaar via /api/v3/admin/* en /api/v3/system/*.
+    - CORS-headers staan goed voor localhost:5173 (Vite dev server).
+    - `node --experimental-strip-types scripts/create-admin-token.ts` genereert een los token (schrijft ook naar out/dev-admin-token.txt).
+
 - [ ] WI-230 | type:chore | priority:P2 | status:TODO | title:Managed cloud observability provisioning als IaC
   - context: WI-222 levert compose-based externe observability stack; managed cloud provisioning (vendor-specifieke IaC) bleef out-of-scope.
   - acceptance:
@@ -167,6 +176,15 @@
     - Supportacties (resend/reset/diagnose) zijn via zichtbare UI interacties uitvoerbaar.
 
 ## Done (recent additions)
+
+- [x] WI-266 | type:feature | priority:P0 | status:DONE | title:Backend HTTP server entry point met dev admin token bootstrap
+  - context: Er is geen server.ts — de backend heeft alleen route handlers maar geen draaiende HTTP server. WI-265 bouwde een admin web app die naar :3000 proxyt maar de backend draait niet. Voor lokale ontwikkeling moet de operator een token kunnen krijgen zonder OAuth-flow.
+  - acceptance:
+    - `node --experimental-strip-types src/backend/server.ts` start een HTTP server op poort 3000.
+    - Bij opstarten print de server een dev admin token naar de console (TTL 24 uur).
+    - Alle admin routes die de WI-265 web app aanroept zijn bereikbaar via /api/v3/admin/* en /api/v3/system/*.
+    - CORS-headers staan goed voor localhost:5173 (Vite dev server).
+    - `node --experimental-strip-types scripts/create-admin-token.ts` genereert een los token (schrijft ook naar out/dev-admin-token.txt).
 
 - [x] WI-265 | type:feature | priority:P1 | status:DONE | title:Admin web Vite+React applicatie shell met tab-navigatie en auth gate
   - context: src/admin-web bevat alleen framework-agnostische TypeScript library code (controller, renderers, types). Er is geen echte browser-applicatie. Blueprint specificeert React + Vite + TypeScript voor het admin panel. Operator wil een werkbare browser-UI om data, settings, extract en operations te beheren.
