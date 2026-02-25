@@ -24,9 +24,19 @@
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<false/>
+			</dict>
+		</dict>
 	</dict>
 	<key>MenuFitBackendBaseURL</key>
-	<string>https://api.menufit.local</string>
+	<string>http://localhost:3000</string>
 	<key>MenuFitUserAccessToken</key>
 	<string></string>
 	<key>MenuFitUserSubjectId</key>
