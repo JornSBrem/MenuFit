@@ -32,3 +32,31 @@ groups:
           summary: "MenuFit blocked-rate is above 12%"
           description: "Blocked traffic is elevated. Validate RBAC/rate-limit/WAF policy behavior and suspicious traffic patterns."
           runbook: "docs/ops/observability-runbook.md#blocked-rate"
+
+      - alert: MenuFitLockTimeoutRateHigh
+        expr: |
+          sum(rate(menufit_lock_events_total{event=~"timeout|renew_failed"}[5m])) > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "MenuFit lock timeout/renew-fail rate is elevated"
+          description: "Distributed lock backend shows sustained timeout or lease renewal failures."
+          runbook: "docs/ops/distributed-lock-failover-runbook.md"
+
+      - alert: MenuFitLockContentionRatioHigh
+        expr: |
+          (
+            sum(rate(menufit_lock_events_total{event=~"timeout|backend_error"}[5m]))
+            /
+            clamp_min(sum(rate(menufit_lock_events_total{event="acquired"}[5m])), 1)
+          ) > 0.10
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "MenuFit lock contention ratio is above 10%"
+          description: "Lock acquisition contention is elevated. Check Redis health and fallback mode behavior."
+          runbook: "docs/ops/distributed-lock-failover-runbook.md"

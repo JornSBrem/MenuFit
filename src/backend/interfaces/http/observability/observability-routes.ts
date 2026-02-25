@@ -1,5 +1,6 @@
 import type { OperationalTelemetryService } from "../../../application/observability/operational-telemetry-service.ts";
 import type { ObservabilityDashboardSnapshot } from "../../../application/observability/types.ts";
+import { GLOBAL_LOCK_TELEMETRY } from "../../../integrations/storage/lock-telemetry.ts";
 import {
   type AnySessionContext,
   requireAdminSession,
@@ -76,7 +77,13 @@ export const handleObservabilityMetrics = (
     ok: true,
     data: {
       contentType: "text/plain; version=0.0.4",
-      body: telemetry.toPrometheusMetrics(),
+      body: [
+        telemetry.toPrometheusMetrics(),
+        GLOBAL_LOCK_TELEMETRY.toPrometheusMetrics(),
+      ]
+        .map((chunk) => chunk.trim())
+        .filter((chunk) => chunk.length > 0)
+        .join("\n"),
     },
   };
 };

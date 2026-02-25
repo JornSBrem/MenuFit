@@ -5,6 +5,7 @@ Versioned production observability assets for MenuFit backend:
 - Prometheus scrape + alert rules
 - Alertmanager escalation routing (Slack + webhook)
 - Grafana datasource and dashboard provisioning
+- Distributed lock event visibility (`menufit_lock_events_total`) for contention monitoring
 
 ## Files
 
@@ -57,3 +58,5 @@ Rollback:
   - `100 * (sum(rate(menufit_http_requests_total{outcome=~"client_error|server_error"}[5m])) / clamp_min(sum(rate(menufit_http_requests_total[5m])), 1))`
 - Blocked-rate signal:
   - `100 * (sum(rate(menufit_http_requests_total{outcome=~"forbidden|rate_limited|waf_blocked"}[5m])) / clamp_min(sum(rate(menufit_http_requests_total[5m])), 1))`
+- Lock contention signal:
+  - `sum(rate(menufit_lock_events_total{event=~"timeout|renew_failed"}[5m]))`

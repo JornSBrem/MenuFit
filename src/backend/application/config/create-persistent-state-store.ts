@@ -4,6 +4,7 @@ import {
   FileLeaseLockCoordinator,
   RedisCliLeaseLockClient,
 } from "../../integrations/storage/distributed-lock.ts";
+import { GLOBAL_LOCK_TELEMETRY } from "../../integrations/storage/lock-telemetry.ts";
 import { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 
 const DEFAULT_STATE_STORE_PATH = "out/v3/state/menu-fit-state.json";
@@ -70,12 +71,15 @@ export const createPersistentStateStore = (
             retryDelayMs,
             renewIntervalMs,
             failOpen,
+            backendName: "redis",
+            telemetrySink: GLOBAL_LOCK_TELEMETRY,
           },
         )
       : new FileLeaseLockCoordinator(`${filePath}.lock`, {
           leaseTtlMs,
           maxWaitMs,
           retryDelayMs,
+          telemetrySink: GLOBAL_LOCK_TELEMETRY,
         });
 
   return new PersistentStateStore(filePath, {

@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- [ ] WI-227 | type:chore | priority:P3 | status:TODO | title:Cluster-wide lock observability dashboards
-  - context: WI-214 voegt lockcoördinatie toe, maar cluster-brede lock metrics/dashboards bleven out-of-scope.
-  - acceptance:
-    - Lock acquire/timeout/stale-reclaim metrics zijn zichtbaar in operationele dashboards.
-    - Alerts bestaan voor verhoogde lock contention en timeouts.
-
 - [ ] WI-228 | type:chore | priority:P3 | status:TODO | title:Uitgebreide iOS E2E testsuite met backend mocks en netwerkvirtualisatie
   - context: WI-215 levert alleen baseline UI smoke automation; volledige mobiele E2E suite met gecontroleerde backend-/netwerksimulatie bleef out-of-scope.
   - acceptance:
@@ -74,6 +68,18 @@
     - Etcd backend ondersteunt acquire/renew/release semantiek equivalent aan Redis pad.
     - Runtime configuratie kan Redis en etcd backends veilig wisselen met regressietests.
 
+- [ ] WI-239 | type:spike | priority:P3 | status:TODO | title:Synthetische cluster contention/load test voor lock backends
+  - context: WI-227 levert lock metrics/dashboards, maar synthetische cluster contention-loadtests bleven out-of-scope.
+  - acceptance:
+    - Loadscenario's simuleren multi-node lock contention met reproduceerbare meetresultaten.
+    - Resultaten leveren drempelwaarden voor timeout/contention alerts.
+
+- [ ] WI-240 | type:spike | priority:P3 | status:TODO | title:Tenant-level lock isolatie analytics ontwerp
+  - context: WI-227 sluit tenant-level lock isolatie analytics expliciet uit.
+  - acceptance:
+    - Ontwerp beschrijft lock-metrics segmentatie per tenant/workload zonder gevoelige data leakage.
+    - Benodigde telemetry-uitbreidingen en querypatronen zijn gedefinieerd.
+
 - [ ] WI-216 | type:feature | priority:P3 | status:TODO | title:Uitbreidbare ingest-matrix voor arbitraire kcal-waarden
   - context: WI-202 sluit extra ingest matrix uitbreiding voor arbitraire kcal-waarden expliciet uit.
   - acceptance:
@@ -115,6 +121,12 @@
 _None_
 
 ## Done
+
+- [x] WI-227 | type:chore | priority:P3 | status:DONE | title:Cluster-wide lock observability dashboards
+  - context: WI-214 voegt lockcoördinatie toe, maar cluster-brede lock metrics/dashboards bleven out-of-scope.
+  - acceptance:
+    - Lock acquire/timeout/stale-reclaim metrics zijn zichtbaar in operationele dashboards.
+    - Alerts bestaan voor verhoogde lock contention en timeouts.
 
 - [x] WI-226 | type:feature | priority:P2 | status:DONE | title:Externe distributed lock backend integratie (Redis/etcd)
   - context: WI-214 levert file lease locks; externe lock backend voor multi-node/cluster scenarios bleef out-of-scope.

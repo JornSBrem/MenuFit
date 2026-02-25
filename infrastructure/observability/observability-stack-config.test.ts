@@ -13,12 +13,15 @@ test("prometheus config scrapes menufit observability metrics endpoint", () => {
   assert.match(config, /credentials_file:\s+\/etc\/prometheus\/secrets\/menufit_observability_token/);
 });
 
-test("alert rules include error-rate and blocked-rate thresholds", () => {
+test("alert rules include error/blocked and lock contention thresholds", () => {
   const rules = read("prometheus/alerts/menufit-alerts.yml");
   assert.match(rules, /alert:\s+MenuFitHighHttpErrorRate/);
   assert.match(rules, /alert:\s+MenuFitHighBlockedRate/);
+  assert.match(rules, /alert:\s+MenuFitLockTimeoutRateHigh/);
+  assert.match(rules, /alert:\s+MenuFitLockContentionRatioHigh/);
   assert.match(rules, /client_error\|server_error/);
   assert.match(rules, /forbidden\|rate_limited\|waf_blocked/);
+  assert.match(rules, /menufit_lock_events_total/);
 });
 
 test("alertmanager escalation receiver routes to slack and webhook channels", () => {
@@ -35,5 +38,7 @@ test("grafana provisioning includes backend observability dashboard", () => {
   assert.match(dashboard, /MenuFit Backend Observability/);
   assert.match(dashboard, /menufit_http_requests_total/);
   assert.match(dashboard, /menufit_security_events_total/);
+  assert.match(dashboard, /menufit_lock_events_total/);
   assert.match(dashboard, /Job and Operations Route Throughput/);
+  assert.match(dashboard, /Distributed Lock Events/);
 });

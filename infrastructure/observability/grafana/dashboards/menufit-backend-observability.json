@@ -308,6 +308,56 @@
       ],
       "title": "Job and Operations Route Throughput",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "menufit-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "menufit-prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (backend, event) (increase(menufit_lock_events_total[15m]))",
+          "legendFormat": "{{backend}}::{{event}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Distributed Lock Events (15m)",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",

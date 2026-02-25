@@ -28,3 +28,7 @@ Config keys for distributed lock backend:
 - `STATE_LOCK_FAIL_OPEN` (`true`/`false`; failover behavior when backend unavailable)
 - `STATE_LOCK_REDIS_URL` (redis URL when backend is `redis`)
 - `STATE_LOCK_REDIS_KEY_PREFIX` (redis key namespace)
+
+Lock metrics exported through observability:
+
+- `menufit_lock_events_total{backend=<file|redis>,event=<acquired|timeout|stale_reclaim|renew_failed|backend_error>}`

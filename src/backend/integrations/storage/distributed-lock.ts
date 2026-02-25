@@ -8,6 +8,17 @@ export interface DistributedLockCoordinator {
   runExclusive<T>(criticalSection: () => T): T;
 }
 
+export type LockTelemetryEventType =
+  | "acquired"
+  | "timeout"
+  | "stale_reclaim"
+  | "renew_failed"
+  | "backend_error";
+
+export interface LockTelemetrySink {
+  record(input: { backend: string; eventType: LockTelemetryEventType }): void;
+}
+
 export interface ExternalLeaseLockClient {
   tryAcquire(input: {
     lockKey: string;
@@ -30,6 +41,7 @@ interface FileLeaseLockOptions {
   leaseTtlMs?: number;
   maxWaitMs?: number;
   retryDelayMs?: number;
+  telemetrySink?: LockTelemetrySink;
 }
 
 interface ExternalLeaseLockOptions {
@@ -39,6 +51,8 @@ interface ExternalLeaseLockOptions {
   maxWaitMs?: number;
   retryDelayMs?: number;
   failOpen?: boolean;
+  backendName?: string;
+  telemetrySink?: LockTelemetrySink;
 }
 
 type RedisCliCommandExecutor = (args: string[]) => string;
@@ -80,6 +94,10 @@ export class ExternalLeaseLockCoordinator implements DistributedLockCoordinator 
 
   private readonly failOpen: boolean;
 
+  private readonly backendName: string;
+
+  private readonly telemetrySink?: LockTelemetrySink;
+
   constructor(
     lockKey: string,
     client: ExternalLeaseLockClient,
@@ -93,6 +111,8 @@ export class ExternalLeaseLockCoordinator implements DistributedLockCoordinator 
     this.maxWaitMs = options?.maxWaitMs ?? 5_000;
     this.retryDelayMs = options?.retryDelayMs ?? 50;
     this.failOpen = options?.failOpen ?? true;
+    this.backendName = options?.backendName?.trim() || "external";
+    this.telemetrySink = options?.telemetrySink;
   }
 
   runExclusive<T>(criticalSection: () => T): T {
@@ -114,9 +134,11 @@ export class ExternalLeaseLockCoordinator implements DistributedLockCoordinator 
           leaseTtlMs: this.leaseTtlMs,
         });
         if (!renewed) {
+          this.recordTelemetry("renew_failed");
           renewError = new Error("External lease lock renewal rejected.");
         }
       } catch (error) {
+        this.recordTelemetry("renew_failed");
         renewError =
           error instanceof Error
             ? error
@@ -153,9 +175,11 @@ export class ExternalLeaseLockCoordinator implements DistributedLockCoordinator 
           leaseTtlMs: this.leaseTtlMs,
         });
         if (result === "acquired") {
+          this.recordTelemetry("acquired");
           return true;
         }
       } catch (error) {
+        this.recordTelemetry("backend_error");
         if (this.failOpen) {
           return false;
         }
@@ -164,7 +188,15 @@ export class ExternalLeaseLockCoordinator implements DistributedLockCoordinator 
 
       sleepBlocking(this.retryDelayMs);
     }
+    this.recordTelemetry("timeout");
     return false;
+  }
+
+  private recordTelemetry(eventType: LockTelemetryEventType): void {
+    this.telemetrySink?.record({
+      backend: this.backendName,
+      eventType,
+    });
   }
 }
 
@@ -263,12 +295,15 @@ export class FileLeaseLockCoordinator implements DistributedLockCoordinator {
 
   private readonly retryDelayMs: number;
 
+  private readonly telemetrySink?: LockTelemetrySink;
+
   constructor(lockPath: string, options?: FileLeaseLockOptions) {
     this.lockPath = lockPath;
     this.nowMs = options?.nowMs ?? Date.now;
     this.leaseTtlMs = options?.leaseTtlMs ?? 30_000;
     this.maxWaitMs = options?.maxWaitMs ?? 5_000;
     this.retryDelayMs = options?.retryDelayMs ?? 50;
+    this.telemetrySink = options?.telemetrySink;
   }
 
   runExclusive<T>(criticalSection: () => T): T {
@@ -294,6 +329,10 @@ export class FileLeaseLockCoordinator implements DistributedLockCoordinator {
         const fd = openSync(this.lockPath, "wx");
         writeFileSync(fd, JSON.stringify({ pid: process.pid, expiresAtMs }), "utf8");
         closeSync(fd);
+        this.telemetrySink?.record({
+          backend: "file",
+          eventType: "acquired",
+        });
         return true;
       } catch (error) {
         const code = (error as NodeJS.ErrnoException).code;
@@ -303,6 +342,10 @@ export class FileLeaseLockCoordinator implements DistributedLockCoordinator {
 
         if (this.isLeaseExpired()) {
           rmSync(this.lockPath, { force: true });
+          this.telemetrySink?.record({
+            backend: "file",
+            eventType: "stale_reclaim",
+          });
           continue;
         }
 
@@ -310,6 +353,10 @@ export class FileLeaseLockCoordinator implements DistributedLockCoordinator {
       }
     }
 
+    this.telemetrySink?.record({
+      backend: "file",
+      eventType: "timeout",
+    });
     return false;
   }
 

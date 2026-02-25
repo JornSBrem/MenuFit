@@ -34,6 +34,7 @@ test("file lease lock coordinator reclaims expired lock file", () => {
   const lockPath = join(dir, "state.lock");
   try {
     let now = 2_300_000_000_000;
+    const events: string[] = [];
     writeFileSync(lockPath, JSON.stringify({ pid: 123, expiresAtMs: now - 1_000 }), "utf8");
 
     const coordinator = new FileLeaseLockCoordinator(lockPath, {
@@ -41,6 +42,9 @@ test("file lease lock coordinator reclaims expired lock file", () => {
       leaseTtlMs: 5_000,
       maxWaitMs: 50,
       retryDelayMs: 1,
+      telemetrySink: {
+        record: ({ eventType }) => events.push(eventType),
+      },
     });
 
     const value = coordinator.runExclusive(() => {
@@ -48,6 +52,8 @@ test("file lease lock coordinator reclaims expired lock file", () => {
       return "ok";
     });
     assert.equal(value, "ok");
+    assert.equal(events.includes("stale_reclaim"), true);
+    assert.equal(events.includes("acquired"), true);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -114,6 +120,35 @@ test("external lease lock coordinator fails closed when backend is unavailable",
   );
 
   assert.throws(() => coordinator.runExclusive(() => "should-not-run"), /backend unavailable/u);
+});
+
+test("external lease lock coordinator records timeout telemetry when lock stays busy", () => {
+  const events: string[] = [];
+  let now = 2_300_000_000_000;
+  const coordinator = new ExternalLeaseLockCoordinator(
+    "state-store",
+    {
+      tryAcquire: () => "busy",
+      renew: () => true,
+      release: () => {},
+    },
+    {
+      failOpen: false,
+      maxWaitMs: 5,
+      retryDelayMs: 1,
+      nowMs: () => {
+        now += 2;
+        return now;
+      },
+      telemetrySink: {
+        record: ({ eventType }) => events.push(eventType),
+      },
+      backendName: "redis",
+    },
+  );
+
+  assert.throws(() => coordinator.runExclusive(() => "nope"), /Could not acquire external distributed lock/u);
+  assert.equal(events.includes("timeout"), true);
 });
 
 test("redis cli lease lock client issues set/eval commands with expected shape", () => {
