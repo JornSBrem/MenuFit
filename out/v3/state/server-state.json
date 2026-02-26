@@ -27,10 +27,82 @@
       "adminRole": "owner",
       "issuedAtEpochSeconds": 1772044072,
       "expiresAtEpochSeconds": 1772130472
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-3",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772051532,
+      "expiresAtEpochSeconds": 1772137932
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-4",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772094762,
+      "expiresAtEpochSeconds": 1774686762
+    },
+    {
+      "sessionKind": "user",
+      "subjectId": "ios-user",
+      "tokenId": "sess-5",
+      "picnicAccountId": "picnic-default",
+      "issuedAtEpochSeconds": 1772094762,
+      "expiresAtEpochSeconds": 1774686762
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-6",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772108199,
+      "expiresAtEpochSeconds": 1774700199
+    },
+    {
+      "sessionKind": "user",
+      "subjectId": "ios-user",
+      "tokenId": "sess-7",
+      "picnicAccountId": "picnic-default",
+      "issuedAtEpochSeconds": 1772108199,
+      "expiresAtEpochSeconds": 1774700199
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-8",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772108591,
+      "expiresAtEpochSeconds": 1774700591
+    },
+    {
+      "sessionKind": "user",
+      "subjectId": "ios-user",
+      "tokenId": "sess-9",
+      "picnicAccountId": "picnic-default",
+      "issuedAtEpochSeconds": 1772108591,
+      "expiresAtEpochSeconds": 1774700591
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-10",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772108786,
+      "expiresAtEpochSeconds": 1774700786
+    },
+    {
+      "sessionKind": "user",
+      "subjectId": "ios-user",
+      "tokenId": "sess-11",
+      "picnicAccountId": "picnic-default",
+      "issuedAtEpochSeconds": 1772108786,
+      "expiresAtEpochSeconds": 1774700786
     }
   ],
   "providerSessions": [],
   "schedulerRuns": [],
   "retryQueueEntries": [],
-  "updatedAt": "2026-02-25T18:27:52.065Z"
+  "updatedAt": "2026-02-26T12:26:26.381Z"
 }
