@@ -116,6 +116,26 @@ export const loginToPg = async (
     // Body is geen JSON, of al gelezen — negeer
   }
 
+  // DEBUG: log response info zodat we het auth-mechanisme kunnen bepalen
+  console.log("[pg-login] status:", response.status);
+  console.log("[pg-login] content-type:", response.headers.get("content-type"));
+  console.log("[pg-login] set-cookie header aanwezig:", response.headers.has("set-cookie"));
+  if (responseBody && typeof responseBody === "object") {
+    const keys = Object.keys(responseBody as object);
+    console.log("[pg-login] response body sleutels (top-level):", keys);
+    // Log de sleutels één niveau dieper
+    for (const key of keys.slice(0, 5)) {
+      const val = (responseBody as Record<string, unknown>)[key];
+      if (val && typeof val === "object") {
+        console.log(`[pg-login]   .${key} sleutels:`, Object.keys(val as object));
+      } else {
+        console.log(`[pg-login]   .${key}:`, typeof val === "string" ? val.slice(0, 40) : typeof val);
+      }
+    }
+  } else {
+    console.log("[pg-login] response body:", responseBody);
+  }
+
   if (!response.ok) {
     let detail = `HTTP ${response.status}`;
     if (responseBody && typeof responseBody === "object") {
@@ -160,9 +180,14 @@ export const loginToPg = async (
     };
   }
 
+  // Geef de exacte body-structuur mee zodat we het auth-mechanisme kunnen bepalen
+  const bodyDescription =
+    responseBody && typeof responseBody === "object"
+      ? `Body-sleutels: [${Object.keys(responseBody as object).join(", ")}]`
+      : `Body: ${String(responseBody).slice(0, 100)}`;
+
   throw new PgLoginError(
     "NO_AUTH_TOKEN",
-    "PG login succesvol (HTTP 200) maar geen sessie-cookies of Bearer-token ontvangen. " +
-      "Controleer of de inloggegevens correct zijn.",
+    `PG login succesvol (HTTP 200) maar geen token gevonden. ${bodyDescription}`,
   );
 };
