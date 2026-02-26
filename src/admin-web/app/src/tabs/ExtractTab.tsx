@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import type { AdminAsyncViewState, AdminExtractViewData, SystemJobRecord } from "@lib/types.ts";
+import { useState, useEffect, useRef, type FormEvent } from "react";
+import type { AdminAsyncViewState, AdminExtractViewData, IngestJobStatus, SystemJobRecord } from "@lib/types.ts";
 import type { AdminDashboardController } from "@lib/admin-dashboard-controller.ts";
 import { card, section, table, th, td, btn, btnDanger, emptyMsg, fieldset, label, input } from "./shared-styles.ts";
 
@@ -31,6 +31,47 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const data = viewState.data;
+  const activeIngestJob = data?.activeIngestJob;
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Start/stop polling op basis van activeIngestJob
+  useEffect(() => {
+    if (!activeIngestJob || activeIngestJob.status !== "running") {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      return;
+    }
+    if (pollingRef.current) return; // al aan het pollen
+    pollingRef.current = setInterval(() => {
+      void controller.getIngestStatus(activeIngestJob.jobId).then((nextState) => {
+        onStateChange();
+        const job = nextState.views.extract.data?.activeIngestJob;
+        if (job && job.status !== "running") {
+          // Klaar of mislukt — stop polling en toon resultaat
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
+          setIngestBusy(false);
+          if (job.status === "completed") {
+            setSuccessMsg(
+              `Ingest klaar: ${job.goldProjected ?? 0} gold-records, ${job.tasksRan ?? 0} taken. ${job.errors.length > 0 ? `(${job.errors.length} waarschuwingen)` : ""}`,
+            );
+          } else {
+            setErrorMsg(`Ingest mislukt: ${job.errors[0] ?? "onbekende fout"}`);
+          }
+        }
+      });
+    }, 1000);
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [activeIngestJob?.jobId, activeIngestJob?.status]);
 
   /** Geeft true als de extract-view in de staat een fout heeft. StatusBanner toont die fout al. */
   const extractHasError = (state: { views: { extract: { status: string } } }): boolean =>
@@ -102,16 +143,15 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
         basePersons: discoverResult.defaultBasePersons,
       });
       onStateChange();
-      if (!extractHasError(ingestState)) {
-        setSuccessMsg(
-          `Ingest gestart voor ${discoverResult.availableWeeks.length} weken (${discoverResult.availableWeeks.join(", ")}).`,
-        );
+      if (extractHasError(ingestState)) {
+        setIngestBusy(false);
       }
+      // ingestBusy blijft true — polling (useEffect) zet hem uit als de job klaar is
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Ontdekken of ingest mislukt.");
+      setIngestBusy(false);
     } finally {
       setPgDiscoverBusy(false);
-      setIngestBusy(false);
     }
   };
 
@@ -281,6 +321,9 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
         </div>
       </div>
 
+      {/* Ingest voortgang */}
+      {activeIngestJob && <IngestProgress job={activeIngestJob} />}
+
       {/* Ingest */}
       <div style={card}>
         <h3 style={section.title}>Ingest uitvoeren</h3>
@@ -365,6 +408,76 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
           </table>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---- IngestProgress component ----------------------------------------------
+
+function IngestProgress({ job }: { job: IngestJobStatus }) {
+  const isRunning = job.status === "running";
+  const isDone = job.status === "completed";
+  const isFailed = job.status === "failed";
+
+  // Bepaal voortgang op basis van fase
+  let pct = 0;
+  let phaseLabel = "";
+  if (job.phase === "fetching") {
+    pct = job.totalFetches > 0 ? Math.round((job.fetched / job.totalFetches) * 50) : 0;
+    phaseLabel = `Ophalen: ${job.fetched} / ${job.totalFetches} unieke URL's`;
+  } else if (job.phase === "processing") {
+    pct = 50 + (job.totalProcessing > 0 ? Math.round((job.processed / job.totalProcessing) * 50) : 0);
+    phaseLabel = `Verwerken: ${job.processed} / ${job.totalProcessing} week×kcal combinaties`;
+  } else if (job.phase === "done") {
+    pct = 100;
+    phaseLabel = isDone
+      ? `Klaar — ${job.goldProjected ?? 0} gold-records, ${job.tasksRan ?? 0} taken`
+      : `Mislukt`;
+  }
+
+  const barColor = isFailed ? "#c00" : isDone ? "#0a6d3a" : "#0071e3";
+
+  return (
+    <div style={{
+      ...card,
+      border: `1px solid ${isFailed ? "#ffb3b3" : isDone ? "#8fd6b4" : "#b8d4f8"}`,
+      background: isFailed ? "#fff0f0" : isDone ? "#f0fff4" : "#f0f7ff",
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <strong style={{ fontSize: 14, color: barColor }}>
+          {isRunning ? "⏳ Ingest bezig…" : isDone ? "✅ Ingest voltooid" : "❌ Ingest mislukt"}
+        </strong>
+        <span style={{ fontSize: 12, color: "#6e6e73" }}>
+          {new Date(job.startedAt).toLocaleTimeString("nl-NL")}
+          {job.finishedAt && ` → ${new Date(job.finishedAt).toLocaleTimeString("nl-NL")}`}
+        </span>
+      </div>
+
+      {/* Voortgangsbalk */}
+      <div style={{ background: "#e5e5ea", borderRadius: 4, height: 8, marginBottom: 6, overflow: "hidden" }}>
+        <div style={{
+          height: "100%",
+          width: `${pct}%`,
+          background: barColor,
+          borderRadius: 4,
+          transition: "width 0.4s ease",
+        }} />
+      </div>
+
+      <div style={{ fontSize: 12, color: "#3a3a3c", marginBottom: 4 }}>
+        {phaseLabel}
+      </div>
+
+      {job.errors.length > 0 && (
+        <details style={{ marginTop: 6 }}>
+          <summary style={{ fontSize: 12, color: "#c00", cursor: "pointer" }}>
+            {job.errors.length} waarschuwing{job.errors.length !== 1 ? "en" : ""}
+          </summary>
+          <div style={{ marginTop: 4, fontSize: 11, color: "#c00", maxHeight: 120, overflowY: "auto" }}>
+            {job.errors.map((e, i) => <div key={i}>{e}</div>)}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

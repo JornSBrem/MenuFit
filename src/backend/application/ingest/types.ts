@@ -23,10 +23,12 @@ export interface IngestRetryPolicy {
 
 export interface IngestTaskResult {
   task: IngestTask;
-  metadata: BronzeObjectMetadata;
-  filePath: string;
-  bytes: number;
-  verified: boolean;
+  metadata?: BronzeObjectMetadata;
+  filePath?: string;
+  bytes?: number;
+  verified?: boolean;
+  /** Aanwezig als de taak mislukt is (continueOnError modus) */
+  error?: string;
 }
 
 export interface BronzeManifestRecord {

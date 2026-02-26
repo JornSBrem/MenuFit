@@ -15,6 +15,7 @@ import type {
   HouseholdInviteResendRequest,
   HouseholdOperationsStatus,
   HouseholdSessionResetRequest,
+  IngestJobStatus,
   IngestRequest,
   PgDiscoverResult,
   PgLoginRequest,
@@ -60,6 +61,10 @@ export class AdminApiClient {
 
   pgDiscover(year?: number): Promise<ApiEnvelope<PgDiscoverResult>> {
     return this.post("/api/v3/admin/pg-discover", year ? { year } : {});
+  }
+
+  getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>> {
+    return this.get(`/api/v3/admin/ingest-status/${jobId}`);
   }
 
   getDiagnostics(): Promise<ApiEnvelope<SystemDiagnosticsSummary>> {

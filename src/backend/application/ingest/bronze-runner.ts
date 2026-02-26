@@ -46,6 +46,8 @@ export interface BronzeRunnerOptions {
   retryPolicy?: IngestRetryPolicy;
   bronzeRoot?: string;
   manifestPath?: string;
+  /** Bij true wordt een mislukte taak overgeslagen i.p.v. een exception te gooien */
+  continueOnError?: boolean;
 }
 
 export const runBronzeIngestTasks = async (
@@ -60,37 +62,48 @@ export const runBronzeIngestTasks = async (
   const manifestPath = options?.manifestPath ?? join(bronzeRoot, "manifest.json");
 
   for (const task of tasks) {
-    // Touch config to guarantee endpoint keys are loaded and validated by store.
-    if (task.source === "pg") {
-      config.get<string>("PG_LOGIN_URL");
+    try {
+      // Touch config to guarantee endpoint keys are loaded and validated by store.
+      if (task.source === "pg") {
+        config.get<string>("PG_LOGIN_URL");
+      }
+
+      const payload = await withRetry(() => fetchJson(task.requestUrl, task), retryPolicy);
+      const metadata = buildMetadata(task, payload);
+      const verified = verifyBronzePayloadChecksum(metadata, payload);
+      if (!verified) {
+        throw new Error(`Checksum verification failed for task ${task.entityType} week ${task.week}`);
+      }
+
+      const written = await writeBronzeJson(bronzeRoot, metadata, payload);
+      await appendManifestRecord(manifestPath, {
+        id: manifestRecordId(task, metadata.sha256),
+        entityType: task.entityType,
+        source: task.source,
+        filePath: written.path,
+        metadata,
+        bytes: written.bytes,
+        verified,
+        createdAt: new Date().toISOString(),
+      });
+
+      results.push({
+        task,
+        metadata,
+        filePath: written.path,
+        bytes: written.bytes,
+        verified,
+      });
+    } catch (err) {
+      if (options?.continueOnError) {
+        results.push({
+          task,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      } else {
+        throw err;
+      }
     }
-
-    const payload = await withRetry(() => fetchJson(task.requestUrl, task), retryPolicy);
-    const metadata = buildMetadata(task, payload);
-    const verified = verifyBronzePayloadChecksum(metadata, payload);
-    if (!verified) {
-      throw new Error(`Checksum verification failed for task ${task.entityType} week ${task.week}`);
-    }
-
-    const written = await writeBronzeJson(bronzeRoot, metadata, payload);
-    await appendManifestRecord(manifestPath, {
-      id: manifestRecordId(task, metadata.sha256),
-      entityType: task.entityType,
-      source: task.source,
-      filePath: written.path,
-      metadata,
-      bytes: written.bytes,
-      verified,
-      createdAt: new Date().toISOString(),
-    });
-
-    results.push({
-      task,
-      metadata,
-      filePath: written.path,
-      bytes: written.bytes,
-      verified,
-    });
   }
 
   return results;
