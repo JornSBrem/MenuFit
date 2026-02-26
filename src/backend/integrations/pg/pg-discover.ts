@@ -15,8 +15,9 @@ export interface PgDiscoverResult {
 }
 
 /**
- * Zet een datum om naar het YYYYWW ISO-weeknummer dat de PG API gebruikt.
+ * Zet een datum om naar het YYYYWW interne weeknummer.
  * Bijv.: week 9 van 2026 → 202609
+ * Let op: de PG API gebruikt alleen het weeknummer (% 100), niet YYYYWW.
  */
 export const toIsoWeekNumber = (date: Date): number => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -51,9 +52,8 @@ export const buildProbeWeeks = (options: PgDiscoverOptions = {}): number[] => {
 const isValidWeekResponse = (payload: unknown): boolean => {
   if (!payload || typeof payload !== "object") return false;
   const p = payload as Record<string, unknown>;
-  if (!p.data || typeof p.data !== "object") return false;
-  const data = p.data as Record<string, unknown>;
-  return Array.isArray(data.groceries) || Array.isArray(data.meals);
+  // PG API geeft { data: { ... } } terug voor een bestaande week
+  return p.data !== undefined && p.data !== null;
 };
 
 /**
@@ -76,9 +76,6 @@ export const discoverAvailableWeeks = async (
         ) as Record<string, string>)
       : {};
 
-  // DEBUG: toon welke auth-headers aanwezig zijn (zonder waarden)
-  console.log("[pg-discover] extraHeaders sleutels:", Object.keys(extraHeaders));
-
   const probedWeeks = buildProbeWeeks(options);
   const availableWeeks: number[] = [];
   const errors: Array<{ week: number; error: string }> = [];
@@ -89,7 +86,8 @@ export const discoverAvailableWeeks = async (
     const batch = probedWeeks.slice(i, i + BATCH_SIZE);
     await Promise.all(
       batch.map(async (week) => {
-        const url = buildPgEndpointUrl(config, "week", { week });
+        // PG API verwacht alleen het weeknummer (bijv. 9), niet YYYYWW (bijv. 202609)
+        const url = buildPgEndpointUrl(config, "week", { week: week % 100 });
         try {
           const response = await fetch(url, {
             method: "GET",
@@ -99,31 +97,14 @@ export const discoverAvailableWeeks = async (
           if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
               errors.push({ week, error: `Auth fout (${response.status}) — log eerst in bij PG` });
-            } else {
-              // DEBUG: log niet-200 statussen zodat we het probleem kunnen opsporen
-              console.log(`[pg-discover] week ${week}: HTTP ${response.status} (${url})`);
             }
             // 404 / 400 → week bestaat gewoon niet, geen fout melden
             return;
           }
 
           const payload = await response.json();
-          // DEBUG: log de eerste week zodat we de response-structuur zien
-          if (week === probedWeeks[0]) {
-            console.log(`[pg-discover] voorbeeld week ${week} response (top-level sleutels):`,
-              payload && typeof payload === "object" ? Object.keys(payload as object) : payload);
-            if (payload && typeof payload === "object" && (payload as Record<string, unknown>).data) {
-              const data = (payload as Record<string, unknown>).data;
-              console.log(`[pg-discover]   .data type:`, typeof data, Array.isArray(data) ? "(array)" : "");
-              if (data && typeof data === "object" && !Array.isArray(data)) {
-                console.log(`[pg-discover]   .data sleutels:`, Object.keys(data as object).slice(0, 10));
-              }
-            }
-          }
           if (isValidWeekResponse(payload)) {
             availableWeeks.push(week);
-          } else {
-            console.log(`[pg-discover] week ${week}: HTTP 200 maar shape-check mislukt`);
           }
         } catch (err) {
           errors.push({
