@@ -26,7 +26,8 @@ const endpointVariablesByEntityType = (
   if (entityType === "pg.recipe") {
     return { recipeId: `week-${week}` };
   }
-  return { week };
+  // PG API verwacht alleen het weeknummer (bijv. 9), niet YYYYWW (bijv. 202609)
+  return { week: week % 100 };
 };
 
 export interface PlannerOptions {
