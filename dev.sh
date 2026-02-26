@@ -15,6 +15,13 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+# Verwijder eventueel al draaiend proces op poort 3000
+if lsof -ti:3000 > /dev/null 2>&1; then
+  echo "Poort 3000 al in gebruik — bestaand proces stoppen..."
+  lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+  sleep 0.5
+fi
+
 echo "Backend starten..."
 node --experimental-strip-types src/backend/server.ts &
 
