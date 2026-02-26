@@ -21,6 +21,7 @@ function statusColor(status: SystemJobRecord["status"]): string {
 }
 
 export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabProps) {
+  const [pgLoginBusy, setPgLoginBusy] = useState(false);
   const [ingestBusy, setIngestBusy] = useState(false);
   const [recomputeBusy, setRecomputeBusy] = useState(false);
   const [cleanupBusy, setCleanupBusy] = useState(false);
@@ -28,6 +29,26 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const data = viewState.data;
+
+  const handlePgLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    setPgLoginBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      await controller.pgLogin({
+        email: String(fd.get("email") ?? "").trim(),
+        password: String(fd.get("password") ?? ""),
+      });
+      onStateChange();
+      setSuccessMsg("Ingelogd bij Project Gezond. Sessie-cookies zijn opgeslagen.");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "PG login mislukt.");
+    } finally {
+      setPgLoginBusy(false);
+    }
+  };
 
   const handleIngest = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -106,6 +127,28 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {successMsg && <div style={successBanner}>{successMsg}</div>}
       {errorMsg && <div style={errorBanner}>{errorMsg}</div>}
+
+      {/* PG Login */}
+      <div style={card}>
+        <h3 style={section.title}>Project Gezond inloggen</h3>
+        {data?.pgLoginStatus && (
+          <div style={pgLoginStatusBanner}>
+            ✅ Ingelogd — cookies: <strong>{data.pgLoginStatus.cookieNames.join(", ")}</strong>
+            <span style={{ marginLeft: 8, opacity: 0.7, fontSize: 11 }}>
+              {new Date(data.pgLoginStatus.loggedInAt).toLocaleString("nl-NL")}
+            </span>
+          </div>
+        )}
+        <form onSubmit={(e) => void handlePgLogin(e)} style={fieldset}>
+          <div style={label}>E-mailadres</div>
+          <input style={input} name="email" type="email" placeholder="naam@example.com" autoComplete="username" required />
+          <div style={label}>Wachtwoord</div>
+          <input style={input} name="password" type="password" placeholder="••••••••" autoComplete="current-password" required />
+          <button style={btn} type="submit" disabled={pgLoginBusy}>
+            {pgLoginBusy ? "Inloggen…" : "Inloggen bij PG"}
+          </button>
+        </form>
+      </div>
 
       {/* Ingest */}
       <div style={card}>
@@ -211,4 +254,14 @@ const errorBanner = {
   padding: "10px 14px",
   borderRadius: 8,
   fontSize: 13,
+} as const;
+
+const pgLoginStatusBanner = {
+  background: "#f0fff4",
+  color: "#0a6d3a",
+  border: "1px solid #8fd6b4",
+  padding: "8px 12px",
+  borderRadius: 6,
+  fontSize: 13,
+  marginBottom: 12,
 } as const;

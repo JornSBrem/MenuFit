@@ -21,6 +21,8 @@ import type {
   HouseholdOperationsStatus,
   HouseholdSessionResetRequest,
   IngestRequest,
+  PgLoginRequest,
+  PgLoginResult,
   RecomputeRequest,
   SystemDiagnosticsSummary,
   SystemJobRecord,
@@ -61,6 +63,7 @@ export interface AdminDashboardApi {
     body: HouseholdSessionResetRequest,
   ): Promise<ApiEnvelope<AdminOperationReport>>;
   diagnoseUserSession(subjectId: string): Promise<ApiEnvelope<UserSessionDiagnostic>>;
+  pgLogin(body: PgLoginRequest): Promise<ApiEnvelope<PgLoginResult>>;
 }
 
 const createEmptyView = <T>(data?: T): AdminAsyncViewState<T> => ({
@@ -452,6 +455,25 @@ export class AdminDashboardController {
       this.state.views.operations = createErrorView(toAdminApiError(error), previous);
     }
 
+    return this.getState();
+  }
+
+  async pgLogin(body: PgLoginRequest): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.extract.data;
+    this.state.views.extract = createLoadingView(previous);
+    try {
+      const result = this.unwrapEnvelope(await this.api.pgLogin(body));
+      const nextData = {
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: {
+          cookieNames: result.cookieNames,
+          loggedInAt: new Date().toISOString(),
+        },
+      };
+      this.state.views.extract = createSuccessView(nextData);
+    } catch (error) {
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
     return this.getState();
   }
 
