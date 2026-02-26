@@ -16,6 +16,7 @@ import type {
   HouseholdOperationsStatus,
   HouseholdSessionResetRequest,
   IngestRequest,
+  PgDiscoverResult,
   PgLoginRequest,
   PgLoginResult,
   RecomputeRequest,
@@ -55,6 +56,10 @@ export class AdminApiClient {
 
   pgLogin(body: PgLoginRequest): Promise<ApiEnvelope<PgLoginResult>> {
     return this.post("/api/v3/admin/pg-login", body);
+  }
+
+  pgDiscover(): Promise<ApiEnvelope<PgDiscoverResult>> {
+    return this.post("/api/v3/admin/pg-discover", {});
   }
 
   getDiagnostics(): Promise<ApiEnvelope<SystemDiagnosticsSummary>> {

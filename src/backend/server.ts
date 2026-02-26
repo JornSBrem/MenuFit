@@ -26,6 +26,7 @@ import { createIngestPlan } from "./application/ingest/ingest-planner.ts";
 import { runBronzeIngestTasks, type FetchJson } from "./application/ingest/bronze-runner.ts";
 import { fetchPgJson } from "./integrations/pg/pg-fetch.ts";
 import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
+import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
 import {
   authorizeAdminFromBearerHeader,
@@ -548,6 +549,33 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             },
           });
         }
+      }
+      return;
+    }
+
+    // ---- PG discover (zoekt welke weeknummers beschikbaar zijn in de PG API) ----
+    if (path === "/api/v3/admin/pg-discover" && method === "POST") {
+      try {
+        const result = await discoverAvailableWeeks(config);
+        json(res, 200, {
+          ok: true,
+          data: {
+            availableWeeks: result.availableWeeks,
+            probedWeeks: result.probedWeeks,
+            errors: result.errors,
+            // Standaard kcal/basePersons voor "alles inladen"
+            defaultKcals: [2000],
+            defaultBasePersons: [2],
+          },
+        });
+      } catch (err) {
+        json(res, 500, {
+          ok: false,
+          error: {
+            code: "DISCOVER_ERROR",
+            message: err instanceof Error ? err.message : "Fout bij ontdekken van beschikbare weken.",
+          },
+        });
       }
       return;
     }

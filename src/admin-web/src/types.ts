@@ -82,9 +82,18 @@ export interface PgLoginStatus {
   loggedInAt: string;
 }
 
+export interface PgDiscoverResult {
+  availableWeeks: number[];
+  probedWeeks: number[];
+  errors: Array<{ week: number; error: string }>;
+  defaultKcals: number[];
+  defaultBasePersons: number[];
+}
+
 export interface AdminExtractViewData {
   jobs: SystemJobRecord[];
   pgLoginStatus?: PgLoginStatus;
+  pgDiscoverResult?: PgDiscoverResult;
 }
 
 export interface AdminOperationsViewData {
