@@ -8,3 +8,8 @@
 # Observability local secrets/config
 infrastructure/observability/.env
 infrastructure/observability/secrets/
+
+# Local dev tokens
+out/dev-admin-token.txt
+out/dev-user-token.txt
+
