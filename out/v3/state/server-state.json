@@ -99,10 +99,42 @@
       "picnicAccountId": "picnic-default",
       "issuedAtEpochSeconds": 1772108786,
       "expiresAtEpochSeconds": 1774700786
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-12",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772110183,
+      "expiresAtEpochSeconds": 1774702183
+    },
+    {
+      "sessionKind": "user",
+      "subjectId": "ios-user",
+      "tokenId": "sess-13",
+      "picnicAccountId": "picnic-default",
+      "issuedAtEpochSeconds": 1772110183,
+      "expiresAtEpochSeconds": 1774702183
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-14",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772110260,
+      "expiresAtEpochSeconds": 1774702260
+    },
+    {
+      "sessionKind": "user",
+      "subjectId": "ios-user",
+      "tokenId": "sess-15",
+      "picnicAccountId": "picnic-default",
+      "issuedAtEpochSeconds": 1772110260,
+      "expiresAtEpochSeconds": 1774702260
     }
   ],
   "providerSessions": [],
   "schedulerRuns": [],
   "retryQueueEntries": [],
-  "updatedAt": "2026-02-26T12:26:26.381Z"
+  "updatedAt": "2026-02-26T12:51:00.760Z"
 }
