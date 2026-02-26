@@ -131,10 +131,26 @@
       "picnicAccountId": "picnic-default",
       "issuedAtEpochSeconds": 1772110260,
       "expiresAtEpochSeconds": 1774702260
+    },
+    {
+      "sessionKind": "admin",
+      "subjectId": "dev-admin",
+      "tokenId": "sess-16",
+      "adminRole": "owner",
+      "issuedAtEpochSeconds": 1772110700,
+      "expiresAtEpochSeconds": 1774702700
+    },
+    {
+      "sessionKind": "user",
+      "subjectId": "ios-user",
+      "tokenId": "sess-17",
+      "picnicAccountId": "picnic-default",
+      "issuedAtEpochSeconds": 1772110700,
+      "expiresAtEpochSeconds": 1774702700
     }
   ],
   "providerSessions": [],
   "schedulerRuns": [],
   "retryQueueEntries": [],
-  "updatedAt": "2026-02-26T12:51:00.760Z"
+  "updatedAt": "2026-02-26T12:58:20.017Z"
 }
