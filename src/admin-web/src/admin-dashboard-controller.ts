@@ -213,19 +213,25 @@ export class AdminDashboardController {
   }
 
   async loadExtractView(): Promise<AdminDashboardUiState> {
-    this.state.views.extract = createLoadingView(this.state.views.extract.data);
+    // Bewaar pgLoginStatus en pgDiscoverResult bij tab-wissel
+    const previous = this.state.views.extract.data;
+    this.state.views.extract = createLoadingView(previous);
     try {
       const jobs = this.unwrapEnvelope(await this.api.getJobs());
       this.state.views.extract =
         jobs.length === 0
           ? createEmptyView({
               jobs: [],
+              pgLoginStatus: previous?.pgLoginStatus,
+              pgDiscoverResult: previous?.pgDiscoverResult,
             })
           : createSuccessView({
               jobs,
+              pgLoginStatus: previous?.pgLoginStatus,
+              pgDiscoverResult: previous?.pgDiscoverResult,
             });
     } catch (error) {
-      this.state.views.extract = createErrorView(toAdminApiError(error), this.state.views.extract.data);
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
     }
     return this.getState();
   }

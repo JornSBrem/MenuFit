@@ -48,6 +48,34 @@ const buildCookieHeader = (setCookieHeaders: string[]): string =>
     .filter(Boolean)
     .join("; ");
 
+/**
+ * Probeert een Bearer-token te extraheren uit de JSON-response body.
+ * Kijkt naar veelgebruikte veldnamen: token, access_token, jwt, data.token, data.access_token.
+ */
+const extractBodyToken = (body: unknown): string | null => {
+  if (!body || typeof body !== "object") return null;
+  const b = body as Record<string, unknown>;
+
+  // Direct op root
+  for (const key of ["token", "access_token", "jwt", "accessToken", "auth_token"]) {
+    if (typeof b[key] === "string" && (b[key] as string).length > 0) {
+      return b[key] as string;
+    }
+  }
+
+  // Eén niveau dieper via "data"
+  if (b.data && typeof b.data === "object") {
+    const d = b.data as Record<string, unknown>;
+    for (const key of ["token", "access_token", "jwt", "accessToken", "auth_token"]) {
+      if (typeof d[key] === "string" && (d[key] as string).length > 0) {
+        return d[key] as string;
+      }
+    }
+  }
+
+  return null;
+};
+
 export const loginToPg = async (
   credentials: PgLoginCredentials,
   loginUrl: string,
@@ -60,6 +88,7 @@ export const loginToPg = async (
   }
 
   let response: Response;
+  let responseBody: unknown = null;
   try {
     response = await fetch(loginUrl, {
       method: "POST",
@@ -72,8 +101,6 @@ export const loginToPg = async (
         email: credentials.email.trim(),
         password: credentials.password,
       }),
-      // Niet automatisch redirecten — we willen de cookies uit de first response
-      redirect: "manual",
     });
   } catch (err) {
     throw new PgLoginError(
@@ -82,58 +109,60 @@ export const loginToPg = async (
     );
   }
 
-  // Haal alle Set-Cookie headers op
-  // De Fetch API biedt geen directe toegang tot meerdere Set-Cookie headers via
-  // response.headers.get() — dat merged ze. We gebruiken getSetCookie() waar beschikbaar,
-  // anders vallen we terug op de samengevoegde waarde.
-  let setCookieHeaders: string[] = [];
+  // Lees body altijd — nodig voor zowel foutdetails als JWT-token
+  try {
+    responseBody = await response.json();
+  } catch {
+    // Body is geen JSON, of al gelezen — negeer
+  }
 
-  // Node.js 18+ ondersteunt headers.getSetCookie()
+  if (!response.ok) {
+    let detail = `HTTP ${response.status}`;
+    if (responseBody && typeof responseBody === "object") {
+      const b = responseBody as Record<string, unknown>;
+      if (typeof b.message === "string") detail = b.message;
+      else if (typeof b.error === "string") detail = b.error;
+    }
+    throw new PgLoginError("LOGIN_FAILED", `PG login mislukt (${response.status}): ${detail}`);
+  }
+
+  // --- Strategie 1: cookies via Set-Cookie headers ---
+  let setCookieHeaders: string[] = [];
   if (typeof (response.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie === "function") {
     setCookieHeaders = (response.headers as unknown as { getSetCookie: () => string[] }).getSetCookie();
   } else {
     const raw = response.headers.get("set-cookie");
-    if (raw) {
-      setCookieHeaders = [raw];
-    }
+    if (raw) setCookieHeaders = [raw];
   }
 
-  if (!response.ok && response.status !== 302 && response.status !== 301) {
-    // Probeer body te lezen voor foutdetails
-    let detail = "";
-    try {
-      const text = await response.text();
-      const parsed = JSON.parse(text) as Record<string, unknown>;
-      detail = typeof parsed.message === "string" ? parsed.message : text.slice(0, 200);
-    } catch {
-      detail = `HTTP ${response.status}`;
-    }
-    throw new PgLoginError(
-      "LOGIN_FAILED",
-      `PG login mislukt (${response.status}): ${detail}`,
-    );
+  if (setCookieHeaders.length > 0) {
+    const cookieHeader = buildCookieHeader(setCookieHeaders);
+    const cookieNames = setCookieHeaders.map(extractCookieName).filter(Boolean);
+    const extraHeaders: Record<string, string> = {
+      "X-Requested-With": "XMLHttpRequest",
+      Cookie: cookieHeader,
+    };
+    return { cookieHeader, extraHeaders, cookieNames, statusCode: response.status };
   }
 
-  if (setCookieHeaders.length === 0) {
-    throw new PgLoginError(
-      "NO_COOKIES",
-      "PG login succesvol maar geen sessie-cookies ontvangen. " +
-        "Mogelijk zijn de inloggegevens onjuist of gebruikt PG een ander auth-mechanisme.",
-    );
+  // --- Strategie 2: Bearer-token in response body ---
+  const bearerToken = extractBodyToken(responseBody);
+  if (bearerToken) {
+    const extraHeaders: Record<string, string> = {
+      "X-Requested-With": "XMLHttpRequest",
+      Authorization: `Bearer ${bearerToken}`,
+    };
+    return {
+      cookieHeader: "",
+      extraHeaders,
+      cookieNames: ["bearer_token"],
+      statusCode: response.status,
+    };
   }
 
-  const cookieHeader = buildCookieHeader(setCookieHeaders);
-  const cookieNames = setCookieHeaders.map(extractCookieName).filter(Boolean);
-
-  const extraHeaders: Record<string, string> = {
-    "X-Requested-With": "XMLHttpRequest",
-    Cookie: cookieHeader,
-  };
-
-  return {
-    cookieHeader,
-    extraHeaders,
-    cookieNames,
-    statusCode: response.status,
-  };
+  throw new PgLoginError(
+    "NO_AUTH_TOKEN",
+    "PG login succesvol (HTTP 200) maar geen sessie-cookies of Bearer-token ontvangen. " +
+      "Controleer of de inloggegevens correct zijn.",
+  );
 };

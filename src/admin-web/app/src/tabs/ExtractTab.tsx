@@ -31,6 +31,10 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
 
   const data = viewState.data;
 
+  /** Geeft true als de extract-view in de staat een fout heeft. StatusBanner toont die fout al. */
+  const extractHasError = (state: { views: { extract: { status: string } } }): boolean =>
+    state.views.extract.status === "error";
+
   const handlePgLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -38,12 +42,14 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     setSuccessMsg(null);
     setErrorMsg(null);
     try {
-      await controller.pgLogin({
+      const nextState = await controller.pgLogin({
         email: String(fd.get("email") ?? "").trim(),
         password: String(fd.get("password") ?? ""),
       });
       onStateChange();
-      setSuccessMsg("Ingelogd bij Project Gezond. Sessie-cookies zijn opgeslagen.");
+      if (!extractHasError(nextState)) {
+        setSuccessMsg("Ingelogd bij Project Gezond. Sessie-cookies zijn opgeslagen.");
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "PG login mislukt.");
     } finally {
@@ -56,9 +62,16 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     setSuccessMsg(null);
     setErrorMsg(null);
     try {
-      await controller.pgDiscover();
+      const nextState = await controller.pgDiscover();
       onStateChange();
-      setSuccessMsg("Beschikbare weken gevonden.");
+      if (!extractHasError(nextState)) {
+        const found = nextState.views.extract.data?.pgDiscoverResult?.availableWeeks.length ?? 0;
+        setSuccessMsg(
+          found > 0
+            ? `${found} beschikbare week${found === 1 ? "" : "nummers"} gevonden.`
+            : "Geen beschikbare weken gevonden in de PG API.",
+        );
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Ontdekken mislukt.");
     } finally {
@@ -71,24 +84,28 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     setSuccessMsg(null);
     setErrorMsg(null);
     try {
-      const nextState = await controller.pgDiscover();
+      const discoverState = await controller.pgDiscover();
       onStateChange();
-      const discoverResult = nextState.views.extract.data?.pgDiscoverResult;
+      if (extractHasError(discoverState)) return; // StatusBanner toont de fout al
+
+      const discoverResult = discoverState.views.extract.data?.pgDiscoverResult;
       if (!discoverResult || discoverResult.availableWeeks.length === 0) {
         setErrorMsg("Geen beschikbare weken gevonden in de PG API.");
         return;
       }
       setIngestBusy(true);
-      await controller.runIngest({
+      const ingestState = await controller.runIngest({
         operationId: crypto.randomUUID(),
         weeks: discoverResult.availableWeeks,
         kcals: discoverResult.defaultKcals,
         basePersons: discoverResult.defaultBasePersons,
       });
       onStateChange();
-      setSuccessMsg(
-        `Ingest gestart voor ${discoverResult.availableWeeks.length} weken (${discoverResult.availableWeeks.join(", ")}).`,
-      );
+      if (!extractHasError(ingestState)) {
+        setSuccessMsg(
+          `Ingest gestart voor ${discoverResult.availableWeeks.length} weken (${discoverResult.availableWeeks.join(", ")}).`,
+        );
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Ontdekken of ingest mislukt.");
     } finally {
