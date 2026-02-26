@@ -56,8 +56,8 @@ const extractBodyToken = (body: unknown): string | null => {
   if (!body || typeof body !== "object") return null;
   const b = body as Record<string, unknown>;
 
-  // Direct op root
-  for (const key of ["token", "access_token", "jwt", "accessToken", "auth_token"]) {
+  // Direct op root — inclusief "accesToken" (typfout in PG API)
+  for (const key of ["token", "access_token", "jwt", "accessToken", "accesToken", "auth_token"]) {
     if (typeof b[key] === "string" && (b[key] as string).length > 0) {
       return b[key] as string;
     }
@@ -66,7 +66,7 @@ const extractBodyToken = (body: unknown): string | null => {
   // Eén niveau dieper via "data"
   if (b.data && typeof b.data === "object") {
     const d = b.data as Record<string, unknown>;
-    for (const key of ["token", "access_token", "jwt", "accessToken", "auth_token"]) {
+    for (const key of ["token", "access_token", "jwt", "accessToken", "accesToken", "auth_token"]) {
       if (typeof d[key] === "string" && (d[key] as string).length > 0) {
         return d[key] as string;
       }
@@ -114,26 +114,6 @@ export const loginToPg = async (
     responseBody = await response.json();
   } catch {
     // Body is geen JSON, of al gelezen — negeer
-  }
-
-  // DEBUG: log response info zodat we het auth-mechanisme kunnen bepalen
-  console.log("[pg-login] status:", response.status);
-  console.log("[pg-login] content-type:", response.headers.get("content-type"));
-  console.log("[pg-login] set-cookie header aanwezig:", response.headers.has("set-cookie"));
-  if (responseBody && typeof responseBody === "object") {
-    const keys = Object.keys(responseBody as object);
-    console.log("[pg-login] response body sleutels (top-level):", keys);
-    // Log de sleutels één niveau dieper
-    for (const key of keys.slice(0, 5)) {
-      const val = (responseBody as Record<string, unknown>)[key];
-      if (val && typeof val === "object") {
-        console.log(`[pg-login]   .${key} sleutels:`, Object.keys(val as object));
-      } else {
-        console.log(`[pg-login]   .${key}:`, typeof val === "string" ? val.slice(0, 40) : typeof val);
-      }
-    }
-  } else {
-    console.log("[pg-login] response body:", responseBody);
   }
 
   if (!response.ok) {
