@@ -24,7 +24,7 @@ import { GoldWeekReadService, projectSilverToGold } from "./application/gold/ind
 import { reprocessSilverTransforms } from "./application/silver/index.ts";
 import { createIngestPlan } from "./application/ingest/ingest-planner.ts";
 import { runBronzeIngestTasks, type FetchJson } from "./application/ingest/bronze-runner.ts";
-import { fetchPgJson } from "./integrations/pg/pg-fetch.ts";
+import { fetchPgJson, PgRateLimitError } from "./integrations/pg/pg-fetch.ts";
 import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
 import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
@@ -151,7 +151,7 @@ const SYNONYM_DICT_VERSION = "1.0.0";
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
 /** Milliseconden wachten tussen opeenvolgende PG API requests (rate limit) */
-const PG_FETCH_DELAY_MS = 300;
+const PG_FETCH_DELAY_MS = 1500;
 
 async function runRealIngest(
   weeks: number[],
@@ -182,14 +182,30 @@ async function runRealIngest(
     for (let i = 0; i < uniqueUrls.length; i++) {
       const url = uniqueUrls[i];
       const sampleTask = urlToSampleTask.get(url)!;
-      try {
-        const payload = await fetchPgJson(sampleTask, config);
-        urlToPayload.set(url, payload);
-      } catch (err) {
-        job.errors.push(
-          `Ophalen mislukt voor ${url}: ${err instanceof Error ? err.message : String(err)}`,
-        );
+
+      // Probeer het request, met één automatische retry na 429
+      let attempts = 0;
+      while (attempts < 2) {
+        try {
+          const payload = await fetchPgJson(sampleTask, config);
+          urlToPayload.set(url, payload);
+          break; // Gelukt
+        } catch (err) {
+          if (err instanceof PgRateLimitError && attempts === 0) {
+            // 429: wacht de opgegeven tijd en probeer dan opnieuw
+            const waitMs = Math.max(err.retryAfterMs, 5_000);
+            console.log(`[ingest] 429 rate limit — wacht ${Math.round(waitMs / 1000)}s voor ${url}`);
+            await sleep(waitMs);
+            attempts++;
+          } else {
+            job.errors.push(
+              `Ophalen mislukt voor ${url}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+            break;
+          }
+        }
       }
+
       job.fetched = i + 1;
 
       // Throttle: niet te snel hammeren op de PG API
