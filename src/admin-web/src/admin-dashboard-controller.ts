@@ -65,7 +65,7 @@ export interface AdminDashboardApi {
   ): Promise<ApiEnvelope<AdminOperationReport>>;
   diagnoseUserSession(subjectId: string): Promise<ApiEnvelope<UserSessionDiagnostic>>;
   pgLogin(body: PgLoginRequest): Promise<ApiEnvelope<PgLoginResult>>;
-  pgDiscover(): Promise<ApiEnvelope<PgDiscoverResult>>;
+  pgDiscover(year?: number): Promise<ApiEnvelope<PgDiscoverResult>>;
 }
 
 const createEmptyView = <T>(data?: T): AdminAsyncViewState<T> => ({
@@ -486,11 +486,11 @@ export class AdminDashboardController {
     return this.getState();
   }
 
-  async pgDiscover(): Promise<AdminDashboardUiState> {
+  async pgDiscover(year?: number): Promise<AdminDashboardUiState> {
     const previous = this.state.views.extract.data;
     this.state.views.extract = createLoadingView(previous);
     try {
-      const result = this.unwrapEnvelope(await this.api.pgDiscover());
+      const result = this.unwrapEnvelope(await this.api.pgDiscover(year));
       const nextData = {
         jobs: previous?.jobs ?? [],
         pgLoginStatus: previous?.pgLoginStatus,
