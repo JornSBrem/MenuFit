@@ -66,8 +66,25 @@ export interface AdminSettingsViewData {
   auditTrail: AdminConfigAuditEntry[];
 }
 
+export interface PgLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface PgLoginResult {
+  message: string;
+  cookieNames: string[];
+  statusCode: number;
+}
+
+export interface PgLoginStatus {
+  cookieNames: string[];
+  loggedInAt: string;
+}
+
 export interface AdminExtractViewData {
   jobs: SystemJobRecord[];
+  pgLoginStatus?: PgLoginStatus;
 }
 
 export interface AdminOperationsViewData {

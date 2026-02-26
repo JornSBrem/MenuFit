@@ -16,6 +16,8 @@ import type {
   HouseholdOperationsStatus,
   HouseholdSessionResetRequest,
   IngestRequest,
+  PgLoginRequest,
+  PgLoginResult,
   RecomputeRequest,
   SystemDiagnosticsSummary,
   SystemJobRecord,
@@ -49,6 +51,10 @@ export class AdminApiClient {
 
   runCleanup(body: CleanupRequest): Promise<ApiEnvelope<AdminOperationReport>> {
     return this.post("/api/v3/admin/cleanup", body);
+  }
+
+  pgLogin(body: PgLoginRequest): Promise<ApiEnvelope<PgLoginResult>> {
+    return this.post("/api/v3/admin/pg-login", body);
   }
 
   getDiagnostics(): Promise<ApiEnvelope<SystemDiagnosticsSummary>> {
