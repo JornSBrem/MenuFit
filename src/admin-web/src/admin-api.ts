@@ -58,8 +58,8 @@ export class AdminApiClient {
     return this.post("/api/v3/admin/pg-login", body);
   }
 
-  pgDiscover(): Promise<ApiEnvelope<PgDiscoverResult>> {
-    return this.post("/api/v3/admin/pg-discover", {});
+  pgDiscover(year?: number): Promise<ApiEnvelope<PgDiscoverResult>> {
+    return this.post("/api/v3/admin/pg-discover", year ? { year } : {});
   }
 
   getDiagnostics(): Promise<ApiEnvelope<SystemDiagnosticsSummary>> {

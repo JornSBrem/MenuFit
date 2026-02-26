@@ -556,7 +556,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     // ---- PG discover (zoekt welke weeknummers beschikbaar zijn in de PG API) ----
     if (path === "/api/v3/admin/pg-discover" && method === "POST") {
       try {
-        const result = await discoverAvailableWeeks(config);
+        const discoverBody = body as { year?: number };
+        const discoverOptions = typeof discoverBody.year === "number" ? { year: discoverBody.year } : {};
+        const result = await discoverAvailableWeeks(config, discoverOptions);
         json(res, 200, {
           ok: true,
           data: {

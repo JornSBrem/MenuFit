@@ -23,6 +23,7 @@ function statusColor(status: SystemJobRecord["status"]): string {
 export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabProps) {
   const [pgLoginBusy, setPgLoginBusy] = useState(false);
   const [pgDiscoverBusy, setPgDiscoverBusy] = useState(false);
+  const [discoverYear, setDiscoverYear] = useState(() => new Date().getFullYear());
   const [ingestBusy, setIngestBusy] = useState(false);
   const [recomputeBusy, setRecomputeBusy] = useState(false);
   const [cleanupBusy, setCleanupBusy] = useState(false);
@@ -62,7 +63,7 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     setSuccessMsg(null);
     setErrorMsg(null);
     try {
-      const nextState = await controller.pgDiscover();
+      const nextState = await controller.pgDiscover(discoverYear);
       onStateChange();
       if (!extractHasError(nextState)) {
         const found = nextState.views.extract.data?.pgDiscoverResult?.availableWeeks.length ?? 0;
@@ -84,7 +85,7 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     setSuccessMsg(null);
     setErrorMsg(null);
     try {
-      const discoverState = await controller.pgDiscover();
+      const discoverState = await controller.pgDiscover(discoverYear);
       onStateChange();
       if (extractHasError(discoverState)) return; // StatusBanner toont de fout al
 
@@ -218,8 +219,26 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
       <div style={card}>
         <h3 style={section.title}>Ontdek beschikbare weken</h3>
         <p style={{ margin: "0 0 12px", fontSize: 13, color: "#6e6e73" }}>
-          Controleert automatisch welke weeknummers beschikbaar zijn in de PG API (huidige week ±&nbsp;enkele weken).
+          Controleert welke weeknummers beschikbaar zijn in de PG API voor het geselecteerde jaar.
         </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 13, color: "#1d1d1f" }}>Jaar:</span>
+          {[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map((y) => (
+            <button
+              key={y}
+              onClick={() => setDiscoverYear(y)}
+              style={{
+                ...btn,
+                background: discoverYear === y ? "#0071e3" : "#e5e5ea",
+                color: discoverYear === y ? "#fff" : "#1d1d1f",
+                padding: "4px 14px",
+                fontSize: 13,
+              }}
+            >
+              {y}
+            </button>
+          ))}
+        </div>
 
         {data?.pgDiscoverResult && (
           <div style={discoverResultBox}>
