@@ -21,6 +21,7 @@ import type {
   HouseholdOperationsStatus,
   HouseholdSessionResetRequest,
   IngestRequest,
+  PgDiscoverResult,
   PgLoginRequest,
   PgLoginResult,
   RecomputeRequest,
@@ -64,6 +65,7 @@ export interface AdminDashboardApi {
   ): Promise<ApiEnvelope<AdminOperationReport>>;
   diagnoseUserSession(subjectId: string): Promise<ApiEnvelope<UserSessionDiagnostic>>;
   pgLogin(body: PgLoginRequest): Promise<ApiEnvelope<PgLoginResult>>;
+  pgDiscover(): Promise<ApiEnvelope<PgDiscoverResult>>;
 }
 
 const createEmptyView = <T>(data?: T): AdminAsyncViewState<T> => ({
@@ -469,8 +471,29 @@ export class AdminDashboardController {
           cookieNames: result.cookieNames,
           loggedInAt: new Date().toISOString(),
         },
+        pgDiscoverResult: previous?.pgDiscoverResult,
       };
       this.state.views.extract = createSuccessView(nextData);
+    } catch (error) {
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async pgDiscover(): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.extract.data;
+    this.state.views.extract = createLoadingView(previous);
+    try {
+      const result = this.unwrapEnvelope(await this.api.pgDiscover());
+      const nextData = {
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: result,
+      };
+      this.state.views.extract =
+        result.availableWeeks.length > 0
+          ? createSuccessView(nextData)
+          : createEmptyView(nextData);
     } catch (error) {
       this.state.views.extract = createErrorView(toAdminApiError(error), previous);
     }

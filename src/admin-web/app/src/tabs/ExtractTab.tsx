@@ -22,6 +22,7 @@ function statusColor(status: SystemJobRecord["status"]): string {
 
 export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabProps) {
   const [pgLoginBusy, setPgLoginBusy] = useState(false);
+  const [pgDiscoverBusy, setPgDiscoverBusy] = useState(false);
   const [ingestBusy, setIngestBusy] = useState(false);
   const [recomputeBusy, setRecomputeBusy] = useState(false);
   const [cleanupBusy, setCleanupBusy] = useState(false);
@@ -47,6 +48,52 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
       setErrorMsg(err instanceof Error ? err.message : "PG login mislukt.");
     } finally {
       setPgLoginBusy(false);
+    }
+  };
+
+  const handleDiscover = async () => {
+    setPgDiscoverBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      await controller.pgDiscover();
+      onStateChange();
+      setSuccessMsg("Beschikbare weken gevonden.");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Ontdekken mislukt.");
+    } finally {
+      setPgDiscoverBusy(false);
+    }
+  };
+
+  const handleDiscoverAndIngest = async () => {
+    setPgDiscoverBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      const nextState = await controller.pgDiscover();
+      onStateChange();
+      const discoverResult = nextState.views.extract.data?.pgDiscoverResult;
+      if (!discoverResult || discoverResult.availableWeeks.length === 0) {
+        setErrorMsg("Geen beschikbare weken gevonden in de PG API.");
+        return;
+      }
+      setIngestBusy(true);
+      await controller.runIngest({
+        operationId: crypto.randomUUID(),
+        weeks: discoverResult.availableWeeks,
+        kcals: discoverResult.defaultKcals,
+        basePersons: discoverResult.defaultBasePersons,
+      });
+      onStateChange();
+      setSuccessMsg(
+        `Ingest gestart voor ${discoverResult.availableWeeks.length} weken (${discoverResult.availableWeeks.join(", ")}).`,
+      );
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Ontdekken of ingest mislukt.");
+    } finally {
+      setPgDiscoverBusy(false);
+      setIngestBusy(false);
     }
   };
 
@@ -148,6 +195,54 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
             {pgLoginBusy ? "Inloggen…" : "Inloggen bij PG"}
           </button>
         </form>
+      </div>
+
+      {/* Discover */}
+      <div style={card}>
+        <h3 style={section.title}>Ontdek beschikbare weken</h3>
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: "#6e6e73" }}>
+          Controleert automatisch welke weeknummers beschikbaar zijn in de PG API (huidige week ±&nbsp;enkele weken).
+        </p>
+
+        {data?.pgDiscoverResult && (
+          <div style={discoverResultBox}>
+            {data.pgDiscoverResult.availableWeeks.length === 0 ? (
+              <span style={{ color: "#c00" }}>Geen beschikbare weken gevonden.</span>
+            ) : (
+              <>
+                <strong>Beschikbaar ({data.pgDiscoverResult.availableWeeks.length}):</strong>{" "}
+                {data.pgDiscoverResult.availableWeeks.join(", ")}
+                <span style={{ marginLeft: 12, color: "#6e6e73", fontSize: 11 }}>
+                  geprobed: {data.pgDiscoverResult.probedWeeks.length} weken
+                </span>
+              </>
+            )}
+            {data.pgDiscoverResult.errors.length > 0 && (
+              <div style={{ marginTop: 6, color: "#c00", fontSize: 12 }}>
+                {data.pgDiscoverResult.errors.map((e) => (
+                  <div key={e.week}>Week {e.week}: {e.error}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            style={btn}
+            onClick={() => void handleDiscover()}
+            disabled={pgDiscoverBusy || ingestBusy}
+          >
+            {pgDiscoverBusy ? "Bezig met ontdekken…" : "Ontdek beschikbare weken"}
+          </button>
+          <button
+            style={{ ...btn, background: "#0a6d3a", color: "#fff" }}
+            onClick={() => void handleDiscoverAndIngest()}
+            disabled={pgDiscoverBusy || ingestBusy}
+          >
+            {pgDiscoverBusy || ingestBusy ? "Bezig…" : "Ontdek & inladen"}
+          </button>
+        </div>
       </div>
 
       {/* Ingest */}
@@ -262,6 +357,15 @@ const pgLoginStatusBanner = {
   border: "1px solid #8fd6b4",
   padding: "8px 12px",
   borderRadius: 6,
+  fontSize: 13,
+  marginBottom: 12,
+} as const;
+
+const discoverResultBox = {
+  background: "#f5f5f7",
+  border: "1px solid #d2d2d7",
+  borderRadius: 6,
+  padding: "8px 12px",
   fontSize: 13,
   marginBottom: 12,
 } as const;

@@ -197,6 +197,16 @@ const createApi = (
       statusCode: 200,
     },
   }),
+  pgDiscover: async () => ({
+    ok: true,
+    data: {
+      availableWeeks: [202609, 202610],
+      probedWeeks: [202607, 202608, 202609, 202610, 202611],
+      errors: [],
+      defaultKcals: [2000],
+      defaultBasePersons: [2],
+    },
+  }),
   ...overrides,
 });
 
