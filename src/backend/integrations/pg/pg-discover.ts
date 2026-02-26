@@ -96,14 +96,31 @@ export const discoverAvailableWeeks = async (
           if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
               errors.push({ week, error: `Auth fout (${response.status}) — log eerst in bij PG` });
+            } else {
+              // DEBUG: log niet-200 statussen zodat we het probleem kunnen opsporen
+              console.log(`[pg-discover] week ${week}: HTTP ${response.status} (${url})`);
             }
             // 404 / 400 → week bestaat gewoon niet, geen fout melden
             return;
           }
 
           const payload = await response.json();
+          // DEBUG: log de eerste week zodat we de response-structuur zien
+          if (week === probedWeeks[0]) {
+            console.log(`[pg-discover] voorbeeld week ${week} response (top-level sleutels):`,
+              payload && typeof payload === "object" ? Object.keys(payload as object) : payload);
+            if (payload && typeof payload === "object" && (payload as Record<string, unknown>).data) {
+              const data = (payload as Record<string, unknown>).data;
+              console.log(`[pg-discover]   .data type:`, typeof data, Array.isArray(data) ? "(array)" : "");
+              if (data && typeof data === "object" && !Array.isArray(data)) {
+                console.log(`[pg-discover]   .data sleutels:`, Object.keys(data as object).slice(0, 10));
+              }
+            }
+          }
           if (isValidWeekResponse(payload)) {
             availableWeeks.push(week);
+          } else {
+            console.log(`[pg-discover] week ${week}: HTTP 200 maar shape-check mislukt`);
           }
         } catch (err) {
           errors.push({
