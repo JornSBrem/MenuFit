@@ -12,6 +12,16 @@ const parseExtraHeaders = (raw: unknown): Record<string, string> => {
   return Object.fromEntries(entries);
 };
 
+/** Gooit deze error bij HTTP 429 zodat de caller de retry-after kan respecteren */
+export class PgRateLimitError extends Error {
+  readonly retryAfterMs: number;
+  constructor(url: string, retryAfterMs: number) {
+    super(`PG request failed (429) for ${url}`);
+    this.name = "PgRateLimitError";
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
 export const fetchPgJson = async (
   task: IngestTask,
   config: RuntimeConfigStore,
@@ -26,6 +36,13 @@ export const fetchPgJson = async (
       ...extraHeaders,
     },
   });
+
+  if (response.status === 429) {
+    // Respecteer Retry-After header (in seconden), anders 60s standaard
+    const retryAfter = response.headers.get("retry-after");
+    const retryAfterMs = retryAfter ? parseFloat(retryAfter) * 1000 : 60_000;
+    throw new PgRateLimitError(task.requestUrl, retryAfterMs);
+  }
 
   if (!response.ok) {
     throw new Error(`PG request failed (${response.status}) for ${task.requestUrl}`);
