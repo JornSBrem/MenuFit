@@ -76,6 +76,9 @@ export const discoverAvailableWeeks = async (
         ) as Record<string, string>)
       : {};
 
+  // DEBUG: toon welke auth-headers aanwezig zijn (zonder waarden)
+  console.log("[pg-discover] extraHeaders sleutels:", Object.keys(extraHeaders));
+
   const probedWeeks = buildProbeWeeks(options);
   const availableWeeks: number[] = [];
   const errors: Array<{ week: number; error: string }> = [];
