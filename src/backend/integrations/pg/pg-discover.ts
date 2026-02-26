@@ -2,9 +2,9 @@ import type { RuntimeConfigStore } from "../../../shared/config/index.ts";
 import { buildPgEndpointUrl } from "./endpoint-contract.ts";
 
 export interface PgDiscoverOptions {
-  /** Aantal weken terug vanaf nu om te proberen (default: 2) */
+  /** Aantal weken terug vanaf nu om te proberen (default: 26) */
   weeksBack?: number;
-  /** Aantal weken vooruit vanaf nu om te proberen (default: 8) */
+  /** Aantal weken vooruit vanaf nu om te proberen (default: 26) */
   weeksForward?: number;
 }
 
@@ -32,8 +32,8 @@ export const toIsoWeekNumber = (date: Date): number => {
  * Genereert de lijst van ISO-weeknummers in een bereik rondom vandaag.
  */
 export const buildProbeWeeks = (options: PgDiscoverOptions = {}): number[] => {
-  const weeksBack = options.weeksBack ?? 2;
-  const weeksForward = options.weeksForward ?? 8;
+  const weeksBack = options.weeksBack ?? 26;
+  const weeksForward = options.weeksForward ?? 26;
   const now = new Date();
   const weeks: number[] = [];
 
@@ -80,8 +80,8 @@ export const discoverAvailableWeeks = async (
   const availableWeeks: number[] = [];
   const errors: Array<{ week: number; error: string }> = [];
 
-  // Verwerk in batches van 5 parallelle requests
-  const BATCH_SIZE = 5;
+  // Verwerk in batches van 10 parallelle requests
+  const BATCH_SIZE = 10;
   for (let i = 0; i < probedWeeks.length; i += BATCH_SIZE) {
     const batch = probedWeeks.slice(i, i + BATCH_SIZE);
     await Promise.all(
