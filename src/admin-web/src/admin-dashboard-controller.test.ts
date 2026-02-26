@@ -189,6 +189,14 @@ const createApi = (
     ok: true,
     data: defaultSessionDiagnostic,
   }),
+  pgLogin: async () => ({
+    ok: true,
+    data: {
+      message: "Succesvol ingelogd bij Project Gezond.",
+      cookieNames: ["session"],
+      statusCode: 200,
+    },
+  }),
   ...overrides,
 });
 
