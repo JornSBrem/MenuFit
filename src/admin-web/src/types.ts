@@ -23,6 +23,8 @@ export interface AdminOperationReport {
   createdAt: string;
   performedBy: string;
   details?: Record<string, unknown>;
+  /** Aanwezig bij async ingest-jobs: ID om status te pollen */
+  jobId?: string;
 }
 
 export interface SystemDiagnosticsSummary {
@@ -90,10 +92,26 @@ export interface PgDiscoverResult {
   defaultBasePersons: number[];
 }
 
+export interface IngestJobStatus {
+  jobId: string;
+  status: "running" | "completed" | "failed";
+  phase: "fetching" | "processing" | "done";
+  fetched: number;
+  totalFetches: number;
+  processed: number;
+  totalProcessing: number;
+  errors: string[];
+  startedAt: string;
+  finishedAt?: string;
+  tasksRan?: number;
+  goldProjected?: number;
+}
+
 export interface AdminExtractViewData {
   jobs: SystemJobRecord[];
   pgLoginStatus?: PgLoginStatus;
   pgDiscoverResult?: PgDiscoverResult;
+  activeIngestJob?: IngestJobStatus;
 }
 
 export interface AdminOperationsViewData {

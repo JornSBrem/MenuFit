@@ -20,6 +20,7 @@ import type {
   HouseholdInviteResendRequest,
   HouseholdOperationsStatus,
   HouseholdSessionResetRequest,
+  IngestJobStatus,
   IngestRequest,
   PgDiscoverResult,
   PgLoginRequest,
@@ -66,6 +67,7 @@ export interface AdminDashboardApi {
   diagnoseUserSession(subjectId: string): Promise<ApiEnvelope<UserSessionDiagnostic>>;
   pgLogin(body: PgLoginRequest): Promise<ApiEnvelope<PgLoginResult>>;
   pgDiscover(year?: number): Promise<ApiEnvelope<PgDiscoverResult>>;
+  getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>>;
 }
 
 const createEmptyView = <T>(data?: T): AdminAsyncViewState<T> => ({
@@ -257,7 +259,50 @@ export class AdminDashboardController {
   }
 
   async runIngest(body: IngestRequest): Promise<AdminDashboardUiState> {
-    await this.executeOperation(() => this.api.runIngest(body));
+    const previous = this.state.views.extract.data;
+    try {
+      const report = this.unwrapEnvelope(await this.api.runIngest(body));
+      // Sla het jobId op in de extract-view zodat de UI kan pollen
+      const activeIngestJob: IngestJobStatus | undefined = report.jobId
+        ? {
+            jobId: report.jobId,
+            status: "running",
+            phase: "fetching",
+            fetched: 0,
+            totalFetches: 0,
+            processed: 0,
+            totalProcessing: 0,
+            errors: [],
+            startedAt: new Date().toISOString(),
+          }
+        : undefined;
+      this.state.views.extract = createSuccessView({
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: previous?.pgDiscoverResult,
+        activeIngestJob,
+      });
+      // Registreer ook in de operations history
+      this.operationHistory.push(report);
+    } catch (error) {
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async getIngestStatus(jobId: string): Promise<AdminDashboardUiState> {
+    try {
+      const status = this.unwrapEnvelope(await this.api.getIngestStatus(jobId));
+      const previous = this.state.views.extract.data;
+      this.state.views.extract = createSuccessView({
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: previous?.pgDiscoverResult,
+        activeIngestJob: status,
+      });
+    } catch {
+      // Negeer poll-fouten — de UI blijft proberen
+    }
     return this.getState();
   }
 

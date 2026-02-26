@@ -117,96 +117,176 @@ async function bootstrapDevTokens(): Promise<{ adminToken: string; userToken: st
   return { adminToken, userToken };
 }
 
+// ---- Ingest job tracking ---------------------------------------------------
+
+export interface IngestJobStatus {
+  jobId: string;
+  status: "running" | "completed" | "failed";
+  /** Fase: ophalen van unieke URLs bij PG API */
+  phase: "fetching" | "processing" | "done";
+  /** Aantal unieke URLs al opgehaald */
+  fetched: number;
+  /** Totaal unieke URLs te ophalen */
+  totalFetches: number;
+  /** Aantal week×kcal combinaties al verwerkt (silver/gold) */
+  processed: number;
+  /** Totaal week×kcal combinaties te verwerken */
+  totalProcessing: number;
+  errors: string[];
+  startedAt: string;
+  finishedAt?: string;
+  tasksRan?: number;
+  goldProjected?: number;
+}
+
+const activeIngestJobs = new Map<string, IngestJobStatus>();
+
 // ---- Real ingest pipeline --------------------------------------------------
 
 const TRANSFORM_VERSION = "1.0.0";
 const CANONICAL_RULESET_VERSION = "1.0.0";
 const SYNONYM_DICT_VERSION = "1.0.0";
 
+/** Wacht ms milliseconden (voor throttling tussen PG API requests) */
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+/** Milliseconden wachten tussen opeenvolgende PG API requests (rate limit) */
+const PG_FETCH_DELAY_MS = 300;
+
 async function runRealIngest(
   weeks: number[],
   kcals: number[],
   basePersons: number[],
-): Promise<{ tasksRan: number; goldProjected: number; errors: string[] }> {
-  const matrix = { weeks, kcals, basePersons };
-  const tasks = createIngestPlan(matrix, config);
-  const capturedPayloads = new Map<string, unknown>();
-  const errors: string[] = [];
+  jobId: string,
+): Promise<void> {
+  const job = activeIngestJobs.get(jobId);
+  if (!job) return;
 
-  const capturingFetch: FetchJson = async (url, task) => {
-    const payload = await fetchPgJson(task, config);
-    capturedPayloads.set(
-      `${task.week}:${task.kcal}:${task.basePersons}:${task.entityType}`,
-      payload,
-    );
-    return payload;
-  };
+  try {
+    const matrix = { weeks, kcals, basePersons };
+    const tasks = createIngestPlan(matrix, config);
 
-  await runBronzeIngestTasks(tasks, config, capturingFetch);
-
-  const year = new Date().getUTCFullYear();
-  let goldProjected = 0;
-
-  for (const task of tasks) {
-    if (task.entityType !== "pg.week_menu") {
-      continue;
-    }
-    const rawPayload = capturedPayloads.get(
-      `${task.week}:${task.kcal}:${task.basePersons}:${task.entityType}`,
-    );
-    if (!rawPayload) {
-      errors.push(`Missing captured payload for week=${task.week} kcal=${task.kcal}`);
-      continue;
-    }
-
-    try {
-      // PG response shape: { data: { meals: [...], groceries: [...] } }
-      const pgData =
-        (rawPayload as Record<string, unknown>)["data"] ??
-        rawPayload;
-
-      const silverOutputs = reprocessSilverTransforms(
-        [
-          {
-            sourceObjectId: task.requestUrl,
-            payload: pgData as Parameters<typeof reprocessSilverTransforms>[0][number]["payload"],
-            year,
-            week: task.week,
-            kcal: task.kcal,
-            basePersons: task.basePersons,
-          },
-        ],
-        {
-          transformVersion: TRANSFORM_VERSION,
-          canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
-          synonymDictVersion: SYNONYM_DICT_VERSION,
-          stateStore,
-        },
-      );
-
-      for (const silver of silverOutputs) {
-        const context = {
-          sourceObjectId: task.requestUrl,
-          year,
-          week: task.week,
-          kcal: task.kcal,
-          basePersons: task.basePersons,
-          transformVersion: TRANSFORM_VERSION,
-          canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
-          synonymDictVersion: SYNONYM_DICT_VERSION,
-        };
-        const gold = projectSilverToGold({ silver, context });
-        goldReadService.upsert(gold);
-        goldProjected += 1;
+    // --- Stap 1: dedupliceer op URL — elke unieke URL slechts 1× ophalen ---
+    const urlToSampleTask = new Map<string, typeof tasks[0]>();
+    for (const task of tasks) {
+      if (!urlToSampleTask.has(task.requestUrl)) {
+        urlToSampleTask.set(task.requestUrl, task);
       }
-    } catch (err) {
-      errors.push(
-        `Silver/Gold pipeline failed for week=${task.week}: ${err instanceof Error ? err.message : String(err)}`,
-      );
     }
-  }
+    const uniqueUrls = Array.from(urlToSampleTask.keys());
+    job.totalFetches = uniqueUrls.length;
+    job.phase = "fetching";
 
-  return { tasksRan: tasks.length, goldProjected, errors };
+    const urlToPayload = new Map<string, unknown>();
+
+    for (let i = 0; i < uniqueUrls.length; i++) {
+      const url = uniqueUrls[i];
+      const sampleTask = urlToSampleTask.get(url)!;
+      try {
+        const payload = await fetchPgJson(sampleTask, config);
+        urlToPayload.set(url, payload);
+      } catch (err) {
+        job.errors.push(
+          `Ophalen mislukt voor ${url}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      job.fetched = i + 1;
+
+      // Throttle: niet te snel hammeren op de PG API
+      if (i < uniqueUrls.length - 1) {
+        await sleep(PG_FETCH_DELAY_MS);
+      }
+    }
+
+    // --- Stap 2: schrijf bronze-bestanden via gecachte fetch ---
+    const cachedFetch: FetchJson = async (url) => {
+      const payload = urlToPayload.get(url);
+      if (payload === undefined) throw new Error(`Geen gecachte payload voor ${url}`);
+      return payload;
+    };
+
+    // Alleen taken waarvoor we een payload hebben
+    const runnableTasks = tasks.filter((t) => urlToPayload.has(t.requestUrl));
+    await runBronzeIngestTasks(runnableTasks, config, cachedFetch, { continueOnError: true });
+
+    // --- Stap 3: silver/gold verwerking per week×kcal combinatie ---
+    const weekMenuTasks = runnableTasks.filter((t) => t.entityType === "pg.week_menu");
+    job.phase = "processing";
+    job.totalProcessing = weekMenuTasks.length;
+    job.processed = 0;
+
+    const year = new Date().getUTCFullYear();
+    let goldProjected = 0;
+
+    for (let i = 0; i < weekMenuTasks.length; i++) {
+      const task = weekMenuTasks[i];
+      const rawPayload = urlToPayload.get(task.requestUrl);
+      if (!rawPayload) {
+        job.errors.push(`Geen payload voor week=${task.week} kcal=${task.kcal}`);
+        job.processed = i + 1;
+        continue;
+      }
+
+      try {
+        const pgData =
+          (rawPayload as Record<string, unknown>)["data"] ?? rawPayload;
+
+        const silverOutputs = reprocessSilverTransforms(
+          [
+            {
+              sourceObjectId: task.requestUrl,
+              payload: pgData as Parameters<typeof reprocessSilverTransforms>[0][number]["payload"],
+              year,
+              week: task.week,
+              kcal: task.kcal,
+              basePersons: task.basePersons,
+            },
+          ],
+          {
+            transformVersion: TRANSFORM_VERSION,
+            canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
+            synonymDictVersion: SYNONYM_DICT_VERSION,
+            stateStore,
+          },
+        );
+
+        for (const silver of silverOutputs) {
+          const gold = projectSilverToGold({
+            silver,
+            context: {
+              sourceObjectId: task.requestUrl,
+              year,
+              week: task.week,
+              kcal: task.kcal,
+              basePersons: task.basePersons,
+              transformVersion: TRANSFORM_VERSION,
+              canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
+              synonymDictVersion: SYNONYM_DICT_VERSION,
+            },
+          });
+          goldReadService.upsert(gold);
+          goldProjected++;
+        }
+      } catch (err) {
+        job.errors.push(
+          `Silver/Gold fout week=${task.week} kcal=${task.kcal}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+
+      job.processed = i + 1;
+    }
+
+    job.tasksRan = tasks.length;
+    job.goldProjected = goldProjected;
+    job.status = "completed";
+    job.phase = "done";
+    job.finishedAt = new Date().toISOString();
+  } catch (err) {
+    job.status = "failed";
+    job.phase = "done";
+    job.errors.push(err instanceof Error ? err.message : String(err));
+    job.finishedAt = new Date().toISOString();
+  }
 }
 
 // ---- HTTP helpers ----------------------------------------------------------
@@ -459,35 +539,44 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         return;
       }
 
-      // Run the real pipeline asynchronously — run and report results
       const ingestBody = body as { weeks?: number[]; kcals?: number[]; basePersons?: number[] };
       const ingestWeeks = Array.isArray(ingestBody.weeks) ? ingestBody.weeks : [];
       const ingestKcals = Array.isArray(ingestBody.kcals) ? ingestBody.kcals : [];
       const ingestBasePersons = Array.isArray(ingestBody.basePersons) ? ingestBody.basePersons : [];
 
-      try {
-        const pipelineResult = await runRealIngest(ingestWeeks, ingestKcals, ingestBasePersons);
-        json(res, 200, {
-          ...result,
-          data: {
-            ...result.data,
-            pipeline: pipelineResult,
-          },
-        });
-      } catch (err) {
-        // Return the admin op report but note the pipeline error
-        json(res, 200, {
-          ...result,
-          data: {
-            ...result.data,
-            pipeline: {
-              tasksRan: 0,
-              goldProjected: 0,
-              errors: [err instanceof Error ? err.message : String(err)],
-            },
-          },
-        });
+      // Maak een job-tracking entry aan en start de ingest op de achtergrond
+      const jobId = `ingest-${Date.now()}`;
+      activeIngestJobs.set(jobId, {
+        jobId,
+        status: "running",
+        phase: "fetching",
+        fetched: 0,
+        totalFetches: 0,
+        processed: 0,
+        totalProcessing: 0,
+        errors: [],
+        startedAt: new Date().toISOString(),
+      });
+
+      // Start op achtergrond — niet awaiten zodat de HTTP-response direct terugkomt
+      void runRealIngest(ingestWeeks, ingestKcals, ingestBasePersons, jobId);
+
+      json(res, 200, {
+        ...result,
+        data: { ...result.data, jobId },
+      });
+      return;
+    }
+
+    // ---- Ingest job status (polling endpoint) ----
+    if (path.startsWith("/api/v3/admin/ingest-status/") && method === "GET") {
+      const jobId = path.slice("/api/v3/admin/ingest-status/".length);
+      const job = activeIngestJobs.get(jobId);
+      if (!job) {
+        json(res, 404, { ok: false, error: { code: "NOT_FOUND", message: "Job niet gevonden" } });
+        return;
       }
+      json(res, 200, { ok: true, data: job });
       return;
     }
 
