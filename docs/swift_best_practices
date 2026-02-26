@@ -1,0 +1,234 @@
+1. Volg Apple’s Human Interface Guidelines (HIG)
+
+Gebruik native componenten (SwiftUI of UIKit) waar mogelijk.
+
+Respecteer platformconventies (navigatie, gestures, spacing).
+
+Vermijd custom UI als standaardcomponenten volstaan.
+
+Referentie: Apple Human Interface Guidelines.
+
+2. SwiftUI-first (tenzij duidelijke reden anders)
+
+Voor nieuwe apps:
+
+Gebruik SwiftUI als default.
+
+Combineer met MVVM of TCA voor schaalbaarheid.
+
+Houd business logic los van View.
+
+Anti-pattern:
+
+Logica in Views
+
+Netwerkcalls direct in UI
+
+State verspreid over meerdere Views
+
+3. State Management: maak het voorspelbaar
+
+Gebruik duidelijke scheiding:
+
+@State → lokaal, view-specifiek
+
+@StateObject → lifecycle ownership
+
+@ObservedObject → dependency injection
+
+@EnvironmentObject → globale app-state (beperkt gebruiken)
+
+Voor grotere apps:
+
+Central state container (Redux/TCA-achtig)
+
+Duidelijke dataflow (unidirectional)
+
+4. Navigatie: houd het simpel
+
+Gebruik:
+
+NavigationStack (iOS 16+)
+
+Typed routing (geen string-based routes)
+
+Deep linking vanaf begin meenemen
+
+Vermijd:
+
+Programmatic navigation hacks
+
+Impliciete navigation side-effects
+
+5. Layout: consistent spacing system
+
+Definieer vaste spacing tokens:
+
+enum Spacing {
+    static let xs: CGFloat = 4
+    static let sm: CGFloat = 8
+    static let md: CGFloat = 16
+    static let lg: CGFloat = 24
+}
+
+Gebruik:
+
+8pt grid
+
+Consistente margins
+
+Max width voor iPad layouts
+
+6. Performance by design
+
+Lazy stacks (LazyVStack)
+
+Gebruik .task i.p.v. onAppear voor async work
+
+Vermijd zware computations in body
+
+Image caching (bijv. Nuke of eigen layer)
+
+7. Feedback & Micro-interacties
+
+Haptics (UIImpactFeedbackGenerator)
+
+Subtiele animaties (.animation(.spring(), value:))
+
+Loading states altijd expliciet tonen
+
+Empty states ontwerpen (geen lege schermen)
+
+8. Accessibility is geen afterthought
+
+Dynamic Type ondersteunen
+
+accessibilityLabel
+
+Contrast controleren
+
+VoiceOver testen
+
+Test altijd met:
+
+Grotere tekst
+
+Dark mode
+
+Reduce motion
+
+9. Design System bouwen (zeker voor jouw Spaarbuddy-app)
+
+Gezien je werkt aan een AI-gedreven finance app (Spaarbuddy):
+
+Maak vanaf dag 1:
+
+Color tokens
+
+Typography scale
+
+Button styles
+
+Card component
+
+Form components
+
+Bijvoorbeeld:
+
+struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding()
+            .background(Color.accentColor)
+            .foregroundColor(.white)
+            .cornerRadius(12)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+    }
+}
+
+Dit voorkomt UI-chaos als je straks meer features toevoegt (PDF parsing, AI insights, analytics).
+
+10. UX-principes specifiek voor mobiele apps
+Minimal cognitive load
+
+1 primary action per scherm
+
+Progressieve disclosure
+
+Geen overvolle dashboards
+
+Performance perception
+
+Skeleton loaders
+
+Instant feedback bij tap
+
+Async taken niet blokkeren
+
+Data apps (zoals Spaarbuddy)
+
+Gebruik duidelijke visuele hiërarchie
+
+Highlight key numbers
+
+Toon trends i.p.v. ruwe data
+
+11. Testing
+
+Snapshot tests (UI regressie)
+
+ViewModel unit tests
+
+TestFlight usability rondes
+
+12. Dark Mode is default
+
+Ontwerp eerst voor:
+
+System colors (Color.primary)
+
+Geen hard-coded wit/zwart
+
+Assets in light/dark variants
+
+13. Foutenafhandeling UX
+
+Niet:
+
+“Something went wrong.”
+
+Wel:
+
+Wat ging mis
+
+Wat kan gebruiker doen
+
+Retry-knop
+
+14. Analytics vanaf begin
+
+Meet:
+
+Funnel drop-offs
+
+Feature usage
+
+Time to complete action
+
+UX zonder data is gokken.
+
+Samenvattend Framework
+
+Voor een serieuze Swift-app:
+
+SwiftUI + MVVM
+
+Design system
+
+Unidirectional data flow
+
+Performance-first
+
+Accessibility by default
+
+Analytics geïntegreerd
