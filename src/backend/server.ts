@@ -566,7 +566,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             probedWeeks: result.probedWeeks,
             errors: result.errors,
             // Standaard kcal/basePersons voor "alles inladen"
-            defaultKcals: [2000],
+            // 1250 t/m 3000 in stappen van 250
+            defaultKcals: [1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000],
             defaultBasePersons: [2],
           },
         });
