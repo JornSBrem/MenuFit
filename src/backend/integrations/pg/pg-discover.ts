@@ -2,10 +2,8 @@ import type { RuntimeConfigStore } from "../../../shared/config/index.ts";
 import { buildPgEndpointUrl } from "./endpoint-contract.ts";
 
 export interface PgDiscoverOptions {
-  /** Aantal weken terug vanaf nu om te proberen (default: 26) */
-  weeksBack?: number;
-  /** Aantal weken vooruit vanaf nu om te proberen (default: 26) */
-  weeksForward?: number;
+  /** Welk jaar te ontdekken (default: huidig jaar) */
+  year?: number;
 }
 
 export interface PgDiscoverResult {
@@ -29,24 +27,17 @@ export const toIsoWeekNumber = (date: Date): number => {
 };
 
 /**
- * Genereert de lijst van ISO-weeknummers in een bereik rondom vandaag.
+ * Genereert alle YYYYWW-weeknummers voor een heel jaar (weken 1 t/m 53).
+ * Week 53 bestaat alleen in jaren met 53 ISO-weken; de PG API geeft 404 terug
+ * als die week niet bestaat, zodat hij automatisch wordt overgeslagen.
  */
 export const buildProbeWeeks = (options: PgDiscoverOptions = {}): number[] => {
-  const weeksBack = options.weeksBack ?? 26;
-  const weeksForward = options.weeksForward ?? 26;
-  const now = new Date();
+  const year = options.year ?? new Date().getFullYear();
   const weeks: number[] = [];
-
-  for (let offset = -weeksBack; offset <= weeksForward; offset++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() + offset * 7);
-    const weekNum = toIsoWeekNumber(d);
-    if (!weeks.includes(weekNum)) {
-      weeks.push(weekNum);
-    }
+  for (let w = 1; w <= 53; w++) {
+    weeks.push(year * 100 + w);
   }
-
-  return weeks.sort((a, b) => a - b);
+  return weeks;
 };
 
 const isValidWeekResponse = (payload: unknown): boolean => {
