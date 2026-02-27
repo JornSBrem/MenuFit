@@ -152,11 +152,15 @@ const extractRecipeName = (html: string): string | undefined => {
 /**
  * Converteert moment-HTML naar een lijst van ingrediëntteksten.
  * Elke <p> is één ingrediënt; links worden gereduceerd tot hun tekst.
+ * Blokken met een receptlink (href="/recepten/...") worden overgeslagen —
+ * dat is de receptnaam, geen ingrediënt.
  */
 const extractIngredients = (html: string): Array<{ text: string }> => {
   const blocks = html.split(/<\/p>/i);
   const ingredients: Array<{ text: string }> = [];
   for (const block of blocks) {
+    // Sla blokken over die een receptlink bevatten (dit is de receptnaam, geen ingrediënt)
+    if (/href="\/recepten\//i.test(block)) continue;
     const stripped = stripHtml(block.replace(/<p[^>]*>/i, "")).trim();
     if (stripped.length > 0) {
       ingredients.push({ text: stripped });
@@ -241,11 +245,11 @@ export const mapPgWeekDataToSilverPayload = (
       const html = variant.moments[def.key] as string | undefined;
       if (!html || !html.trim()) continue;
 
-      const ingredients = extractIngredients(html);
-      if (ingredients.length === 0) continue;
-
       const recipeSlug = extractRecipeSlug(html);
       const recipeName = extractRecipeName(html);
+      const ingredients = extractIngredients(html);
+      // Sla het moment over als er géén ingrediënten én géén recept is (volledig leeg moment)
+      if (ingredients.length === 0 && !recipeSlug) continue;
       const imageUrl = recipeSlug ? recipeImageMap.get(recipeSlug) : undefined;
       const momentKcal = parseKcal(variant.moments[def.kcalKey] as string | number | undefined);
 
