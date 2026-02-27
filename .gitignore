@@ -9,7 +9,6 @@
 infrastructure/observability/.env
 infrastructure/observability/secrets/
 
-# Local dev tokens
-out/dev-admin-token.txt
-out/dev-user-token.txt
+# Local runtime data (bronze/silver/gold, state, tokens)
+out/
 
