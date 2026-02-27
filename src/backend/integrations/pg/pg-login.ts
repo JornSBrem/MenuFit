@@ -160,14 +160,38 @@ export const loginToPg = async (
     };
   }
 
-  // Geef de exacte body-structuur mee zodat we het auth-mechanisme kunnen bepalen
-  const bodyDescription =
-    responseBody && typeof responseBody === "object"
-      ? `Body-sleutels: [${Object.keys(responseBody as object).join(", ")}]`
-      : `Body: ${String(responseBody).slice(0, 100)}`;
+  // Geef een volledige (maar veilige) body-dump mee voor diagnose
+  let bodyDescription: string;
+  if (responseBody && typeof responseBody === "object") {
+    // Vervang wachtwoord-achtige waarden door *** maar behoud structuur
+    const sanitize = (obj: unknown, depth = 0): unknown => {
+      if (depth > 4 || obj === null || typeof obj !== "object") return obj;
+      const result: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+        const lk = k.toLowerCase();
+        if (lk.includes("password") || lk.includes("secret") || lk.includes("wachtwoord")) {
+          result[k] = "***";
+        } else if (typeof v === "string" && v.length > 80) {
+          result[k] = v.slice(0, 40) + "…";
+        } else if (typeof v === "object" && v !== null) {
+          result[k] = sanitize(v, depth + 1);
+        } else {
+          result[k] = v;
+        }
+      }
+      return result;
+    };
+    bodyDescription = `Body: ${JSON.stringify(sanitize(responseBody), null, 2)}`;
+  } else {
+    bodyDescription = `Body (raw): ${String(responseBody).slice(0, 200)}`;
+  }
+
+  const cookieInfo = setCookieHeaders.length > 0
+    ? ` | Set-Cookie headers: ${setCookieHeaders.map(h => h.split(";")[0]).join(", ")}`
+    : " | Geen Set-Cookie headers ontvangen.";
 
   throw new PgLoginError(
     "NO_AUTH_TOKEN",
-    `PG login succesvol (HTTP 200) maar geen token gevonden. ${bodyDescription}`,
+    `PG login succesvol (HTTP 200) maar geen token gevonden.${cookieInfo}\n${bodyDescription}`,
   );
 };
