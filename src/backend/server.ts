@@ -23,7 +23,7 @@ import { SessionLifecycleService } from "./application/auth/session-lifecycle-se
 import { UserAccountService, UserAccountServiceError } from "./application/auth/user-account-service.ts";
 import { HouseholdService, HouseholdServiceError } from "./application/household/household-service.ts";
 import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
-import type { GoldReadModel, GoldRecipeStep } from "./application/gold/index.ts";
+import type { GoldMealIngredient, GoldReadModel, GoldRecipeStep } from "./application/gold/index.ts";
 
 /** Interne type alias voor stap-verrijking */
 type GoldRecipeStepData = GoldRecipeStep;
@@ -938,6 +938,141 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         });
       } catch (err) {
         json(res, 500, { ok: false, error: { code: "INGEST_STEPS_ERROR", message: err instanceof Error ? err.message : String(err) } });
+      }
+      return;
+    }
+
+    // ---- Admin ingest recipe data from public website (scrapes www.projectgezond.nl) ----
+    if (path === "/api/v3/admin/ingest-recipe-web" && method === "POST") {
+      try {
+        // Verzamel alle unieke recipe-slugs uit de gold data
+        const allModels = goldReadService.listAllModels();
+        const slugSet = new Set<string>();
+        for (const model of allModels) {
+          for (const meal of model.meals) {
+            if (meal.recipeId && meal.imageUrl) slugSet.add(meal.recipeId);
+          }
+        }
+        const slugs = Array.from(slugSet);
+
+        const stripHtml = (html: string): string =>
+          html
+            .replace(/<[^>]+>/g, " ")
+            .replace(/&amp;/g, "&")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&apos;/g, "'")
+            .replace(/&quot;/g, '"')
+            .replace(/&euml;/g, "ë")
+            .replace(/&eacute;/g, "é")
+            .replace(/&egrave;/g, "è")
+            .replace(/&agrave;/g, "à")
+            .replace(/&auml;/g, "ä")
+            .replace(/&ouml;/g, "ö")
+            .replace(/&uuml;/g, "ü")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        /**
+         * Parseer ingrediënten uit de recipe-pagina HTML.
+         * Structuur: <div class="ingredient" itemprop="recipeIngredient">
+         *              <dt>300 gr</dt><dd>kruimige aardappels</dd>
+         *            </div>
+         */
+        const parseIngredients = (html: string): GoldMealIngredient[] => {
+          const ingredients: GoldMealIngredient[] = [];
+          const blockPattern = /<div[^>]*class="[^"]*ingredient[^"]*"[^>]*itemprop="recipeIngredient"[^>]*>([\s\S]*?)<\/div>/gi;
+          let blockMatch: RegExpExecArray | null;
+          while ((blockMatch = blockPattern.exec(html)) !== null) {
+            const block = blockMatch[1] ?? "";
+            const dtMatch = /<dt[^>]*>([\s\S]*?)<\/dt>/i.exec(block);
+            const ddMatch = /<dd[^>]*>([\s\S]*?)<\/dd>/i.exec(block);
+            const amount = dtMatch ? stripHtml(dtMatch[1]) : "";
+            const name = ddMatch ? stripHtml(ddMatch[1]) : "";
+            const text = [amount, name].filter(Boolean).join(" ").trim();
+            if (text) ingredients.push({ text });
+          }
+          return ingredients;
+        };
+
+        /**
+         * Parseer bereidingsstappen uit de recipe-pagina HTML.
+         * Structuur: <ol class="wp-block-list"><li>Stap 1</li><li>Stap 2</li></ol>
+         * binnen een block dat "Instructions" of "bereiding" bevat.
+         */
+        const parseSteps = (html: string): GoldRecipeStep[] => {
+          const steps: GoldRecipeStep[] = [];
+          // Zoek de instructie-sectie
+          const instrPattern = /Instructions[\s\S]{0,200}?<ol[^>]*class="[^"]*wp-block-list[^"]*"[^>]*>([\s\S]*?)<\/ol>/i;
+          const instrMatch = instrPattern.exec(html);
+          if (!instrMatch?.[1]) return steps;
+          const listHtml = instrMatch[1];
+          const liPattern = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+          let liMatch: RegExpExecArray | null;
+          let stepNum = 1;
+          while ((liMatch = liPattern.exec(listHtml)) !== null) {
+            const text = stripHtml(liMatch[1]).trim();
+            if (text) steps.push({ step: stepNum++, text });
+          }
+          return steps;
+        };
+
+        const dataMap = new Map<string, { ingredients?: GoldMealIngredient[]; steps?: GoldRecipeStep[] }>();
+        const errors: string[] = [];
+        let fetched = 0;
+        let withData = 0;
+
+        for (const slug of slugs) {
+          try {
+            const url = `https://www.projectgezond.nl/recepten/${encodeURIComponent(slug)}`;
+            const response = await fetch(url, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)",
+                Accept: "text/html",
+              },
+              redirect: "follow",
+            });
+
+            if (!response.ok) {
+              errors.push(`${slug}: HTTP ${response.status}`);
+              continue;
+            }
+
+            const html = await response.text();
+            const ingredients = parseIngredients(html);
+            const steps = parseSteps(html);
+
+            if (ingredients.length > 0 || steps.length > 0) {
+              dataMap.set(slug, { ingredients, steps });
+              withData++;
+            }
+            fetched++;
+
+            // Kleine pauze om de server niet te overbelasten
+            await new Promise<void>((resolve) => setTimeout(resolve, 150));
+          } catch (err) {
+            errors.push(`${slug}: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
+
+        // Verrijk alle gold modellen
+        goldReadService.enrichWithRecipeData(dataMap);
+
+        json(res, 200, {
+          ok: true,
+          data: {
+            totalRecipes: slugs.length,
+            fetched,
+            withData,
+            errors: errors.slice(0, 20),
+          },
+        });
+      } catch (err) {
+        json(res, 500, {
+          ok: false,
+          error: { code: "INGEST_WEB_ERROR", message: err instanceof Error ? err.message : String(err) },
+        });
       }
       return;
     }

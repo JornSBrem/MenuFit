@@ -132,6 +132,38 @@ export class GoldWeekReadService {
     this.batchPersist();
   }
 
+  /**
+   * Verrijkt alle gold-modellen met ingrediënten + stappen vanuit website-scraping.
+   * - Stappen worden altijd bijgewerkt als beschikbaar.
+   * - Ingrediënten worden alleen ingevuld als het maaltijdmoment er nog geen heeft.
+   * Schrijft daarna alles in één batchPersist naar schijf.
+   */
+  enrichWithRecipeData(
+    dataMap: Map<string, { ingredients?: GoldMealIngredient[]; steps?: GoldRecipeStep[] }>,
+  ): void {
+    if (dataMap.size === 0) return;
+    for (const [key, model] of this.store.entries()) {
+      const enrichedMeals = model.meals.map((meal) => {
+        if (!meal.recipeId) return meal;
+        const data = dataMap.get(meal.recipeId);
+        if (!data) return meal;
+
+        const newSteps = data.steps && data.steps.length > 0 ? data.steps : meal.steps;
+        // Vul ingrediënten alleen in als het maaltijdmoment nog geen eigen ingrediënten heeft
+        const newIngredients =
+          (!meal.ingredients || meal.ingredients.length === 0) &&
+          data.ingredients &&
+          data.ingredients.length > 0
+            ? data.ingredients
+            : meal.ingredients;
+
+        return { ...meal, steps: newSteps, ingredients: newIngredients };
+      });
+      this.store.set(key, { ...model, meals: enrichedMeals });
+    }
+    this.batchPersist();
+  }
+
   getGroceries(year: number, week: number, kcal: number, basePersons: number): WeekGroceriesResponse | null {
     const model = this.resolveModel(year, week, kcal, basePersons);
     if (!model) {
