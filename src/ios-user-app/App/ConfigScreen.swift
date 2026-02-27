@@ -12,6 +12,35 @@ struct ConfigScreen: View {
     NavigationView {
       Form {
 
+        // MARK: Dieet
+        Section {
+          VStack(alignment: .leading, spacing: 10) {
+            Text("Dagelijkse kcal-behoefte")
+              .font(.subheadline)
+            HStack(spacing: 8) {
+              ForEach(viewModel.fixedKcals, id: \.self) { kcal in
+                let selected = viewModel.selection.kcal == kcal
+                Button("\(kcal)") {
+                  viewModel.setPreferredKcal(kcal)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(selected ? Color.blue : Color(.systemGray5))
+                .foregroundColor(selected ? .white : .primary)
+                .cornerRadius(8)
+                .font(.subheadline.weight(selected ? .semibold : .regular))
+              }
+            }
+          }
+          .padding(.vertical, 4)
+        } header: {
+          Text("Dieet")
+        } footer: {
+          Text("Stel je dagelijkse caloriebehoefte in. Dit wordt opgeslagen en bij elke start gebruikt.")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+
         // MARK: Account
         Section("Account") {
           if let session = viewModel.authSession {

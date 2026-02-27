@@ -10,6 +10,7 @@
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdir, writeFile } from "node:fs/promises";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,9 +23,12 @@ import { SessionLifecycleService } from "./application/auth/session-lifecycle-se
 import { UserAccountService, UserAccountServiceError } from "./application/auth/user-account-service.ts";
 import { HouseholdService, HouseholdServiceError } from "./application/household/household-service.ts";
 import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
+import type { GoldReadModel } from "./application/gold/index.ts";
 import { reprocessSilverTransforms } from "./application/silver/index.ts";
+import type { SilverTransformOutput } from "./application/silver/index.ts";
 import { createIngestPlan } from "./application/ingest/ingest-planner.ts";
 import { runBronzeIngestTasks, type FetchJson } from "./application/ingest/bronze-runner.ts";
+import { mapPgWeekDataToSilverPayload } from "./application/ingest/pg-payload-mapper.ts";
 import { fetchPgJson, PgRateLimitError } from "./integrations/pg/pg-fetch.ts";
 import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
 import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
@@ -253,16 +257,19 @@ async function runRealIngest(
       const weekNum = task.week % 100;                  // bijv. 9
       const weekYear = Math.floor(task.week / 100);     // bijv. 2026
 
+      // PG weekmenu-data uitpakken (buitenste envelope verwijderen)
+      const pgData = (rawPayload as Record<string, unknown>)["data"] ?? rawPayload;
+
       for (const kcal of PG_FIXED_KCALS) {
         try {
-          const pgData =
-            (rawPayload as Record<string, unknown>)["data"] ?? rawPayload;
+          // Converteer PG day_menus-formaat → BronzeLikeWeekPayload
+          const silverPayload = mapPgWeekDataToSilverPayload(pgData, kcal);
 
           const silverOutputs = reprocessSilverTransforms(
             [
               {
                 sourceObjectId: task.requestUrl,
-                payload: pgData as Parameters<typeof reprocessSilverTransforms>[0][number]["payload"],
+                payload: silverPayload,
                 year: weekYear,
                 week: weekNum,
                 kcal,
@@ -816,6 +823,127 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           },
         });
       }
+      return;
+    }
+
+    // ---- Admin reprocess-from-bronze (herbouwt silver+gold vanuit bestaande bronzebestanden) ----
+    if (path === "/api/v3/admin/reprocess-from-bronze" && method === "POST") {
+      const bronzeDir = join(ROOT, "out", "v3", "bronze", "pg", "pg.week_menu");
+
+      // Recursief alle JSON-bestanden ophalen zonder /k= in het pad (= ruwe PG-responses)
+      const rawFiles: string[] = [];
+      const collectJsonFiles = (dir: string): void => {
+        let entries;
+        try {
+          entries = readdirSync(dir, { withFileTypes: true });
+        } catch {
+          return;
+        }
+        for (const entry of entries) {
+          const fullPath = join(dir, entry.name);
+          if (entry.isDirectory()) {
+            collectJsonFiles(fullPath);
+          } else if (entry.name.endsWith(".json") && !fullPath.includes("/k=")) {
+            rawFiles.push(fullPath);
+          }
+        }
+      };
+      collectJsonFiles(bronzeDir);
+
+      if (rawFiles.length === 0) {
+        json(res, 200, {
+          ok: false,
+          error: { code: "NO_BRONZE_FILES", message: "Geen bronzebestanden gevonden zonder k= in pad." },
+        });
+        return;
+      }
+
+      // Verzamel alle silver outputs + gold-modellen zonder tussentijdse state-writes
+      const allSilverUpdates: { key: string; output: SilverTransformOutput }[] = [];
+      const allGoldModels: GoldReadModel[] = [];
+      let processed = 0;
+      let totalMeals = 0;
+      const errors: string[] = [];
+
+      for (const filePath of rawFiles) {
+        let fileData: Record<string, unknown>;
+        try {
+          fileData = JSON.parse(readFileSync(filePath, "utf8")) as Record<string, unknown>;
+        } catch {
+          errors.push(`Leesfout: ${filePath}`);
+          continue;
+        }
+
+        const meta = fileData["metadata"] as Record<string, unknown> | undefined;
+        const filePayload = fileData["payload"] as Record<string, unknown> | undefined;
+        if (!meta || !filePayload) {
+          errors.push(`Ongeldige bronzestructuur: ${filePath}`);
+          continue;
+        }
+
+        const weekRaw = typeof meta["week"] === "number" ? meta["week"] : 0;
+        const basePersons = typeof meta["basePersons"] === "number" ? meta["basePersons"] : 2;
+        const sourceObjectId =
+          ((meta["requestMeta"] as Record<string, unknown> | undefined)?.["requestUrl"] as string | undefined) ??
+          filePath;
+        const weekNum = weekRaw % 100;
+        const weekYear = Math.floor(weekRaw / 100);
+        const pgData = filePayload["data"] as Record<string, unknown>;
+
+        for (const kcal of PG_FIXED_KCALS) {
+          try {
+            const silverPayload = mapPgWeekDataToSilverPayload(pgData, kcal);
+            const [silverOutput] = reprocessSilverTransforms(
+              [{ sourceObjectId, payload: silverPayload, year: weekYear, week: weekNum, kcal, basePersons }],
+              {
+                transformVersion: TRANSFORM_VERSION,
+                canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
+                synonymDictVersion: SYNONYM_DICT_VERSION,
+                // Geen stateStore — batch-write achteraf
+              },
+            );
+            const silverKey = `${weekYear}:${weekNum}:${kcal}:${basePersons}:${TRANSFORM_VERSION}`;
+            allSilverUpdates.push({ key: silverKey, output: silverOutput });
+
+            const gold = projectSilverToGold({
+              silver: silverOutput,
+              context: {
+                sourceObjectId,
+                year: weekYear,
+                week: weekNum,
+                kcal,
+                basePersons,
+                transformVersion: TRANSFORM_VERSION,
+                canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
+                synonymDictVersion: SYNONYM_DICT_VERSION,
+              },
+            });
+            allGoldModels.push(gold);
+            totalMeals += gold.meals.length;
+            processed++;
+          } catch (err) {
+            errors.push(
+              `week=${weekYear}W${String(weekNum).padStart(2, "0")} kcal=${kcal}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
+      }
+
+      // Één stateStore-update voor alle silver transforms
+      stateStore.update((draft) => {
+        for (const { key, output } of allSilverUpdates) {
+          draft.silverTransforms[key] = structuredClone(output);
+        }
+      });
+
+      // Batch-update voor gold (in-memory + één persist-write)
+      goldReadService.batchLoad(allGoldModels);
+      goldReadService.batchPersist();
+
+      json(res, 200, {
+        ok: true,
+        data: { filesScanned: rawFiles.length, processed, totalMeals, errors },
+      });
       return;
     }
 
