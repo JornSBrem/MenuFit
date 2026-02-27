@@ -137,7 +137,7 @@ struct WeekScreen: View {
   private var upcomingRecipeMeals: [GoldWeekMealView] {
     viewModel.upcomingDayCards
       .flatMap { $0.meals }
-      .filter { $0.recipeId != nil }
+      .filter { $0.recipeId != nil && $0.imageUrl != nil }
   }
 
   private func recipeCard(_ meal: GoldWeekMealView) -> some View {
