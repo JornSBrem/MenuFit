@@ -13,6 +13,8 @@ export interface HouseholdRecord {
   createdAt: string;
   updatedAt: string;
   members: HouseholdMember[];
+  /** Unieke code om gezinsleden te laten koppelen */
+  inviteCode?: string;
 }
 
 export interface HouseholdInvitation {

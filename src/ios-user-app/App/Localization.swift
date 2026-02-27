@@ -8,6 +8,8 @@ enum L10nKey: String {
   case tabWeek
   case tabMatch
   case tabOrder
+  case tabRecipes
+  case tabConfig
   case weekSettingsSection
   case yearStepper
   case weekStepper
@@ -139,6 +141,8 @@ struct AppStrings {
     .tabWeek: "Week",
     .tabMatch: "Match",
     .tabOrder: "Bestellen",
+    .tabRecipes: "Recepten",
+    .tabConfig: "Instellingen",
     .weekSettingsSection: "Week instellingen",
     .yearStepper: "Jaar: %d",
     .weekStepper: "Week: %d",

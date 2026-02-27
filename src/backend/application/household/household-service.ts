@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import type {
   AcceptHouseholdInvitationRequest,
@@ -84,6 +85,56 @@ export class HouseholdService {
         );
       }
     }
+  }
+
+  /** Maak een nieuw gezin aan met een unieke inviteCode. Als de gebruiker al in een gezin zit, geeft dat gezin terug. */
+  createHouseholdWithCode(actorUserId: string): HouseholdRecord {
+    const actor = assertNonEmpty(actorUserId, "actorUserId");
+    const existing = this.findHouseholdByUser(actor);
+    if (existing) {
+      return structuredClone(sortMembers(existing));
+    }
+
+    const createdAt = this.now();
+    const inviteCode = randomBytes(4).toString("hex").toUpperCase(); // 8-char hex code
+    const household: HouseholdRecord = {
+      householdId: this.nextHouseholdId(),
+      createdAt,
+      updatedAt: createdAt,
+      inviteCode,
+      members: [{ userId: actor, role: "head", joinedAt: createdAt }],
+    };
+
+    this.householdsById.set(household.householdId, household);
+    this.persist();
+    return structuredClone(sortMembers(household));
+  }
+
+  /** Koppel aan een bestaand gezin via de inviteCode. */
+  joinByCode(code: string, actorUserId: string): HouseholdRecord {
+    const actor = assertNonEmpty(actorUserId, "actorUserId");
+    const normalizedCode = code.trim().toUpperCase();
+    if (!normalizedCode) {
+      throw new HouseholdServiceError("INVALID_CODE", "Gezinscode is verplicht.");
+    }
+
+    if (this.isUserInAnyHousehold(actor)) {
+      throw new HouseholdServiceError("USER_ALREADY_IN_HOUSEHOLD", "Je bent al lid van een gezin.");
+    }
+
+    const household = Array.from(this.householdsById.values()).find(
+      (h) => h.inviteCode === normalizedCode,
+    );
+    if (!household) {
+      throw new HouseholdServiceError("CODE_NOT_FOUND", "Gezinscode is onbekend of verlopen.");
+    }
+
+    const joinedAt = this.now();
+    household.members.push({ userId: actor, role: "member", joinedAt });
+    household.updatedAt = joinedAt;
+
+    this.persist();
+    return structuredClone(sortMembers(household));
   }
 
   bootstrapHousehold(actorUserId: string): HouseholdRecord {

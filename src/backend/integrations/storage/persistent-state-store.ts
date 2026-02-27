@@ -11,6 +11,7 @@ import type { AuditEvent } from "../../application/audit/types.ts";
 import type {
   AppSessionRecord,
   ProviderSessionRecord,
+  UserAccountRecord,
 } from "../../application/auth/types.ts";
 import type { CartSyncReport } from "../../application/cart/types.ts";
 import type { GoldReadModel } from "../../application/gold/types.ts";
@@ -27,7 +28,7 @@ import type { SilverTransformOutput } from "../../application/silver/types.ts";
 import type { SystemJobRecord, SystemOperationReport } from "../../application/system/types.ts";
 import type { RetryQueueEntryRecord, SchedulerRunRecord } from "../../jobs/types.ts";
 
-export const CURRENT_STATE_SCHEMA_VERSION = 4;
+export const CURRENT_STATE_SCHEMA_VERSION = 5;
 
 export type PersistentStateStoreDriver = "file" | "sqlite" | "postgres";
 
@@ -40,6 +41,27 @@ export interface PersistentStateStoreOptions {
 
 export interface PersistentAppState {
   schemaVersion: number;
+  silverTransforms: Record<string, SilverTransformOutput>;
+  goldReadModels: Record<string, GoldReadModel>;
+  cartReportsByIdempotencyKey: Record<string, CartSyncReport>;
+  systemJobs: SystemJobRecord[];
+  systemReports: SystemOperationReport[];
+  matchingQueue: MatchReviewQueueItem[];
+  matchingAuditTrail: MatchAuditEvent[];
+  matchingOverrides: MatchOverrideRecord[];
+  auditTrail: AuditEvent[];
+  households: HouseholdRecord[];
+  householdInvitations: HouseholdInvitation[];
+  authSessions: AppSessionRecord[];
+  providerSessions: ProviderSessionRecord[];
+  schedulerRuns: SchedulerRunRecord[];
+  retryQueueEntries: RetryQueueEntryRecord[];
+  userAccounts: UserAccountRecord[];
+  updatedAt: string;
+}
+
+interface PersistentAppStateV4 {
+  schemaVersion: 4;
   silverTransforms: Record<string, SilverTransformOutput>;
   goldReadModels: Record<string, GoldReadModel>;
   cartReportsByIdempotencyKey: Record<string, CartSyncReport>;
@@ -127,6 +149,7 @@ const ARRAY_COLLECTIONS = [
   "providerSessions",
   "schedulerRuns",
   "retryQueueEntries",
+  "userAccounts",
 ] as const;
 
 type MapCollectionName = (typeof MAP_COLLECTIONS)[number];
@@ -171,6 +194,7 @@ const defaultState = (): PersistentAppState => ({
   providerSessions: [],
   schedulerRuns: [],
   retryQueueEntries: [],
+  userAccounts: [],
   updatedAt: new Date().toISOString(),
 });
 
@@ -268,9 +292,9 @@ const migrateV2ToV3 = (raw: unknown): PersistentAppStateV3 => {
   };
 };
 
-const migrateV3ToV4 = (raw: unknown): PersistentAppState => {
+const migrateV3ToV4 = (raw: unknown): PersistentAppStateV4 => {
   if (!isRecord(raw)) {
-    return defaultState();
+    return { ...defaultState(), schemaVersion: 4 };
   }
 
   const source = raw as UnknownRecord;
@@ -299,22 +323,57 @@ const migrateV3ToV4 = (raw: unknown): PersistentAppState => {
   };
 };
 
+const migrateV4ToV5 = (raw: unknown): PersistentAppState => {
+  if (!isRecord(raw)) {
+    return defaultState();
+  }
+
+  const source = raw as UnknownRecord;
+
+  return {
+    schemaVersion: 5,
+    silverTransforms: asObjectRecord<SilverTransformOutput>(source.silverTransforms),
+    goldReadModels: asObjectRecord<GoldReadModel>(source.goldReadModels),
+    cartReportsByIdempotencyKey: asObjectRecord<CartSyncReport>(source.cartReportsByIdempotencyKey),
+    systemJobs: asArray<SystemJobRecord>(source.systemJobs),
+    systemReports: asArray<SystemOperationReport>(source.systemReports),
+    matchingQueue: asArray<MatchReviewQueueItem>(source.matchingQueue),
+    matchingAuditTrail: asArray<MatchAuditEvent>(source.matchingAuditTrail),
+    matchingOverrides: asArray<MatchOverrideRecord>(source.matchingOverrides),
+    auditTrail: asArray<AuditEvent>(source.auditTrail),
+    households: asArray<HouseholdRecord>(source.households),
+    householdInvitations: asArray<HouseholdInvitation>(source.householdInvitations),
+    authSessions: asArray<AppSessionRecord>(source.authSessions),
+    providerSessions: asArray<ProviderSessionRecord>(source.providerSessions),
+    schedulerRuns: asArray<SchedulerRunRecord>(source.schedulerRuns),
+    retryQueueEntries: asArray<RetryQueueEntryRecord>(source.retryQueueEntries),
+    userAccounts: asArray<UserAccountRecord>(source.userAccounts),
+    updatedAt:
+      typeof source.updatedAt === "string" && source.updatedAt.trim().length > 0
+        ? source.updatedAt
+        : new Date().toISOString(),
+  };
+};
+
 const migrateState = (raw: unknown): PersistentAppState => {
   const version = isRecord(raw) && typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
   if (version <= 0) {
-    return migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(migrateV0ToV1(raw))));
+    return migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(migrateV0ToV1(raw)))));
   }
   if (version === 1) {
-    return migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(raw)));
+    return migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(raw))));
   }
   if (version === 2) {
-    return migrateV3ToV4(migrateV2ToV3(raw));
+    return migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(raw)));
   }
   if (version === 3) {
-    return migrateV3ToV4(raw);
+    return migrateV4ToV5(migrateV3ToV4(raw));
   }
   if (version === 4) {
-    return migrateV3ToV4(raw);
+    return migrateV4ToV5(raw);
+  }
+  if (version === 5) {
+    return migrateV4ToV5(raw);
   }
   return defaultState();
 };

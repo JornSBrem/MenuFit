@@ -65,7 +65,7 @@ final class BackendAPI {
   }
 
   func fetchHouseholdStatus() async throws -> HouseholdStatusResponse {
-    try await get(path: "/api/v3/households/me")
+    try await get(path: "/api/v3/household/me")
   }
 
   func evaluateMatch(body: MatchEvaluateRequestBody) async throws -> MatchWorkflowEvaluateResponse {
@@ -78,6 +78,34 @@ final class BackendAPI {
 
   func syncCart(body: CartSyncRequestBody) async throws -> CartSyncReport {
     try await post(path: "/api/v3/cart/sync", body: body)
+  }
+
+  func fetchRecipes() async throws -> [UserRecipeRecord] {
+    try await get(path: "/api/v3/recipes")
+  }
+
+  // MARK: - Auth endpoints (geen bearer token nodig)
+
+  func register(username: String, password: String) async throws -> AuthTokenResponse {
+    try await postPublic(path: "/api/v3/auth/register", body: AuthRegisterRequest(username: username, password: password))
+  }
+
+  func login(username: String, password: String) async throws -> AuthTokenResponse {
+    try await postPublic(path: "/api/v3/auth/login", body: AuthLoginRequest(username: username, password: password))
+  }
+
+  func fetchMe() async throws -> AuthMeResponse {
+    try await get(path: "/api/v3/auth/me")
+  }
+
+  // MARK: - Household endpoints
+
+  func createHousehold() async throws -> HouseholdCreateResponse {
+    try await post(path: "/api/v3/household/create", body: EmptyBody())
+  }
+
+  func joinHousehold(code: String) async throws -> HouseholdJoinResponse {
+    try await post(path: "/api/v3/household/join-by-code", body: HouseholdJoinRequest(code: code))
   }
 
   private func get<T: Decodable>(path: String, query: [URLQueryItem] = []) async throws -> T {
@@ -107,6 +135,18 @@ final class BackendAPI {
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     try applyAuthorization(to: &request)
+    request.httpBody = try encoder.encode(body)
+
+    return try await perform(request)
+  }
+
+  /// POST zonder Authorization header (voor login/register endpoints)
+  private func postPublic<TBody: Encodable, TData: Decodable>(path: String, body: TBody) async throws -> TData {
+    let url = baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.httpBody = try encoder.encode(body)
 
     return try await perform(request)

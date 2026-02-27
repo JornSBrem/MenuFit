@@ -22,6 +22,8 @@ struct AuthSessionDraft {
 
 @MainActor
 final class UserFlowViewModel: ObservableObject {
+  let fixedKcals: [Int] = [1250, 1500, 1800, 2100]
+
   @Published var selection = WeekSelection(year: 2026, week: 9, kcal: 1800, basePersons: 2)
   @Published var summary: WeekSummaryResponse?
   @Published var groceries: WeekGroceriesResponse?
@@ -29,6 +31,9 @@ final class UserFlowViewModel: ObservableObject {
   @Published var isLoading = false
   @Published var isMatchLoading = false
   @Published var lastError: String?
+  @Published var recipes: [UserRecipeRecord] = []
+  @Published var isRecipesLoading = false
+  @Published var recipesSearchText = ""
   @Published var lastSyncReport: CartSyncReport?
   @Published var authSession: UserAuthSession?
   @Published var matchQueue: [MatchReviewQueueItem] = []
@@ -46,6 +51,11 @@ final class UserFlowViewModel: ObservableObject {
   @Published var selectedMemberId = ""
   @Published var selectedDayLabel = ""
   @Published var checkedGroceryItemIds = Set<String>()
+
+  // Config screen state
+  @Published var configHousehold: HouseholdCreateResponse?
+  @Published var isConfigLoading = false
+  @Published var configMessage: String?
 
   private let api: BackendAPI
   private let cache: OfflineCacheStore
@@ -77,7 +87,6 @@ final class UserFlowViewModel: ObservableObject {
     didBootstrap = true
     await loadHouseholdStatus()
     await loadWeekBundle()
-    await loadMatchQueue()
   }
 
   func refreshAuthState() {
@@ -237,6 +246,51 @@ final class UserFlowViewModel: ObservableObject {
     checkedGroceryItemIds = []
     Task {
       await loadWeekBundle()
+    }
+  }
+
+  func goToCurrentWeek() {
+    let cal = Calendar(identifier: .iso8601)
+    let now = Date()
+    selection.week = cal.component(.weekOfYear, from: now)
+    selection.year = cal.component(.yearForWeekOfYear, from: now)
+    checkedGroceryItemIds = []
+    Task { await loadWeekBundle() }
+  }
+
+  func goToToday() {
+    selectedDayLabel = todayDayLabel()
+  }
+
+  var isCurrentWeekSelected: Bool {
+    let cal = Calendar(identifier: .iso8601)
+    let now = Date()
+    let week = cal.component(.weekOfYear, from: now)
+    let year = cal.component(.yearForWeekOfYear, from: now)
+    return selection.week == week && selection.year == year
+  }
+
+  var upcomingDayCards: [DayCard] {
+    let meals = summary?.meals ?? []
+    return availableDayLabels.map { dayLabel in
+      let dayMeals = meals.filter { normalizeDayLabel($0.dayLabel) == normalizeDayLabel(dayLabel) }
+      return DayCard(dayLabel: dayLabel, meals: dayMeals)
+    }
+  }
+
+  var filteredRecipes: [UserRecipeRecord] {
+    if recipesSearchText.isEmpty { return recipes }
+    return recipes.filter { $0.name.localizedCaseInsensitiveContains(recipesSearchText) }
+  }
+
+  func loadRecipes() async {
+    guard authGateState == .ready else { return }
+    isRecipesLoading = true
+    defer { isRecipesLoading = false }
+    do {
+      recipes = try await api.fetchRecipes()
+    } catch {
+      lastError = "Recepten laden mislukt: \(error.localizedDescription)"
     }
   }
 
@@ -417,6 +471,77 @@ final class UserFlowViewModel: ObservableObject {
     }
   }
 
+  // MARK: - Auth (username/password flow)
+
+  func loginWithCredentials(username: String, password: String) async {
+    lastError = nil
+    do {
+      let response = try await api.login(username: username, password: password)
+      let session = UserAuthSession(
+        accessToken: response.token,
+        subjectId: response.userId,
+        picnicAccountId: "no-picnic",
+        householdId: "",
+        expiresAtEpochSeconds: response.expiresAtEpochSeconds,
+        username: response.username
+      )
+      authStore.save(session: session)
+      clearLoadedData()
+      refreshAuthState()
+      await bootstrapIfNeeded()
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  func registerWithCredentials(username: String, password: String) async {
+    lastError = nil
+    do {
+      let response = try await api.register(username: username, password: password)
+      let session = UserAuthSession(
+        accessToken: response.token,
+        subjectId: response.userId,
+        picnicAccountId: "no-picnic",
+        householdId: "",
+        expiresAtEpochSeconds: response.expiresAtEpochSeconds,
+        username: response.username
+      )
+      authStore.save(session: session)
+      clearLoadedData()
+      refreshAuthState()
+      await bootstrapIfNeeded()
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  // MARK: - Config: Household
+
+  func createNewHousehold() async {
+    isConfigLoading = true
+    configMessage = nil
+    defer { isConfigLoading = false }
+    do {
+      configHousehold = try await api.createHousehold()
+      configMessage = "Gezin aangemaakt! Deel de code met familieleden."
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  func joinHouseholdByCode(_ code: String) async {
+    isConfigLoading = true
+    configMessage = nil
+    defer { isConfigLoading = false }
+    do {
+      let result = try await api.joinHousehold(code: code)
+      configMessage = "Je bent gekoppeld aan gezin \(result.householdId)."
+      await loadHouseholdStatus()
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
   private func buildCandidates(
     for unresolvedName: String,
     groceries: [GoldGroceryTotalView]
@@ -484,6 +609,8 @@ final class UserFlowViewModel: ObservableObject {
     selectedMemberId = ""
     selectedDayLabel = ""
     checkedGroceryItemIds = []
+    recipes = []
+    recipesSearchText = ""
     didBootstrap = false
   }
 

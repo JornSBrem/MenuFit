@@ -8,14 +8,24 @@ struct RootTabView: View {
           Label(AppStrings.text(.tabWeek), systemImage: "calendar")
         }
 
-      MatchScreen()
+      RecipesScreen()
         .tabItem {
-          Label(AppStrings.text(.tabMatch), systemImage: "slider.horizontal.3")
+          Label(AppStrings.text(.tabRecipes), systemImage: "book.closed")
         }
 
       OrderScreen()
         .tabItem {
           Label(AppStrings.text(.tabOrder), systemImage: "cart")
+        }
+
+      MatchScreen()
+        .tabItem {
+          Label(AppStrings.text(.tabMatch), systemImage: "slider.horizontal.3")
+        }
+
+      ConfigScreen()
+        .tabItem {
+          Label(AppStrings.text(.tabConfig), systemImage: "gearshape")
         }
     }
   }
