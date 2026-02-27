@@ -86,4 +86,6 @@ export interface RecipeView {
   recipeId: string;
   name: string;
   imageUrl?: string;
+  kcal?: number;
+  ingredients?: GoldMealIngredient[];
 }
