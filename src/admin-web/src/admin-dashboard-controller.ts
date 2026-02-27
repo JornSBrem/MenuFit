@@ -13,6 +13,8 @@ import type {
   CleanupRequest,
   ConfigUpdateRequest,
   DeleteMappingOverrideRequest,
+  IngestRecipeWebResult,
+  ReprocessFromBronzeResult,
   DeleteRecipeRequest,
   DeleteWeekMenuRequest,
   GoldWeekPlanRecord,
@@ -70,6 +72,8 @@ export interface AdminDashboardApi {
   pgLogin(body: PgLoginRequest): Promise<ApiEnvelope<PgLoginResult>>;
   pgDiscover(year?: number): Promise<ApiEnvelope<PgDiscoverResult>>;
   getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>>;
+  reprocessFromBronze(): Promise<ApiEnvelope<ReprocessFromBronzeResult>>;
+  ingestRecipeWeb(): Promise<ApiEnvelope<IngestRecipeWebResult>>;
 }
 
 const createEmptyView = <T>(data?: T): AdminAsyncViewState<T> => ({
@@ -550,6 +554,40 @@ export class AdminDashboardController {
         result.availableWeeks.length > 0
           ? createSuccessView(nextData)
           : createEmptyView(nextData);
+    } catch (error) {
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async reprocessFromBronze(): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.extract.data;
+    this.state.views.extract = createLoadingView(previous);
+    try {
+      const result = this.unwrapEnvelope(await this.api.reprocessFromBronze());
+      this.state.views.extract = createSuccessView({
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: previous?.pgDiscoverResult,
+        reprocessResult: result,
+      });
+    } catch (error) {
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async ingestRecipeWeb(): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.extract.data;
+    this.state.views.extract = createLoadingView(previous);
+    try {
+      const result = this.unwrapEnvelope(await this.api.ingestRecipeWeb());
+      this.state.views.extract = createSuccessView({
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: previous?.pgDiscoverResult,
+        ingestRecipeWebResult: result,
+      });
     } catch (error) {
       this.state.views.extract = createErrorView(toAdminApiError(error), previous);
     }

@@ -103,6 +103,20 @@ export interface PgDiscoverResult {
   defaultBasePersons: number[];
 }
 
+export interface ReprocessFromBronzeResult {
+  filesScanned: number;
+  processed: number;
+  totalMeals: number;
+  errors: string[];
+}
+
+export interface IngestRecipeWebResult {
+  totalRecipes: number;
+  fetched: number;
+  withData: number;
+  errors: string[];
+}
+
 export interface IngestJobStatus {
   jobId: string;
   status: "running" | "completed" | "failed";
@@ -123,6 +137,8 @@ export interface AdminExtractViewData {
   pgLoginStatus?: PgLoginStatus;
   pgDiscoverResult?: PgDiscoverResult;
   activeIngestJob?: IngestJobStatus;
+  reprocessResult?: ReprocessFromBronzeResult;
+  ingestRecipeWebResult?: IngestRecipeWebResult;
 }
 
 export interface AdminOperationsViewData {

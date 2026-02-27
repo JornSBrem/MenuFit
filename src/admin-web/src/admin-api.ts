@@ -3,6 +3,8 @@ import type {
   AdminOperationReport,
   AdminRecipeRecord,
   AdminSession,
+  IngestRecipeWebResult,
+  ReprocessFromBronzeResult,
   AdminWeekMenuRecord,
   ApiEnvelope,
   CleanupRequest,
@@ -62,6 +64,14 @@ export class AdminApiClient {
 
   pgDiscover(year?: number): Promise<ApiEnvelope<PgDiscoverResult>> {
     return this.post("/api/v3/admin/pg-discover", year ? { year } : {});
+  }
+
+  reprocessFromBronze(): Promise<ApiEnvelope<ReprocessFromBronzeResult>> {
+    return this.post("/api/v3/admin/reprocess-from-bronze", {});
+  }
+
+  ingestRecipeWeb(): Promise<ApiEnvelope<IngestRecipeWebResult>> {
+    return this.post("/api/v3/admin/ingest-recipe-web", {});
   }
 
   getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>> {
