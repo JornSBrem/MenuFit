@@ -27,6 +27,8 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
   const [ingestBusy, setIngestBusy] = useState(false);
   const [recomputeBusy, setRecomputeBusy] = useState(false);
   const [cleanupBusy, setCleanupBusy] = useState(false);
+  const [reprocessBusy, setReprocessBusy] = useState(false);
+  const [ingestWebBusy, setIngestWebBusy] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -223,6 +225,42 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     }
   };
 
+  const handleReprocessFromBronze = async () => {
+    setReprocessBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      const nextState = await controller.reprocessFromBronze();
+      onStateChange();
+      const result = nextState.views.extract.data?.reprocessResult;
+      if (result) {
+        setSuccessMsg(`Herverwerkt: ${result.processed} transforms, ${result.totalMeals} maaltijden (${result.filesScanned} bronzebestanden).`);
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Herverwerken mislukt.");
+    } finally {
+      setReprocessBusy(false);
+    }
+  };
+
+  const handleIngestRecipeWeb = async () => {
+    setIngestWebBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      const nextState = await controller.ingestRecipeWeb();
+      onStateChange();
+      const result = nextState.views.extract.data?.ingestRecipeWebResult;
+      if (result) {
+        setSuccessMsg(`Receptdata: ${result.withData}/${result.fetched} recepten met data (${result.errors.length} fouten).`);
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Recepten inladen mislukt.");
+    } finally {
+      setIngestWebBusy(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {successMsg && <div style={successBanner}>{successMsg}</div>}
@@ -365,6 +403,32 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
             Cleanup uitvoeren
           </button>
         </div>
+      </div>
+
+      {/* Pipeline: herverwerken + recepten inladen */}
+      <div style={card}>
+        <h3 style={section.title}>Pipeline operaties</h3>
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: "#6e6e73" }}>
+          Herbouw gold-data vanuit bestaande bronzebestanden, of laad ingrediënten &amp; bereidingsstappen in via de publieke receptpagina&apos;s.
+        </p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button style={btn} onClick={() => void handleReprocessFromBronze()} disabled={reprocessBusy}>
+            {reprocessBusy ? "Bezig…" : "Herverwerk bronze → gold"}
+          </button>
+          <button style={btn} onClick={() => void handleIngestRecipeWeb()} disabled={ingestWebBusy}>
+            {ingestWebBusy ? "Bezig (~40s)…" : "Inladen recepten (web)"}
+          </button>
+        </div>
+        {data?.reprocessResult && (
+          <p style={{ margin: "8px 0 0", fontSize: 12, color: "#0a6d3a" }}>
+            Laatste herverwerking: {data.reprocessResult.processed} transforms · {data.reprocessResult.totalMeals} maaltijden
+          </p>
+        )}
+        {data?.ingestRecipeWebResult && (
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#0a6d3a" }}>
+            Laatste receptingest: {data.ingestRecipeWebResult.withData}/{data.ingestRecipeWebResult.fetched} recepten met data
+          </p>
+        )}
       </div>
 
       {/* Jobs list */}

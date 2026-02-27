@@ -207,6 +207,32 @@ const createApi = (
       defaultBasePersons: [2],
     },
   }),
+  listGoldWeekPlans: async () => ({
+    ok: true,
+    data: [],
+  }),
+  getIngestStatus: async () => ({
+    ok: true,
+    data: {
+      jobId: "job-1",
+      status: "completed" as const,
+      phase: "done" as const,
+      fetched: 0,
+      totalFetches: 0,
+      processed: 0,
+      totalProcessing: 0,
+      errors: [],
+      startedAt: "2026-02-25T00:00:00.000Z",
+    },
+  }),
+  reprocessFromBronze: async () => ({
+    ok: true,
+    data: { filesScanned: 10, processed: 40, totalMeals: 1680, errors: [] },
+  }),
+  ingestRecipeWeb: async () => ({
+    ok: true,
+    data: { totalRecipes: 50, fetched: 48, withData: 45, errors: [] },
+  }),
   ...overrides,
 });
 
