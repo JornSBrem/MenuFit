@@ -12,11 +12,19 @@ export interface GoldWeekPlanView {
   generatedAt: string;
 }
 
+export interface GoldMealIngredient {
+  text: string;
+}
+
 export interface GoldMealView {
   mealId: string;
   dayLabel: string;
   mealLabel: string;
   recipeId?: string;
+  recipeName?: string;
+  imageUrl?: string;
+  kcal?: number;
+  ingredients?: GoldMealIngredient[];
 }
 
 export interface GoldGroceryTotalView {
@@ -72,4 +80,10 @@ export interface WeekGroceriesResponse {
   weekPlanId: string;
   groceries: GoldGroceryTotalView[];
   reconcile: GoldGroceryReconcileView[];
+}
+
+export interface RecipeView {
+  recipeId: string;
+  name: string;
+  imageUrl?: string;
 }
