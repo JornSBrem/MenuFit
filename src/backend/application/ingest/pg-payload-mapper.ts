@@ -8,19 +8,25 @@
  *   { meals: BronzeLikeMeal[], pdfLines?: string[] }
  *
  * Deze module converteert het PG-formaat naar het interne formaat.
+ * Alle 6 maaltijdmomenten per dag worden geëxtraheerd (ontbijt t/m snack).
  */
 import type { BronzeLikeMeal, BronzeLikeWeekPayload } from "../silver/types.ts";
 
 // ---- PG API types (intern, voor type-safety in de mapper) ------------------
 
 interface PgMoments {
+  breakfast?: string;
+  breakfast_kilocalories?: string | number;
+  between_breakfast_lunch?: string;
+  between_breakfast_lunch_kilocalories?: string | number;
+  lunch?: string;
+  lunch_kilocalories?: string | number;
+  between_lunch_dinner?: string;
+  between_lunch_dinner_kilocalories?: string | number;
   dinner?: string;
   dinner_kilocalories?: string | number;
-  breakfast?: string;
-  lunch?: string;
   snack?: string;
-  between_breakfast_lunch?: string;
-  between_lunch_dinner?: string;
+  snack_kilocalories?: string | number;
 }
 
 interface PgDayMenuVariant {
@@ -37,17 +43,43 @@ interface PgDayMenu {
   day_menu_variants?: PgDayMenuVariant[];
 }
 
+interface PgRecipe {
+  title?: string;
+  slug?: string;
+  media?: {
+    imageConversions?: {
+      medium?: string;
+    };
+  };
+}
+
 interface PgWeekData {
   id?: number;
   week_number?: number;
   day_menus?: PgDayMenu[];
-  recipes?: Array<{ title?: string; slug?: string }>;
+  recipes?: PgRecipe[];
   /**
    * Boodschappenlijst als object met HTML-waarden per categorie:
    *   { vegetables_fruit: "<p>aardbeien</p><p>banaan</p>", ... }
    */
   groceries?: Record<string, string>;
 }
+
+// ---- Maaltijdmoment-definitie ----------------------------------------------
+
+/** Volgorde en Nederlandse labels van de PG maaltijdmomenten */
+const MOMENT_DEFS: Array<{
+  key: keyof PgMoments;
+  kcalKey: keyof PgMoments;
+  label: string;
+}> = [
+  { key: "breakfast", kcalKey: "breakfast_kilocalories", label: "Ontbijt" },
+  { key: "between_breakfast_lunch", kcalKey: "between_breakfast_lunch_kilocalories", label: "Tussendoor (ochtend)" },
+  { key: "lunch", kcalKey: "lunch_kilocalories", label: "Lunch" },
+  { key: "between_lunch_dinner", kcalKey: "between_lunch_dinner_kilocalories", label: "Tussendoor (middag)" },
+  { key: "dinner", kcalKey: "dinner_kilocalories", label: "Diner" },
+  { key: "snack", kcalKey: "snack_kilocalories", label: "Snack" },
+];
 
 // ---- Hulpfuncties ----------------------------------------------------------
 
@@ -73,6 +105,13 @@ const stripHtml = (html: string): string =>
     .replace(/&nbsp;/g, " ")
     .replace(/&apos;/g, "'")
     .replace(/&quot;/g, '"')
+    .replace(/&euml;/g, "ë")
+    .replace(/&eacute;/g, "é")
+    .replace(/&egrave;/g, "è")
+    .replace(/&agrave;/g, "à")
+    .replace(/&auml;/g, "ä")
+    .replace(/&ouml;/g, "ö")
+    .replace(/&uuml;/g, "ü")
     .trim();
 
 /**
@@ -89,7 +128,7 @@ const extractDayLabel = (slug: string): string => {
 };
 
 /**
- * Extraheert de recept-slug uit een dinner-HTML string.
+ * Extraheert de recept-slug uit een moment-HTML string.
  * Bijv.: <a href="/recepten/gepofte-aardappels"> → "gepofte-aardappels"
  */
 const extractRecipeSlug = (html: string): string | undefined => {
@@ -98,11 +137,23 @@ const extractRecipeSlug = (html: string): string | undefined => {
 };
 
 /**
- * Converteert dinner-HTML naar een lijst van ingrediëntteksten.
+ * Extraheert de receptnaam uit de ankertekst in moment-HTML.
+ * Bijv.: <a href="/recepten/hete-bliksem">hete bliksem (recept)</a> → "Hete bliksem"
+ */
+const extractRecipeName = (html: string): string | undefined => {
+  const match = /<a\b[^>]*>([\s\S]*?)<\/a>/i.exec(html);
+  if (!match?.[1]) return undefined;
+  return stripHtml(match[1])
+    .replace(/\s*\(recept\)\s*$/i, "")
+    .trim()
+    .replace(/^\w/, (c) => c.toUpperCase()) || undefined;
+};
+
+/**
+ * Converteert moment-HTML naar een lijst van ingrediëntteksten.
  * Elke <p> is één ingrediënt; links worden gereduceerd tot hun tekst.
  */
 const extractIngredients = (html: string): Array<{ text: string }> => {
-  // Splits op <p>…</p> blokken (case-insensitief, multiline)
   const blocks = html.split(/<\/p>/i);
   const ingredients: Array<{ text: string }> = [];
   for (const block of blocks) {
@@ -132,6 +183,15 @@ const extractGroceryLines = (groceries: Record<string, string> | undefined): str
   return lines;
 };
 
+/**
+ * Zet een kcal-waarde (string of number) om naar een geheel getal.
+ */
+const parseKcal = (raw: string | number | undefined): number | undefined => {
+  if (raw === undefined || raw === null) return undefined;
+  const n = typeof raw === "number" ? raw : parseInt(String(raw), 10);
+  return Number.isFinite(n) ? n : undefined;
+};
+
 // ---- Publieke mapper --------------------------------------------------------
 
 /**
@@ -152,6 +212,16 @@ export const mapPgWeekDataToSilverPayload = (
 
   const data = pgData as PgWeekData;
   const dayMenus = data.day_menus ?? [];
+
+  // Bouw recept-slug → afbeelding-URL lookup
+  const recipeImageMap = new Map<string, string>();
+  for (const recipe of data.recipes ?? []) {
+    const imageUrl = recipe.media?.imageConversions?.medium;
+    if (recipe.slug && imageUrl) {
+      recipeImageMap.set(recipe.slug, imageUrl);
+    }
+  }
+
   const meals: BronzeLikeMeal[] = [];
 
   for (const dayMenu of dayMenus) {
@@ -159,7 +229,7 @@ export const mapPgWeekDataToSilverPayload = (
     const dayLabel = extractDayLabel(slug);
 
     const variants = dayMenu.day_menu_variants ?? [];
-    // Zoek variant die overeenkomt met gewenste kcal; fallback op eerste
+    // Zoek variant die overeenkomt met gewenste kcal; fallback op dichtstbijzijnde
     const variant =
       variants.find((v) => v.calories === kcal) ??
       variants.find((v) => typeof v.calories === "number") ??
@@ -167,18 +237,28 @@ export const mapPgWeekDataToSilverPayload = (
 
     if (!variant?.moments) continue;
 
-    const { dinner } = variant.moments;
-    if (!dinner) continue;
+    for (const def of MOMENT_DEFS) {
+      const html = variant.moments[def.key] as string | undefined;
+      if (!html || !html.trim()) continue;
 
-    const ingredients = extractIngredients(dinner);
-    const recipeId = extractRecipeSlug(dinner);
+      const ingredients = extractIngredients(html);
+      if (ingredients.length === 0) continue;
 
-    meals.push({
-      day: dayLabel,
-      meal: "avondeten",
-      recipeId,
-      ingredients,
-    });
+      const recipeSlug = extractRecipeSlug(html);
+      const recipeName = extractRecipeName(html);
+      const imageUrl = recipeSlug ? recipeImageMap.get(recipeSlug) : undefined;
+      const momentKcal = parseKcal(variant.moments[def.kcalKey] as string | number | undefined);
+
+      meals.push({
+        day: dayLabel,
+        meal: def.label,
+        recipeId: recipeSlug,
+        recipeName,
+        imageUrl,
+        kcal: momentKcal,
+        ingredients,
+      });
+    }
   }
 
   const pdfLines = extractGroceryLines(data.groceries);

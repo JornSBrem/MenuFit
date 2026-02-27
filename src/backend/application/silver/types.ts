@@ -33,6 +33,9 @@ export interface SilverMealRow {
   dayLabel: string;
   mealLabel: string;
   recipeId?: string;
+  recipeName?: string;
+  imageUrl?: string;
+  kcal?: number;
   sourceObjectId: string;
   transformVersion: string;
 }
@@ -117,6 +120,9 @@ export interface BronzeLikeMeal {
   day: string;
   meal: string;
   recipeId?: string;
+  recipeName?: string;
+  imageUrl?: string;
+  kcal?: number;
   ingredients?: BronzeLikeMealIngredient[];
 }
 

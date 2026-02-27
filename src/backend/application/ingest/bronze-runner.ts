@@ -27,7 +27,6 @@ const buildMetadata = (task: IngestTask, payload: unknown): BronzeObjectMetadata
     entityType: task.entityType,
     year: new Date().getUTCFullYear(),
     week: task.week,
-    kcal: task.kcal,
     basePersons: task.basePersons,
     fetchedAt: new Date().toISOString(),
     sha256: sha256Hex(payloadJson),
@@ -40,7 +39,7 @@ const buildMetadata = (task: IngestTask, payload: unknown): BronzeObjectMetadata
 };
 
 const manifestRecordId = (task: IngestTask, sha: string): string =>
-  `${task.source}:${task.entityType}:${task.week}:${task.kcal}:${task.basePersons}:${sha}`;
+  `${task.source}:${task.entityType}:${task.week}:${task.basePersons}:${sha}`;
 
 export interface BronzeRunnerOptions {
   retryPolicy?: IngestRetryPolicy;

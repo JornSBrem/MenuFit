@@ -23,13 +23,67 @@ import { SessionLifecycleService } from "./application/auth/session-lifecycle-se
 import { UserAccountService, UserAccountServiceError } from "./application/auth/user-account-service.ts";
 import { HouseholdService, HouseholdServiceError } from "./application/household/household-service.ts";
 import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
-import type { GoldReadModel } from "./application/gold/index.ts";
+import type { GoldReadModel, GoldRecipeStep } from "./application/gold/index.ts";
+
+/** Interne type alias voor stap-verrijking */
+type GoldRecipeStepData = GoldRecipeStep;
+
+/**
+ * Extraheer bereidingsstappen uit een PG recipe API response.
+ * Probeert meerdere veldnamen / HTML-formaten.
+ */
+const extractRecipeSteps = (raw: unknown): GoldRecipeStepData[] => {
+  if (typeof raw !== "object" || raw === null) return [];
+  const data = (raw as Record<string, unknown>).data ?? raw;
+  if (typeof data !== "object" || data === null) return [];
+  const d = data as Record<string, unknown>;
+
+  // Strip HTML en lege regels
+  const stripHtml = (html: string): string =>
+    html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+
+  // Hulp: zet HTML-blokken (<p>, <li>) om naar tekst-array
+  const htmlToLines = (html: string): string[] =>
+    html.split(/<\/(?:p|li)>/i)
+      .map((b) => stripHtml(b))
+      .filter((t) => t.length > 4);
+
+  const toSteps = (lines: string[]): GoldRecipeStepData[] =>
+    lines.map((text, i) => ({ step: i + 1, text }));
+
+  // 1. instructions als array van objecten
+  if (Array.isArray(d.instructions)) {
+    const lines = d.instructions
+      .map((s: unknown) => {
+        if (typeof s === "string") return stripHtml(s);
+        if (typeof s === "object" && s !== null) {
+          const obj = s as Record<string, unknown>;
+          return stripHtml(String(obj.description ?? obj.text ?? obj.step_text ?? ""));
+        }
+        return "";
+      })
+      .filter((t) => t.length > 4);
+    if (lines.length > 0) return toSteps(lines);
+  }
+
+  // 2. preparation / content / description / method als HTML-string
+  for (const field of ["preparation", "preparation_text", "content", "description", "method", "directions"]) {
+    const val = d[field];
+    if (typeof val === "string" && val.length > 20) {
+      const lines = htmlToLines(val);
+      if (lines.length > 0) return toSteps(lines);
+    }
+  }
+
+  return [];
+};
 import { reprocessSilverTransforms } from "./application/silver/index.ts";
 import type { SilverTransformOutput } from "./application/silver/index.ts";
 import { createIngestPlan } from "./application/ingest/ingest-planner.ts";
 import { runBronzeIngestTasks, type FetchJson } from "./application/ingest/bronze-runner.ts";
 import { mapPgWeekDataToSilverPayload } from "./application/ingest/pg-payload-mapper.ts";
 import { fetchPgJson, PgRateLimitError } from "./integrations/pg/pg-fetch.ts";
+import { buildPgEndpointUrl } from "./integrations/pg/endpoint-contract.ts";
 import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
 import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
@@ -822,6 +876,68 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             message: err instanceof Error ? err.message : "Fout bij ontdekken van beschikbare weken.",
           },
         });
+      }
+      return;
+    }
+
+    // ---- Tijdelijk: PG recipe raw fetch (om API-structuur te ontdekken) ----
+    if (path === "/api/v3/admin/pg-fetch-recipe" && method === "POST") {
+      try {
+        const { recipeId } = body as { recipeId?: string };
+        if (!recipeId) { json(res, 400, { ok: false, error: { code: "MISSING_PARAM", message: "recipeId required" } }); return; }
+        const recipeUrl = buildPgEndpointUrl(config, "recipe", { recipeId });
+        const recipeData = await fetchPgJson({ requestUrl: recipeUrl, entityType: "pg.recipe", variables: { recipeId } }, config);
+        json(res, 200, { ok: true, data: recipeData });
+      } catch (err) {
+        json(res, 500, { ok: false, error: { code: "PG_FETCH_ERROR", message: err instanceof Error ? err.message : String(err) } });
+      }
+      return;
+    }
+
+    // ---- Admin ingest recipe steps (haalt bereidingsstappen op via PG recipe API) ----
+    if (path === "/api/v3/admin/ingest-recipe-steps" && method === "POST") {
+      try {
+        // Verzamel alle unieke recipe-slugs uit de gold data
+        const allModels = goldReadService.listAllModels();
+        const slugSet = new Set<string>();
+        for (const model of allModels) {
+          for (const meal of model.meals) {
+            if (meal.recipeId && meal.imageUrl) slugSet.add(meal.recipeId);
+          }
+        }
+        const slugs = Array.from(slugSet);
+
+        // Haal elke recipe op en extraheer stappen
+        const stepsMap = new Map<string, GoldRecipeStepData[]>();
+        const errors: string[] = [];
+        let fetched = 0;
+
+        for (const slug of slugs) {
+          try {
+            const recipeUrl = buildPgEndpointUrl(config, "recipe", { recipeId: slug });
+            const raw = await fetchPgJson({ requestUrl: recipeUrl, entityType: "pg.recipe", variables: { recipeId: slug } }, config);
+            const steps = extractRecipeSteps(raw);
+            if (steps.length > 0) stepsMap.set(slug, steps);
+            fetched++;
+          } catch (err) {
+            errors.push(`${slug}: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
+
+        // Verrijk alle gold modellen met de stappen
+        goldReadService.enrichWithSteps(stepsMap);
+
+        json(res, 200, {
+          ok: true,
+          data: {
+            totalRecipes: slugs.length,
+            fetched,
+            withSteps: stepsMap.size,
+            errors: errors.slice(0, 20),
+          },
+        });
+      } catch (err) {
+        json(res, 500, { ok: false, error: { code: "INGEST_STEPS_ERROR", message: err instanceof Error ? err.message : String(err) } });
       }
       return;
     }

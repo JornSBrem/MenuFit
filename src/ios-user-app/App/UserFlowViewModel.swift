@@ -51,6 +51,7 @@ final class UserFlowViewModel: ObservableObject {
   @Published var selectedMemberId = ""
   @Published var selectedDayLabel = ""
   @Published var checkedGroceryItemIds = Set<String>()
+  @Published var favoriteRecipeIds = Set<String>()
 
   // Config screen state
   @Published var configHousehold: HouseholdCreateResponse?
@@ -82,6 +83,8 @@ final class UserFlowViewModel: ObservableObject {
     if [1250, 1500, 1800, 2100].contains(savedKcal) {
       selection.kcal = savedKcal
     }
+    let savedFavorites = defaults.stringArray(forKey: "menufit.favorite-recipes") ?? []
+    favoriteRecipeIds = Set(savedFavorites)
     refreshAuthState()
   }
 
@@ -218,6 +221,19 @@ final class UserFlowViewModel: ObservableObject {
     selection.kcal = kcal
     defaults.set(kcal, forKey: "menufit.preferred-kcal")
     Task { await loadWeekBundle() }
+  }
+
+  func toggleFavorite(_ recipeId: String) {
+    if favoriteRecipeIds.contains(recipeId) {
+      favoriteRecipeIds.remove(recipeId)
+    } else {
+      favoriteRecipeIds.insert(recipeId)
+    }
+    defaults.set(Array(favoriteRecipeIds).sorted(), forKey: "menufit.favorite-recipes")
+  }
+
+  func isFavorite(_ recipeId: String) -> Bool {
+    favoriteRecipeIds.contains(recipeId)
   }
 
   func selectMember(_ memberId: String) {

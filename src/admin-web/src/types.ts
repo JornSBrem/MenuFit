@@ -56,11 +56,22 @@ export interface AdminSettingsEntry {
   updatedBy: string;
 }
 
+export interface GoldWeekPlanRecord {
+  weekPlanId: string;
+  year: number;
+  week: number;
+  kcal: number;
+  basePersons: number;
+  mealCount: number;
+  generatedAt: string;
+}
+
 export interface AdminDataViewData {
   diagnostics: SystemDiagnosticsSummary;
   recipes: AdminRecipeRecord[];
   weekMenus: AdminWeekMenuRecord[];
   mappingOverrides: AdminMappingOverrideRecord[];
+  goldWeekPlans: GoldWeekPlanRecord[];
 }
 
 export interface AdminSettingsViewData {
@@ -143,7 +154,6 @@ export interface AdminDashboardUiState {
 export interface IngestRequest {
   operationId: string;
   weeks: number[];
-  kcals: number[];
   basePersons: number[];
 }
 

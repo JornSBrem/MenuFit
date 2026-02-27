@@ -4,6 +4,7 @@ import type { SilverIngredientCanonicalRow, SilverQuantityNormalizedRow } from "
 import type {
   GoldGroceryReconcileView,
   GoldGroceryTotalView,
+  GoldMealIngredient,
   GoldMealView,
   GoldProjectionInput,
   GoldReadModel,
@@ -86,16 +87,53 @@ export const projectSilverToGold = (input: GoldProjectionInput): GoldReadModel =
   const unresolvedItems = groceryReconcile.filter((row) => row.reconcileStatus !== "matched").length;
   const resolvedItems = Math.max(totalItems - unresolvedItems, 0);
   const coverageScore = totalItems === 0 ? 1 : resolvedItems / totalItems;
+  // Ingrediënten per maaltijd opbouwen (op volgorde van rawId)
+  const ingredientsByMeal = new Map<string, string[]>();
+  for (const raw of input.silver.ingredientsRaw) {
+    const existing = ingredientsByMeal.get(raw.mealId) ?? [];
+    existing.push(raw.ingredientText);
+    ingredientsByMeal.set(raw.mealId, existing);
+  }
+
+  // Sorteervolgorde voor maaltijdmomenten binnen een dag
+  const MEAL_MOMENT_ORDER: Record<string, number> = {
+    "Ontbijt": 0,
+    "Tussendoor (ochtend)": 1,
+    "Lunch": 2,
+    "Tussendoor (middag)": 3,
+    "Diner": 4,
+    "Snack": 5,
+  };
+
+  // Sorteervolgorde voor weekdagen
+  const DAY_ORDER: Record<string, number> = {
+    "maandag": 0, "dinsdag": 1, "woensdag": 2, "donderdag": 3,
+    "vrijdag": 4, "zaterdag": 5, "zondag": 6,
+  };
+
+  const getMealMomentOrder = (label: string): number => MEAL_MOMENT_ORDER[label] ?? 99;
+  const getDayOrder = (label: string): number => DAY_ORDER[label.toLowerCase()] ?? 99;
+
   const meals: GoldMealView[] = input.silver.meals
-    .map((meal) => ({
-      mealId: meal.mealId,
-      dayLabel: meal.dayLabel,
-      mealLabel: meal.mealLabel,
-      recipeId: meal.recipeId,
-    }))
-    .sort((left, right) =>
-      `${left.dayLabel}:${left.mealLabel}`.localeCompare(`${right.dayLabel}:${right.mealLabel}`),
-    );
+    .map((meal) => {
+      const rawIngredients = ingredientsByMeal.get(meal.mealId) ?? [];
+      const ingredients: GoldMealIngredient[] = rawIngredients.map((text) => ({ text }));
+      return {
+        mealId: meal.mealId,
+        dayLabel: meal.dayLabel,
+        mealLabel: meal.mealLabel,
+        recipeId: meal.recipeId,
+        recipeName: meal.recipeName,
+        imageUrl: meal.imageUrl,
+        kcal: meal.kcal,
+        ingredients: ingredients.length > 0 ? ingredients : undefined,
+      };
+    })
+    .sort((left, right) => {
+      const dayDiff = getDayOrder(left.dayLabel) - getDayOrder(right.dayLabel);
+      if (dayDiff !== 0) return dayDiff;
+      return getMealMomentOrder(left.mealLabel) - getMealMomentOrder(right.mealLabel);
+    });
 
   return {
     weekPlan: {

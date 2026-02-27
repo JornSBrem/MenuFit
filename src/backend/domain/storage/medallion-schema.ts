@@ -13,7 +13,6 @@ export interface BronzeObjectMetadata {
   entityType: BronzeEntityType;
   year: number;
   week: number;
-  kcal: number;
   basePersons: number;
   fetchedAt: string;
   sha256: string;

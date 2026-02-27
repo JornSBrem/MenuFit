@@ -14,7 +14,6 @@ export const createBronzePath = (root: string, metadata: BronzeObjectMetadata): 
     metadata.entityType,
     `y=${metadata.year}`,
     `w=${metadata.week}`,
-    `k=${metadata.kcal}`,
     `p=${metadata.basePersons}`,
     `${metadata.sha256}.json`,
   );

@@ -1,5 +1,5 @@
 import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
-import type { GoldReadModel, GoldWeekPlanView, RecipeView, WeekGroceriesResponse, WeekSummaryResponse } from "./types";
+import type { GoldReadModel, GoldRecipeStep, GoldWeekPlanView, RecipeView, WeekGroceriesResponse, WeekSummaryResponse } from "./types";
 
 const keyFromWeek = (year: number, week: number, kcal: number, basePersons: number): string =>
   `${year}:${week}:${kcal}:${basePersons}`;
@@ -101,11 +101,35 @@ export class GoldWeekReadService {
             imageUrl: meal.imageUrl,
             kcal: meal.kcal,
             ingredients: meal.ingredients,
+            steps: meal.steps,
           });
         }
       }
     }
     return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name, "nl"));
+  }
+
+  /** Geeft alle gold-modellen terug (voor bulk-operaties zoals step-verrijking). */
+  listAllModels(): GoldReadModel[] {
+    return Array.from(this.store.values());
+  }
+
+  /**
+   * Verrijkt alle gold-modellen met bereidingsstappen op basis van recipeId.
+   * Schrijft daarna alles in één batchPersist naar schijf.
+   */
+  enrichWithSteps(stepsMap: Map<string, GoldRecipeStep[]>): void {
+    if (stepsMap.size === 0) return;
+    for (const [key, model] of this.store.entries()) {
+      const enrichedMeals = model.meals.map((meal) => {
+        if (!meal.recipeId) return meal;
+        const steps = stepsMap.get(meal.recipeId);
+        if (!steps || steps.length === 0) return meal;
+        return { ...meal, steps };
+      });
+      this.store.set(key, { ...model, meals: enrichedMeals });
+    }
+    this.batchPersist();
   }
 
   getGroceries(year: number, week: number, kcal: number, basePersons: number): WeekGroceriesResponse | null {

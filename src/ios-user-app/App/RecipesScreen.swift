@@ -3,6 +3,15 @@ import SwiftUI
 struct RecipesScreen: View {
   @EnvironmentObject private var viewModel: UserFlowViewModel
   @State private var selectedMeal: GoldWeekMealView?
+  @State private var showOnlyFavorites = false
+
+  private var displayedRecipes: [UserRecipeRecord] {
+    let base = viewModel.filteredRecipes
+    if showOnlyFavorites {
+      return base.filter { viewModel.isFavorite($0.recipeId) }
+    }
+    return base
+  }
 
   var body: some View {
     NavigationView {
@@ -21,25 +30,45 @@ struct RecipesScreen: View {
         .padding(.horizontal, 16)
         .padding(.top, 8)
 
-        // ── Telling ───────────────────────────────────────────
-        HStack {
+        // ── Filters + telling ─────────────────────────────────
+        HStack(spacing: 8) {
           if viewModel.isRecipesLoading {
             Text("Recepten laden...")
               .font(.caption).foregroundColor(.secondary)
           } else {
-            Text("Recepten: \(viewModel.filteredRecipes.count)\(viewModel.recipes.count != viewModel.filteredRecipes.count ? " van \(viewModel.recipes.count)" : "")")
+            Text("\(displayedRecipes.count) recept\(displayedRecipes.count == 1 ? "" : "en")")
               .font(.caption).foregroundColor(.secondary)
           }
+
           Spacer()
+
+          // Favorieten filter
+          Button {
+            showOnlyFavorites.toggle()
+          } label: {
+            HStack(spacing: 4) {
+              Image(systemName: showOnlyFavorites ? "heart.fill" : "heart")
+                .foregroundColor(showOnlyFavorites ? .red : .secondary)
+              Text("Favorieten")
+                .font(.caption)
+                .foregroundColor(showOnlyFavorites ? .red : .secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(showOnlyFavorites ? Color.red.opacity(0.1) : Color(.secondarySystemBackground))
+            .cornerRadius(8)
+          }
+
           Button {
             Task { await viewModel.loadRecipes() }
           } label: {
-            Label("Ververs", systemImage: "arrow.clockwise")
+            Image(systemName: "arrow.clockwise")
               .font(.caption)
+              .foregroundColor(.secondary)
           }
           .disabled(viewModel.isRecipesLoading)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.vertical, 6)
 
         Divider()
@@ -49,16 +78,18 @@ struct RecipesScreen: View {
           Spacer()
           ProgressView("Recepten laden...")
           Spacer()
-        } else if viewModel.filteredRecipes.isEmpty {
+        } else if displayedRecipes.isEmpty {
           Spacer()
           VStack(spacing: 12) {
-            Image(systemName: "fork.knife.circle")
+            Image(systemName: showOnlyFavorites ? "heart.slash" : "fork.knife.circle")
               .font(.system(size: 48))
               .foregroundColor(.secondary)
             Text(
-              viewModel.recipes.isEmpty
-                ? "Nog geen recepten beschikbaar.\nLaad weekdata om recepten te importeren."
-                : "Geen recepten gevonden voor '\(viewModel.recipesSearchText)'."
+              showOnlyFavorites
+                ? "Nog geen favorieten opgeslagen.\nTik op het hartje in een recept."
+                : viewModel.recipes.isEmpty
+                  ? "Nog geen recepten beschikbaar.\nLaad weekdata om recepten te importeren."
+                  : "Geen recepten gevonden voor '\(viewModel.recipesSearchText)'."
             )
             .foregroundColor(.secondary)
             .font(.subheadline)
@@ -68,11 +99,22 @@ struct RecipesScreen: View {
           Spacer()
         } else {
           List {
-            ForEach(viewModel.filteredRecipes) { recipe in
+            ForEach(displayedRecipes) { recipe in
               Button { selectedMeal = recipe.toMealView() } label: {
                 recipeRow(recipe)
               }
               .buttonStyle(.plain)
+              .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button {
+                  viewModel.toggleFavorite(recipe.recipeId)
+                } label: {
+                  Label(
+                    viewModel.isFavorite(recipe.recipeId) ? "Verwijder" : "Favoriet",
+                    systemImage: viewModel.isFavorite(recipe.recipeId) ? "heart.slash" : "heart.fill"
+                  )
+                }
+                .tint(viewModel.isFavorite(recipe.recipeId) ? .gray : .red)
+              }
             }
           }
           .listStyle(.plain)
@@ -122,9 +164,25 @@ struct RecipesScreen: View {
         Text(recipe.name)
           .font(.subheadline.weight(.medium))
           .lineLimit(2)
+        if let kcal = recipe.kcal {
+          Text("\(kcal) kcal")
+            .font(.caption)
+            .foregroundColor(.orange)
+        }
       }
+
       Spacer()
+
+      // Hartje
+      Button {
+        viewModel.toggleFavorite(recipe.recipeId)
+      } label: {
+        Image(systemName: viewModel.isFavorite(recipe.recipeId) ? "heart.fill" : "heart")
+          .foregroundColor(viewModel.isFavorite(recipe.recipeId) ? .red : Color(.systemGray3))
+          .font(.body)
+      }
+      .buttonStyle(.plain)
     }
-    .padding(.vertical, 2)
+    .padding(.vertical, 4)
   }
 }

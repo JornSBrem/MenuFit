@@ -139,7 +139,6 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
       const ingestState = await controller.runIngest({
         operationId: crypto.randomUUID(),
         weeks: discoverResult.availableWeeks,
-        kcals: discoverResult.defaultKcals,
         basePersons: discoverResult.defaultBasePersons,
       });
       onStateChange();
@@ -165,10 +164,6 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
       await controller.runIngest({
         operationId: genId(),
         weeks: String(fd.get("weeks") ?? "")
-          .split(",")
-          .map((s) => Number(s.trim()))
-          .filter((n) => !isNaN(n) && n > 0),
-        kcals: String(fd.get("kcals") ?? "")
           .split(",")
           .map((s) => Number(s.trim()))
           .filter((n) => !isNaN(n) && n > 0),
@@ -330,10 +325,8 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
         <form onSubmit={(e) => void handleIngest(e)} style={fieldset}>
           <div style={label}>Weken (kommagescheiden, bijv. 202510,202511)</div>
           <input style={input} name="weeks" placeholder="202510,202511" required />
-          <div style={label}>Kcal waarden (kommagescheiden, bijv. 1800,2000)</div>
-          <input style={input} name="kcals" placeholder="1800,2000" required />
           <div style={label}>Base persons (kommagescheiden, bijv. 1,2)</div>
-          <input style={input} name="basePersons" placeholder="1,2" required />
+          <input style={input} name="basePersons" placeholder="2" required />
           <button style={btn} type="submit" disabled={ingestBusy}>
             {ingestBusy ? "Ingest loopt…" : "Start ingest"}
           </button>

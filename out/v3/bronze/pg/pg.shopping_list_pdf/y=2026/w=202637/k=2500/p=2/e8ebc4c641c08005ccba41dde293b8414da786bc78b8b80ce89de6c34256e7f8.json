@@ -1,0 +1,685 @@
+{
+  "metadata": {
+    "source": "pg",
+    "entityType": "pg.shopping_list_pdf",
+    "year": 2026,
+    "week": 202637,
+    "kcal": 2500,
+    "basePersons": 2,
+    "fetchedAt": "2026-02-26T20:21:26.157Z",
+    "sha256": "e8ebc4c641c08005ccba41dde293b8414da786bc78b8b80ce89de6c34256e7f8",
+    "schemaVersion": "1.0.0",
+    "requestMeta": {
+      "requestUrl": "https://backend.projectgezond.nl/api/v3/week-menus/37",
+      "ingestionMode": "bronze"
+    }
+  },
+  "payload": {
+    "data": {
+      "id": 25,
+      "week_number": 37,
+      "week_number_string": "Week 37",
+      "recipes": [
+        {
+          "title": "Suikerarme appel-walnotencake",
+          "slug": "suikerarme-appel-walnotencake",
+          "media": {
+            "imageConversions": {
+              "medium": "https://new.backend.projectgezond.nl/storage/251/conversions/Appelcake-medium.jpg"
+            }
+          }
+        },
+        {
+          "title": "Gado gado",
+          "slug": "gado-gado",
+          "media": {
+            "imageConversions": {
+              "medium": "https://new.backend.projectgezond.nl/storage/527/conversions/GadoGado-medium.jpg"
+            }
+          }
+        },
+        {
+          "title": "Hartige muffins met ham, kaas en paprika",
+          "slug": "hartige-muffins-met-ham-kaas-en-paprika",
+          "media": {
+            "imageConversions": {
+              "medium": "https://new.backend.projectgezond.nl/storage/173/conversions/HartigeMuffinsHamKaasPaprika-medium.jpg"
+            }
+          }
+        },
+        {
+          "title": "Aardappels met schil uit de oven",
+          "slug": "aardappels-met-schil-uit-de-oven",
+          "media": {
+            "imageConversions": {
+              "medium": "https://new.backend.projectgezond.nl/storage/152/conversions/AardappeltjesUitDeOven-medium.jpg"
+            }
+          }
+        },
+        {
+          "title": "Krokante kipnuggets",
+          "slug": "krokante-kipnuggets",
+          "media": {
+            "imageConversions": {
+              "medium": "https://new.backend.projectgezond.nl/storage/387/conversions/KrokanteKipnuggets-medium.jpg"
+            }
+          }
+        },
+        {
+          "title": "Clubsandwich met rosbief",
+          "slug": "clubsandwich-met-rosbief",
+          "media": {
+            "imageConversions": {
+              "medium": "https://new.backend.projectgezond.nl/storage/125/conversions/ClubsandwichRosbief-medium.jpg"
+            }
+          }
+        },
+        {
+          "title": "Snelle pizzawrap",
+          "slug": "snelle-pizzawrap",
+          "media": {
+            "imageConversions": {
+              "medium": "https://new.backend.projectgezond.nl/storage/156/conversions/PizzaWrap-medium.jpg"
+            }
+          }
+        },
+        {
+          "title": "Spinazieomelet",
+          "slug": "spinazieomelet",
+          "media": {
+            "imageConversions": {
+              "medium": "https://new.backend.projectgezond.nl/storage/532/conversions/1spinazieomelet-medium.jpg"
+            }
+          }
+        }
+      ],
+      "day_menus": [
+        {
+          "id": 114,
+          "title": "Suikerarme appel-walnotencake (week 37 - ma)",
+          "slug": "suikerarme-appel-walnotencake-week-37-ma",
+          "day_menu_variants": [
+            {
+              "moments": {
+                "breakfast_kilocalories": "281",
+                "breakfast": "<p>1 beschuit met magere vleeswaren</p>\n<p>1 beschuit met kaas</p>\n<p>150 ml melk</p>",
+                "between_breakfast_lunch_kilocalories": "91",
+                "between_breakfast_lunch": "<p>1 rijstwafel met pindakaas</p>",
+                "lunch_kilocalories": "281",
+                "lunch": "<p>150 gr rauwkostsalade met dressing naar keuze</p>\n<p>1 cracker met zuivelspread</p>\n<p>1 cracker met appelstroop</p>",
+                "between_lunch_dinner_kilocalories": "74",
+                "between_lunch_dinner": "<p>125 gr yoghurt</p>\n<p>50 gr mangostukjes</p>",
+                "dinner_kilocalories": "382",
+                "dinner": "<p>75 gr tilapiafilet</p>\n<p>150 gr gekookte aardappels</p>\n<p>150 gr courgette</p>\n<p>25 ml jus</p>\n<p>2 mandarijnen</p>",
+                "snack_kilocalories": "163",
+                "snack": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/suikerarme-appel-walnotencake\">1 plak suikerarme appel-walnotencake (recept)&nbsp;</a></p>"
+              },
+              "calories": 1250
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "373",
+                "breakfast": "<p>2 beschuiten met magere vleeswaren</p>\n<p>1 beschuit met kaas</p>\n<p>150 ml melk</p>",
+                "between_breakfast_lunch_kilocalories": "91",
+                "between_breakfast_lunch": "<p>1 rijstwafel met pindakaas</p>",
+                "lunch_kilocalories": "352",
+                "lunch": "<p>150 gr rauwkostsalade met dressing naar keuze</p>\n<p>2 crackers met zuivelspread</p>\n<p>1 cracker met appelstroop</p>",
+                "between_lunch_dinner_kilocalories": "138",
+                "between_lunch_dinner": "<p>125 gr yoghurt</p>\n<p>50 gr mangostukjes</p>\n<p>15 gr granola</p>",
+                "dinner_kilocalories": "382",
+                "dinner": "<p>75 gr tilapiafilet</p>\n<p>150 gr gekookte aardappels</p>\n<p>150 gr courgette</p>\n<p>25 ml jus</p>\n<p>2 mandarijnen</p>",
+                "snack_kilocalories": "163",
+                "snack": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/suikerarme-appel-walnotencake\">1 plak suikerarme appel-walnotencake (recept)&nbsp;</a></p>"
+              },
+              "calories": 1500
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "397",
+                "breakfast": "<p>2 beschuiten met magere vleeswaren</p>\n<p>1 beschuit met kaas</p>\n<p>200 ml melk</p>",
+                "between_breakfast_lunch_kilocalories": "182",
+                "between_breakfast_lunch": "<p>2 rijstwafels met pindakaas</p>",
+                "lunch_kilocalories": "398",
+                "lunch": "<p>250 gr rauwkostsalade met dressing naar keuze</p>\n<p>2 crackers met zuivelspread</p>\n<p>1 cracker met appelstroop</p>",
+                "between_lunch_dinner_kilocalories": "201",
+                "between_lunch_dinner": "<p>200 gr yoghurt</p>\n<p>75 gr mangostukjes</p>\n<p>20 gr granola</p>",
+                "dinner_kilocalories": "465",
+                "dinner": "<p>100 gr tilapiafilet</p>\n<p>200 gr gekookte aardappels</p>\n<p>200 gr courgette</p>\n<p>30 ml jus</p>\n<p>2 mandarijnen</p>",
+                "snack_kilocalories": "163",
+                "snack": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/suikerarme-appel-walnotencake\">1 plak suikerarme appel-walnotencake (recept)&nbsp;</a></p>"
+              },
+              "calories": 1800
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "467",
+                "breakfast": "<p>2 beschuiten met magere vleeswaren</p>\n<p>1 beschuit met kaas</p>\n<p>1 beschuit met smeerkaas</p>\n<p>200 ml melk</p>",
+                "between_breakfast_lunch_kilocalories": "229",
+                "between_breakfast_lunch": "<p>2 rijstwafels met pindakaas</p>\n<p>1 kiwi</p>",
+                "lunch_kilocalories": "515",
+                "lunch": "<p>250 gr rauwkostsalade met dressing naar keuze</p>\n<p>1 gekookt ei</p>\n<p>2 crackers met zuivelspread</p>\n<p>1 cracker met appelstroop</p>\n<p>1 cracker met kaas</p>",
+                "between_lunch_dinner_kilocalories": "201",
+                "between_lunch_dinner": "<p>200 gr yoghurt</p>\n<p>100 gr mangostukjes</p>\n<p>25 gr granola</p>",
+                "dinner_kilocalories": "487",
+                "dinner": "<p>100 gr tilapiafilet</p>\n<p>200 gr gekookte aardappels</p>\n<p>200 gr courgette</p>\n<p>30 ml jus</p>\n<p>2 mandarijnen</p>",
+                "snack_kilocalories": "163",
+                "snack": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/suikerarme-appel-walnotencake\">1 plak suikerarme appel-walnotencake (recept)&nbsp;</a></p>"
+              },
+              "calories": 2100
+            }
+          ]
+        },
+        {
+          "id": 115,
+          "title": "Suikerarme appel-walnotencake & Gado gado (week 37 - di)",
+          "slug": "suikerarme-appel-walnotencake-and-gado-gado-week-37-di",
+          "day_menu_variants": [
+            {
+              "moments": {
+                "breakfast_kilocalories": "181",
+                "breakfast": "<p>1 cracker met pindakaas</p>\n<p>1 cracker met kaas</p>",
+                "between_breakfast_lunch_kilocalories": "88",
+                "between_breakfast_lunch": "<p>125 gr kwark</p>\n<p>50 gr blauwe bessen</p>",
+                "lunch_kilocalories": "218",
+                "lunch": "<p>1 bruine bolletje met groentespread</p>\n<p>30 gr komkommer</p>\n<p>1 tomaat</p>\n<p>ijsbergsla naar smaak</p>\n<p>1 kiwi</p>",
+                "between_lunch_dinner_kilocalories": "163",
+                "between_lunch_dinner": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/suikerarme-appel-walnotencake\">1 plak suikerarme appel-walnotencake (recept)&nbsp;</a></p>",
+                "dinner_kilocalories": "485",
+                "dinner": "<p><a href=\"/recepten/gado-gado\">gado gado (recept, maar dan met 45 gr rijst en 25 gr sat&eacute;saus p.p.)</a></p>",
+                "snack_kilocalories": "142",
+                "snack": "<p>25 gr pure chocola</p>"
+              },
+              "calories": 1250
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "297",
+                "breakfast": "<p>2 crackers met smeerkaas</p>\n<p>1 cracker met pindakaas</p>\n<p>1 kiwi</p>",
+                "between_breakfast_lunch_kilocalories": "88",
+                "between_breakfast_lunch": "<p>125 gr kwark</p>\n<p>50 gr blauwe bessen</p>",
+                "lunch_kilocalories": "322",
+                "lunch": "<p>2 bruine bolletjes met groentespread</p>\n<p>60 gr komkommer</p>\n<p>1 tomaat</p>\n<p>ijsbergsla naar smaak</p>",
+                "between_lunch_dinner_kilocalories": "163",
+                "between_lunch_dinner": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/suikerarme-appel-walnotencake\">1 plak suikerarme appel-walnotencake (recept)&nbsp;</a></p>",
+                "dinner_kilocalories": "485",
+                "dinner": "<p><a href=\"/recepten/gado-gado\">gado gado (recept, maar dan met 45 gr rijst en 25 gr sat&eacute;saus p.p.)</a></p>",
+                "snack_kilocalories": "170",
+                "snack": "<p>30 gr pure chocola</p>"
+              },
+              "calories": 1500
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "385",
+                "breakfast": "<p>2 crackers met pindakaas</p>\n<p>1 cracker met kaas</p>\n<p>1 kiwi</p>",
+                "between_breakfast_lunch_kilocalories": "138",
+                "between_breakfast_lunch": "<p>200 gr kwark</p>\n<p>75 gr blauwe bessen</p>",
+                "lunch_kilocalories": "322",
+                "lunch": "<p>2 bruine bolletjes met groentespread</p>\n<p>60 gr komkommer</p>\n<p>1 tomaat</p>\n<p>ijsbergsla naar smaak</p>",
+                "between_lunch_dinner_kilocalories": "163",
+                "between_lunch_dinner": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/suikerarme-appel-walnotencake\">1 plak suikerarme appel-walnotencake (recept)&nbsp;</a></p>",
+                "dinner_kilocalories": "579",
+                "dinner": "<p><a href=\"/recepten/gado-gado\">gado gado (recept)</a></p>",
+                "snack_kilocalories": "227",
+                "snack": "<p>40 gr pure chocola</p>"
+              },
+              "calories": 1800
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "501",
+                "breakfast": "<p>2 crackers met pindakaas</p>\n<p>1 cracker met kaas</p>\n<p>1 cracker met smeerkaas</p>\n<p>2 kiwi's</p>",
+                "between_breakfast_lunch_kilocalories": "149",
+                "between_breakfast_lunch": "<p>200 gr kwark</p>\n<p>100 gr blauwe bessen</p>",
+                "lunch_kilocalories": "472",
+                "lunch": "<p>2 bruine bolletjes met groentespread</p>\n<p>60 gr komkommer</p>\n<p>1 tomaat</p>\n<p>1 bruin bolletje met zuivelspread</p>\n<p>ijsbergsla naar smaak</p>",
+                "between_lunch_dinner_kilocalories": "163",
+                "between_lunch_dinner": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/suikerarme-appel-walnotencake\">1 plak suikerarme appel-walnotencake (recept)&nbsp;</a></p>",
+                "dinner_kilocalories": "579",
+                "dinner": "<p><a href=\"/recepten/gado-gado\">gado gado (recept)</a></p>",
+                "snack_kilocalories": "227",
+                "snack": "<p>40 gr pure chocola</p>"
+              },
+              "calories": 2100
+            }
+          ]
+        },
+        {
+          "id": 116,
+          "title": "Muffins met ham, kaas en paprika (week 37 - wo)",
+          "slug": "muffins-met-ham-kaas-en-paprika-week-37-wo",
+          "day_menu_variants": [
+            {
+              "moments": {
+                "breakfast_kilocalories": "180",
+                "breakfast": "<p>150 gr yoghurt</p>\n<p>25 gr granola</p>\n<p>50 gr blauwe bessen</p>",
+                "between_breakfast_lunch_kilocalories": "162",
+                "between_breakfast_lunch": "<p>2 mandarijnen</p>\n<p>150 ml melk</p>",
+                "lunch_kilocalories": "251",
+                "lunch": "<p>1 snee brood met magere vleeswaren en rauwkost</p>\n<p>1 snee brood met groentespread en rauwkost</p>",
+                "between_lunch_dinner_kilocalories": "82",
+                "between_lunch_dinner": "<p>1 sesamkoekje</p>",
+                "dinner_kilocalories": "469",
+                "dinner": "<p>75 gr gerookte zalm</p>\n<p>50 gr pasta (bv. fusilli)</p>\n<p>150 gr champignons</p>\n<p>20 gr bosui</p>\n<p>knoflook naar smaak</p>\n<p>25 ml kookroom</p>",
+                "snack_kilocalories": "140",
+                "snack": "<p><a href=\"/recepten/hartige-muffins-met-ham-kaas-en-paprika\">1 hartige muffin met ham, kaas en paprika (recept)</a></p>"
+              },
+              "calories": 1250
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "180",
+                "breakfast": "<p style=\"border-color: var(--black);\">150 gr yoghurt</p>\n<p style=\"border-color: var(--black);\">25 gr granola</p>\n<p style=\"border-color: var(--black);\">50 gr blauwe bessen</p>",
+                "between_breakfast_lunch_kilocalories": "162",
+                "between_breakfast_lunch": "<p>2 mandarijnen</p>\n<p>150 ml melk</p>",
+                "lunch_kilocalories": "385",
+                "lunch": "<p>2 snee&euml;n brood met magere vleeswaren en rauwkost</p>\n<p>1 snee brood met groentespread en rauwkost</p>",
+                "between_lunch_dinner_kilocalories": "164",
+                "between_lunch_dinner": "<p>2 sesamkoekjes</p>",
+                "dinner_kilocalories": "469",
+                "dinner": "<p style=\"border-color: var(--black);\">75 gr gerookte zalm</p>\n<p style=\"border-color: var(--black);\">50 gr pasta (bv. fusilli)</p>\n<p style=\"border-color: var(--black);\">150 gr champignons</p>\n<p style=\"border-color: var(--black);\">20 gr bosui</p>\n<p style=\"border-color: var(--black);\">knoflook naar smaak</p>\n<p style=\"border-color: var(--black);\">25 ml kookroom</p>",
+                "snack_kilocalories": "140",
+                "snack": "<p><a href=\"/recepten/hartige-muffins-met-ham-kaas-en-paprika\">1 hartige muffin met ham, kaas en paprika (recept)</a></p>"
+              },
+              "calories": 1500
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "251",
+                "breakfast": "<p>200 gr yoghurt</p>\n<p>35&nbsp;gr granola</p>\n<p>75 gr blauwe bessen</p>",
+                "between_breakfast_lunch_kilocalories": "186",
+                "between_breakfast_lunch": "<p>2 mandarijnen</p>\n<p>200 ml melk</p>",
+                "lunch_kilocalories": "385",
+                "lunch": "<p>2 snee&euml;n brood met magere vleeswaren en rauwkost</p>\n<p>1 snee brood met groentespread en rauwkost</p>",
+                "between_lunch_dinner_kilocalories": "245",
+                "between_lunch_dinner": "<p>3 sesamkoekjes</p>",
+                "dinner_kilocalories": "599",
+                "dinner": "<p>100 gr gerookte zalm</p>\n<p>65 gr pasta (bv. fusilli)</p>\n<p>200 gr champignons</p>\n<p>30 gr bosui</p>\n<p>knoflook naar smaak</p>\n<p>30 ml kookroom</p>",
+                "snack_kilocalories": "140",
+                "snack": "<p><a href=\"/recepten/hartige-muffins-met-ham-kaas-en-paprika\">1 hartige muffin met ham, kaas en paprika (recept)</a></p>"
+              },
+              "calories": 1800
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "283",
+                "breakfast": "<p>200 gr yoghurt</p>\n<p>40 gr granola</p>\n<p>100 gr blauwe bessen</p>",
+                "between_breakfast_lunch_kilocalories": "186",
+                "between_breakfast_lunch": "<p>2 mandarijnen</p>\n<p>200 ml melk</p>",
+                "lunch_kilocalories": "507",
+                "lunch": "<p>2 snee&euml;n brood met magere vleeswaren en rauwkost</p>\n<p>1 snee brood met groentespread en rauwkost</p>\n<p>1 snee brood appelstroop</p>",
+                "between_lunch_dinner_kilocalories": "245",
+                "between_lunch_dinner": "<p>3 sesamkoekjes</p>",
+                "dinner_kilocalories": "599",
+                "dinner": "<p>100 gr gerookte zalm</p>\n<p>65 gr pasta (bv. fusilli)</p>\n<p>200 gr champignons</p>\n<p>30 gr bosui</p>\n<p>knoflook naar smaak</p>\n<p>30 ml kookroom</p>",
+                "snack_kilocalories": "280",
+                "snack": "<p><a href=\"/recepten/hartige-muffins-met-ham-kaas-en-paprika\">2 hartige muffins met ham, kaas en paprika (recept)</a></p>"
+              },
+              "calories": 2100
+            }
+          ]
+        },
+        {
+          "id": 117,
+          "title": "Hartige muffin met ham, kaas en paprika & Aardappels met schil uit de oven (week 37 - do)",
+          "slug": "hartige-muffin-met-ham-kaas-en-paprika-aardappels-met-schil-uit-de-oven-week-37-do",
+          "day_menu_variants": [
+            {
+              "moments": {
+                "breakfast_kilocalories": "231",
+                "breakfast": "<p>1 beschuit met kaas</p>\n<p>1 beschuit met jam</p>\n<p>1 mandarijn</p>",
+                "between_breakfast_lunch_kilocalories": "140",
+                "between_breakfast_lunch": "<p><a href=\"/recepten/hartige-muffins-met-ham-kaas-en-paprika\">1 hartige muffin met ham, kaas en paprika (recept)</a></p>",
+                "lunch_kilocalories": "299",
+                "lunch": "<p>1 snee brood me zuivelspread en rauwkost</p>\n<p>1 snee brood met pindakaas</p>",
+                "between_lunch_dinner_kilocalories": "97",
+                "between_lunch_dinner": "<p>125 gr kwark</p>\n<p>50 gr mangostukjes</p>",
+                "dinner_kilocalories": "446",
+                "dinner": "<p><a href=\"/recepten/aardappels-met-schil-uit-de-oven\">aardappels met schil uit de oven (recept)</a></p>\n<p>75 gr schouderkarbonade</p>\n<p>150 gr tuinerwten</p>",
+                "snack_kilocalories": "77",
+                "snack": "<p>3 cherrytomaten</p>\n<p>20 gr mozzarella</p>\n<p>pesto naar smaak</p>"
+              },
+              "calories": 1250
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "291",
+                "breakfast": "<p>1 beschuit met kaas</p>\n<p>1 beschuit met jam</p>\n<p>1 banaan</p>",
+                "between_breakfast_lunch_kilocalories": "140",
+                "between_breakfast_lunch": "<p><a href=\"/recepten/hartige-muffins-met-ham-kaas-en-paprika\">1 hartige muffin met ham, kaas en paprika (recept)</a></p>",
+                "lunch_kilocalories": "420",
+                "lunch": "<p>2 snee&euml;n brood me zuivelspread en rauwkost</p>\n<p>1 snee brood met pindakaas</p>",
+                "between_lunch_dinner_kilocalories": "97",
+                "between_lunch_dinner": "<p>125 gr kwark</p>\n<p>50 gr mangostukjes</p>",
+                "dinner_kilocalories": "446",
+                "dinner": "<p style=\"border-color: var(--black);\"><a href=\"/recepten/aardappels-met-schil-uit-de-oven\">aardappels met schil uit de oven (recept)</a></p>\n<p style=\"border-color: var(--black);\">75 gr schouderkarbonade</p>\n<p style=\"border-color: var(--black);\">150 gr tuinerwten</p>",
+                "snack_kilocalories": "102",
+                "snack": "<p>4 cherrytomaten</p>\n<p>30 gr mozzarella</p>\n<p>pesto naar smaak</p>"
+              },
+              "calories": 1500
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "408",
+                "breakfast": "<p>2 beschuiten met kaas</p>\n<p>1 beschuit met jam</p>\n<p>1 banaan</p>",
+                "between_breakfast_lunch_kilocalories": "140",
+                "between_breakfast_lunch": "<p><a href=\"/recepten/hartige-muffins-met-ham-kaas-en-paprika\">1 hartige muffin met ham, kaas en paprika (recept)</a></p>",
+                "lunch_kilocalories": "420",
+                "lunch": "<p>2 snee&euml;n brood me zuivelspread en rauwkost</p>\n<p>1 snee brood met pindakaas</p>",
+                "between_lunch_dinner_kilocalories": "152",
+                "between_lunch_dinner": "<p>200 gr kwark</p>\n<p>75 gr mangostukjes</p>",
+                "dinner_kilocalories": "527",
+                "dinner": "<p><a href=\"/recepten/aardappels-met-schil-uit-de-oven\">aardappels met schil uit de oven (recept)</a></p>\n<p>100 gr schouderkarbonade</p>\n<p>200 gr tuinerwten</p>",
+                "snack_kilocalories": "154",
+                "snack": "<p>6 cherrytomaten</p>\n<p>40 gr mozzarella</p>\n<p>pesto naar smaak</p>"
+              },
+              "calories": 1800
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "408",
+                "breakfast": "<p>2 beschuiten met kaas</p>\n<p>1 beschuit met jam</p>\n<p>1 banaan</p>",
+                "between_breakfast_lunch_kilocalories": "280",
+                "between_breakfast_lunch": "<p><a href=\"/recepten/hartige-muffins-met-ham-kaas-en-paprika\">2 hartige muffins met ham, kaas en paprika (recept)</a></p>",
+                "lunch_kilocalories": "554",
+                "lunch": "<p>2 snee&euml;n brood me zuivelspread en rauwkost</p>\n<p>1 snee brood met pindakaas</p>\n<p>1 snee brood met magere vleeswaren en rauwkost</p>",
+                "between_lunch_dinner_kilocalories": "167",
+                "between_lunch_dinner": "<p>200 gr kwark</p>\n<p>100&nbsp;gr mangostukjes</p>",
+                "dinner_kilocalories": "527",
+                "dinner": "<p><a href=\"/recepten/aardappels-met-schil-uit-de-oven\">aardappels met schil uit de oven (recept)</a></p>\n<p>100 gr schouderkarbonade</p>\n<p>200 gr tuinerwten</p>",
+                "snack_kilocalories": "154",
+                "snack": "<p>6 cherrytomaten</p>\n<p>40 gr mozzarella</p>\n<p>pesto naar smaak</p>"
+              },
+              "calories": 2100
+            }
+          ]
+        },
+        {
+          "id": 118,
+          "title": "Krokante kipnuggets (week 37 - vr)",
+          "slug": "krokante-kipnuggets-week-37-vr",
+          "day_menu_variants": [
+            {
+              "moments": {
+                "breakfast_kilocalories": "258",
+                "breakfast": "<p>150 gr kwark</p>\n<p>25 gr granola</p>\n<p>1 appel</p>",
+                "between_breakfast_lunch_kilocalories": "49",
+                "between_breakfast_lunch": "<p>1 rijstwafel met groentespread en rauwkost</p>",
+                "lunch_kilocalories": "276",
+                "lunch": "<p>1 wrap (40 gr per stuk) met:</p>\n<p>10 gr zuivelspread</p>\n<p>20 gr gerookte zalm</p>\n<p>10 gr bosui</p>\n<p>50 gr rauwkost naar keuze</p>\n<p>1 gekookt ei</p>",
+                "between_lunch_dinner_kilocalories": "92",
+                "between_lunch_dinner": "<p>2 kiwi's</p>",
+                "dinner_kilocalories": "541",
+                "dinner": "<p><a href=\"/recepten/krokante-kipnuggets\">krokante kipnuggets (recept)</a></p>\n<p>150 gr krieltjes</p>\n<p>&nbsp;Een salade van:</p>\n<p>75 gr ijsbergsla</p>\n<p>50 gr komkommer</p>\n<p>1 tomaat</p>\n<p>20 ml dressing naar keuze</p>",
+                "snack_kilocalories": "122",
+                "snack": "<p>30 gr achterham</p>\n<p>3 augurken</p>\n<p><strong>OF</strong></p>\n<p>1 drankje naar keuze</p>"
+              },
+              "calories": 1250
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "258",
+                "breakfast": "<p style=\"border-color: var(--black);\">150 gr kwark</p>\n<p style=\"border-color: var(--black);\">25 gr granola</p>\n<p style=\"border-color: var(--black);\">1 appel</p>",
+                "between_breakfast_lunch_kilocalories": "49",
+                "between_breakfast_lunch": "<p>1 rijstwafel met groentespread en rauwkost</p>",
+                "lunch_kilocalories": "416",
+                "lunch": "<p>2 wraps (40 gr per stuk) met in totaal:</p>\n<p>20 gr zuivelspread</p>\n<p>40 gr gerookte zalm</p>\n<p>20 gr bosui</p>\n<p>100 gr rauwkost naar keuze</p>",
+                "between_lunch_dinner_kilocalories": "46",
+                "between_lunch_dinner": "<p>1 kiwi</p>",
+                "dinner_kilocalories": "541",
+                "dinner": "<p><a href=\"/recepten/krokante-kipnuggets\">krokante kipnuggets (recept)</a></p>\n<p>150 gr krieltjes</p>\n<p>&nbsp;Een salade van:</p>\n<p>75 gr ijsbergsla</p>\n<p>50 gr komkommer</p>\n<p>1 tomaat</p>\n<p>20 ml dressing naar keuze</p>",
+                "snack_kilocalories": "187",
+                "snack": "<p>30 gr achterham</p>\n<p>3 augurken</p>\n<p>1 drankje naar keuze</p>"
+              },
+              "calories": 1500
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "327",
+                "breakfast": "<p>200 gr kwark</p>\n<p>35 gr granola</p>\n<p>1 appel</p>",
+                "between_breakfast_lunch_kilocalories": "97",
+                "between_breakfast_lunch": "<p>2 rijstwafels met groentespread en rauwkost</p>",
+                "lunch_kilocalories": "416",
+                "lunch": "<p>2 wraps (40 gr per stuk) met in totaal:</p>\n<p>20 gr zuivelspread</p>\n<p>40 gr gerookte zalm</p>\n<p>20 gr bosui</p>\n<p>100 gr rauwkost naar keuze</p>",
+                "between_lunch_dinner_kilocalories": "92",
+                "between_lunch_dinner": "<p>2 kiwi's</p>",
+                "dinner_kilocalories": "666",
+                "dinner": "<p><a href=\"/recepten/krokante-kipnuggets\">krokante kipnuggets (recept)</a></p>\n<p>200 gr krieltjes</p>\n<p>&nbsp;Een salade van:</p>\n<p>100 gr ijsbergsla</p>\n<p>50 gr komkommer</p>\n<p>1 tomaat</p>\n<p>1 gekookt ei</p>\n<p>25 ml dressing naar keuze</p>",
+                "snack_kilocalories": "208",
+                "snack": "<p>40 gr achterham</p>\n<p>4 augurken</p>\n<p>1 drankje naar keuze</p>"
+              },
+              "calories": 1800
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "369",
+                "breakfast": "<p>200 gr kwark</p>\n<p>45 gr granola</p>\n<p>1 appel</p>",
+                "between_breakfast_lunch_kilocalories": "188",
+                "between_breakfast_lunch": "<p>2 rijstwafels met groentespread en rauwkost</p>\n<p>1 rijstwafel met pindakaas</p>",
+                "lunch_kilocalories": "508",
+                "lunch": "<p>2 wraps (40 gr per stuk) met in totaal:</p>\n<p>20 gr zuivelspread</p>\n<p>40 gr gerookte zalm</p>\n<p>20 gr bosui</p>\n<p>100 gr rauwkost naar keuze</p>\n<p>2 kiwi's</p>",
+                "between_lunch_dinner_kilocalories": "125",
+                "between_lunch_dinner": "<p>1 notenreep</p>",
+                "dinner_kilocalories": "666",
+                "dinner": "<p><a href=\"/recepten/krokante-kipnuggets\">krokante kipnuggets (recept)</a></p>\n<p>200 gr krieltjes</p>\n<p>&nbsp;Een salade van:</p>\n<p>100 gr ijsbergsla</p>\n<p>50 gr komkommer</p>\n<p>1 tomaat</p>\n<p>1 gekookt ei</p>\n<p>25 ml dressing naar keuze</p>",
+                "snack_kilocalories": "230",
+                "snack": "<p>50 gr achterham</p>\n<p>5 augurken</p>\n<p>1 drankje naar keuze</p>"
+              },
+              "calories": 2100
+            }
+          ]
+        },
+        {
+          "id": 120,
+          "title": "Clubsandwich met rosbief (week 37 - za)",
+          "slug": "clubsandwich-met-rosbief-week-37-za",
+          "day_menu_variants": [
+            {
+              "moments": {
+                "breakfast_kilocalories": "189",
+                "breakfast": "<p>Een smoothie van:</p>\n<p>150 gr yoghurt</p>\n<p>25 gr havermout</p>\n<p>50 gr spinazie</p>\n<p>50 gr mangostukjes</p>",
+                "between_breakfast_lunch_kilocalories": "125",
+                "between_breakfast_lunch": "<p>1 notenreep</p>",
+                "lunch_kilocalories": "346",
+                "lunch": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/clubsandwich-met-rosbief\">clubsandwich met rosbief (recept, maar dan met 2 snee&euml;n brood, 35 gr rosbief, 15 gr yoghurt, 10 gr pesto, 10 gr zongedroogde tomaat, 3 gr pijnboompitten, 15 gr komkommer en 5 gr rucola p.p.)</a></p>\n<p>1 mandarijn</p>",
+                "between_lunch_dinner_kilocalories": "124",
+                "between_lunch_dinner": "<p>1 rijstwafel met smeerkaas en rauwkost</p>\n<p>150 ml melk</p>",
+                "dinner_kilocalories": "390",
+                "dinner": "<p>75 gr kipfilet</p>\n<p>50 gr noedels</p>\n<p>150 wokgroente naar keuze</p>\n<p>25 gr groene currypasta</p>",
+                "snack_kilocalories": "122",
+                "snack": "<p>4 toastjes met zachte geitenkaas</p>\n<p><strong>OF</strong></p>\n<p>1 drankje naar keuze</p>"
+              },
+              "calories": 1250
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "241",
+                "breakfast": "<p>Een smoothie van:</p>\n<p>150 gr yoghurt</p>\n<p>35 gr havermout</p>\n<p>50 gr spinazie</p>\n<p>75 gr mangostukjes</p>",
+                "between_breakfast_lunch_kilocalories": "125",
+                "between_breakfast_lunch": "<p>1 notenreep</p>",
+                "lunch_kilocalories": "346",
+                "lunch": "<p style=\"border-color: var(--black);\"><a style=\"border: 0 solid var(--black);\" href=\"/recepten/clubsandwich-met-rosbief\">clubsandwich met rosbief (recept, maar dan met 2 snee&euml;n brood, 35 gr rosbief, 15 gr yoghurt, 10 gr pesto, 10 gr zongedroogde tomaat, 3 gr pijnboompitten, 15 gr komkommer en 5 gr rucola p.p.)</a></p>\n<p style=\"border-color: var(--black);\">1 mandarijn</p>",
+                "between_lunch_dinner_kilocalories": "124",
+                "between_lunch_dinner": "<p>1 rijstwafel met smeerkaas en rauwkost</p>\n<p>150 ml melk</p>",
+                "dinner_kilocalories": "390",
+                "dinner": "<p style=\"border-color: var(--black);\">75 gr kipfilet</p>\n<p style=\"border-color: var(--black);\">50 gr noedels</p>\n<p style=\"border-color: var(--black);\">150 wokgroente naar keuze</p>\n<p style=\"border-color: var(--black);\">25 gr groene currypasta</p>",
+                "snack_kilocalories": "275",
+                "snack": "<p>6 toastjes met zachte geitenkaas</p>\n<p>1 drankje naar keuze</p>"
+              },
+              "calories": 1500
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "277",
+                "breakfast": "<p>Een smoothie van:</p>\n<p>200 gr yoghurt</p>\n<p>40 gr havermout</p>\n<p>50 gr spinazie</p>\n<p>75 gr mangostukjes</p>",
+                "between_breakfast_lunch_kilocalories": "125",
+                "between_breakfast_lunch": "<p>1 notenreep</p>",
+                "lunch_kilocalories": "497",
+                "lunch": "<p><a style=\"border: 0 solid var(--black);\" href=\"/recepten/clubsandwich-met-rosbief\">clubsandwich met rosbief (recept)</a></p>\n<p>1 mandarijn</p>",
+                "between_lunch_dinner_kilocalories": "148",
+                "between_lunch_dinner": "<p>1 rijstwafel met smeerkaas en rauwkost</p>\n<p>200 ml melk</p>",
+                "dinner_kilocalories": "493",
+                "dinner": "<p>100 gr kipfilet</p>\n<p>65 gr noedels</p>\n<p>200 wokgroente naar keuze</p>\n<p>25 gr groene currypasta</p>",
+                "snack_kilocalories": "275",
+                "snack": "<p>6 toastjes met zachte geitenkaas</p>\n<p>1 drankje naar keuze</p>"
+              },
+              "calories": 1800
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "299",
+                "breakfast": "<p>Een smoothie van:</p>\n<p>200 gr yoghurt</p>\n<p>40 gr havermout</p>\n<p>75 gr spinazie</p>\n<p>10 gr mangostukjes</p>",
+                "between_breakfast_lunch_kilocalories": "250",
+                "between_breakfast_lunch": "<p>2 notenrepen</p>",
+                "lunch_kilocalories": "542",
+                "lunch": "<p><a href=\"/recepten/clubsandwich-met-rosbief\">clubsandwich met rosbief (recept)</a></p>\n<p>2 mandarijnen</p>",
+                "between_lunch_dinner_kilocalories": "201",
+                "between_lunch_dinner": "<p>2 rijstwafels met smeerkaas en rauwkost</p>\n<p>200 ml melk</p>",
+                "dinner_kilocalories": "520",
+                "dinner": "<p>125 gr kipfilet</p>\n<p>65 gr noedels</p>\n<p>200 wokgroente naar keuze</p>\n<p>25 gr groene currypasta</p>",
+                "snack_kilocalories": "275",
+                "snack": "<p>6 toastjes met zachte geitenkaas</p>\n<p>1 drankje naar keuze</p>"
+              },
+              "calories": 2100
+            }
+          ]
+        },
+        {
+          "id": 121,
+          "title": "Spinazieomelet & Snelle pizza wrap met rauwe ham & Snelle pizza wrap met tonijn (week 37 - zo)",
+          "slug": "spinazieomelet-snelle-pizza-wrap-met-rauwe-ham-snelle-pizza-wrap-met-tonijn-week-37-zo",
+          "day_menu_variants": [
+            {
+              "moments": {
+                "breakfast_kilocalories": "302",
+                "breakfast": "<p><a href=\"/recepten/spinazieomelet\">spinazieomelet (recept)</a></p>",
+                "between_breakfast_lunch_kilocalories": "105",
+                "between_breakfast_lunch": "<p>1 banaan</p>",
+                "lunch_kilocalories": "303",
+                "lunch": "<p>Een tosti van:</p>\n<p>2 snee&euml;n brood</p>\n<p>15 gr kaas</p>\n<p>15 gr achterham</p>\n<p>rauwkost naar smaak</p>",
+                "between_lunch_dinner_kilocalories": "54",
+                "between_lunch_dinner": "<p>1 rijstwafel met appelstroop</p>",
+                "dinner_kilocalories": "376",
+                "dinner": "<p><a href=\"/recepten/snelle-pizzawrap\">1 snelle pizza wrap met rauwe ham (recept)</a></p>\n<p><strong>OF</strong></p>\n<p><a href=\"/recepten/snelle-pizzawrap\">1 snelle pizza wrap met tonijn (recept)</a></p>\n<p>200 gr rauwkost naar keuze</p>",
+                "snack_kilocalories": "116",
+                "snack": "<p>125 gr yoghurt</p>\n<p>1 appel</p>\n<p>kaneel naar smaak</p>"
+              },
+              "calories": 1250
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "302",
+                "breakfast": "<p><a href=\"/recepten/spinazieomelet\">spinazieomelet (recept)</a></p>",
+                "between_breakfast_lunch_kilocalories": "105",
+                "between_breakfast_lunch": "<p>1 banaan</p>",
+                "lunch_kilocalories": "303",
+                "lunch": "<p>Een tosti van:</p>\n<p>2 snee&euml;n brood</p>\n<p>15 gr kaas</p>\n<p>15 gr achterham</p>\n<p>rauwkost naar smaak</p>",
+                "between_lunch_dinner_kilocalories": "54",
+                "between_lunch_dinner": "<p>1 rijstwafel met appelstroop</p>",
+                "dinner_kilocalories": "656",
+                "dinner": "<p><a href=\"/recepten/snelle-pizzawrap\">1 snelle pizza wrap met rauwe ham (recept)</a></p>\n<p><a href=\"/recepten/snelle-pizzawrap\">1 snelle pizza wrap met tonijn (recept)</a></p>\n<p>150 gr rauwkost naar keuze</p>",
+                "snack_kilocalories": "116",
+                "snack": "<p>125 gr yoghurt</p>\n<p>1 appel</p>\n<p>kaneel naar smaak</p>"
+              },
+              "calories": 1500
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "372",
+                "breakfast": "<p><a href=\"/recepten/spinazieomelet\">spinazieomelet (recept)</a></p>\n<p>1 cracker met jam</p>",
+                "between_breakfast_lunch_kilocalories": "105",
+                "between_breakfast_lunch": "<p>1 banaan</p>",
+                "lunch_kilocalories": "420",
+                "lunch": "<p>Een tosti van:</p>\n<p>2 snee&euml;n brood</p>\n<p>15 gr kaas</p>\n<p>15 gr achterham</p>\n<p>rauwkost naar smaak</p>\n<p>1 snee brood met groentespread en rauwkost</p>",
+                "between_lunch_dinner_kilocalories": "107",
+                "between_lunch_dinner": "<p>2 rijstwafels met appelstroop</p>",
+                "dinner_kilocalories": "656",
+                "dinner": "<p><a href=\"/recepten/snelle-pizzawrap\">1 snelle pizza wrap met rauwe ham (recept)</a></p>\n<p><a href=\"/recepten/snelle-pizzawrap\">1 snelle pizza wrap met tonijn (recept)</a></p>\n<p>150 gr rauwkost naar keuze</p>",
+                "snack_kilocalories": "142",
+                "snack": "<p>200 gr yoghurt</p>\n<p>1 appel</p>\n<p>kaneel naar smaak</p>"
+              },
+              "calories": 1800
+            },
+            {
+              "moments": {
+                "breakfast_kilocalories": "441",
+                "breakfast": "<p><a href=\"/recepten/spinazieomelet\">spinazieomelet (recept)</a></p>\n<p>2 crackers met jam</p>",
+                "between_breakfast_lunch_kilocalories": "105",
+                "between_breakfast_lunch": "<p>1 banaan</p>",
+                "lunch_kilocalories": "590",
+                "lunch": "<p>Een tosti van:</p>\n<p>2 snee&euml;n brood</p>\n<p>15 gr kaas</p>\n<p>15 gr achterham</p>\n<p>rauwkost naar smaak</p>\n<p>1 snee brood met groentespread en rauwkost</p>\n<p>1 snee brood met kaas en rauwkost</p>",
+                "between_lunch_dinner_kilocalories": "143",
+                "between_lunch_dinner": "<p>2 rijstwafels met appelstroop</p>\n<p>1 rijstwafel met magere vleeswaren met rauwkost</p>",
+                "dinner_kilocalories": "679",
+                "dinner": "<p><a href=\"/recepten/snelle-pizzawrap\">1 snelle pizza wrap met rauwe ham (recept)</a></p>\n<p><a href=\"/recepten/snelle-pizzawrap\">1 snelle pizza wrap met tonijn (recept)</a></p>\n<p>250 gr rauwkost naar keuze</p>",
+                "snack_kilocalories": "142",
+                "snack": "<p>200 gr yoghurt</p>\n<p>1 appel</p>\n<p>kaneel naar smaak</p>"
+              },
+              "calories": 2100
+            }
+          ]
+        }
+      ],
+      "groceries": {
+        "vegetables_fruit": "<p>appel</p>\n<p>banaan</p>\n<p>basilicumblaadjes</p>\n<p>blauwe bessen</p>\n<p>bosui</p>\n<p>champignons</p>\n<p>cherrytomaten</p>\n<p>courgette</p>\n<p>fruit (voor fruitsalade)</p>\n<p>groente voor rauwkost</p>\n<p>ijsbergsla</p>\n<p>Italiaanse kruiden</p>\n<p>kiwi</p>\n<p>knoflook</p>\n<p>komkommer</p>\n<p>mandarijnen</p>\n<p>mangostukjes</p>\n<p>paprika</p>\n<p>rode peper</p>\n<p>rode ui</p>\n<p>rozemarijn (optioneel)</p>\n<p>rucola</p>\n<p>sperziebonen</p>\n<p>spinazie</p>\n<p>taug&eacute;</p>\n<p>tomaat</p>\n<p>tuinerwten</p>\n<p>ui</p>\n<p>witte kool</p>\n<p>wokgroente naar keuze (zaterdag)</p>\n<p>wortel</p>\n<p>zoete appels (bv. Pink Lady, Fuji of Royal Gala)</p>",
+        "potatoes_rice_pasta": "<p>aardappels<span class=\"Apple-converted-space\">&nbsp;</span></p>\n<p>krieltjes</p>\n<p>noedels</p>\n<p>pasta (bv. fusilli)</p>\n<p>roodschillige aardappels</p>\n<p>zilvervliesrijst</p>",
+        "meat_fish": "<p>achterham</p>\n<p>gerookte zalm</p>\n<p>hamblokjes- of reepjes</p>\n<p>kipfilet (vlees)</p>\n<p>magere vleeswaren</p>\n<p>rauwe ham</p>\n<p>rosbief<span class=\"Apple-converted-space\">&nbsp;</span></p>\n<p>schouderkarbonade</p>\n<p>tilapiafilet<span class=\"Apple-converted-space\">&nbsp;</span></p>\n<p>tonijn (op water)</p>",
+        "dairy": "<p>ei</p>\n<p>geraspte kaas</p>\n<p>halfvolle melk</p>\n<p>kaas (stuk)</p>\n<p>kookroom</p>\n<p>magere kwark</p>\n<p>magere yoghurt</p>\n<p>mozzarella</p>\n<p>roomboter</p>\n<p>smeerkaas</p>\n<p>zachte geitenkaas</p>\n<p>zuivelspread<span class=\"Apple-converted-space\">&nbsp;</span></p>",
+        "bread_cereals": "<p>bruine bolletjes</p>\n<p>granola</p>\n<p>havermout</p>\n<p>rijstwafel<span class=\"Apple-converted-space\">&nbsp;</span></p>\n<p>toastjes</p>\n<p>volkoren beschuit<span class=\"Apple-converted-space\">&nbsp;</span></p>\n<p>volkoren brood</p>\n<p>volkoren crackers<span class=\"Apple-converted-space\">&nbsp;</span></p>\n<p>wraps (40 gr per stuk)</p>",
+        "remainder": "<p>appelstroop</p>\n<p>augurk</p>\n<p>bakpoeder</p>\n<p>bloem</p>\n<p>drankje naar keuze</p>\n<p>dressing voor rauwkostsalade<span class=\"Apple-converted-space\">&nbsp;</span></p>\n<p>groene currypasta</p>\n<p>groentespread</p>\n<p>jam</p>\n<p>jus</p>\n<p>kaneel</p>\n<p>kroepoek</p>\n<p>notenreep</p>\n<p>olijfolie</p>\n<p>pesto</p>\n<p>pijnboompitten</p>\n<p>pindakaas</p>\n<p>pure chocola</p>\n<p>rozijnen</p>\n<p>sat&eacute;saus</p>\n<p>sesamkoekjes</p>\n<p>tomatensaus</p>\n<p>walnoten</p>\n<p>zongedroogde tomaten</p>\n<p>zonnebloemolie<span class=\"Apple-converted-space\">&nbsp;</span></p>"
+      },
+      "pdfs": [
+        {
+          "id": 139761,
+          "pdfable_type": "App\\Models\\WeekMenu",
+          "pdfable_id": 25,
+          "type": "WeekMenu",
+          "path": "weekMenu/25/1250",
+          "filename": "Week-37-16:43:24-04-01-2021.pdf",
+          "created_at": "2021-08-20 08:21:53",
+          "updated_at": "2021-08-20 08:21:53"
+        },
+        {
+          "id": 139762,
+          "pdfable_type": "App\\Models\\WeekMenu",
+          "pdfable_id": 25,
+          "type": "WeekMenu",
+          "path": "weekMenu/25/1500",
+          "filename": "Week-37-16:43:24-04-01-2021.pdf",
+          "created_at": "2021-08-20 08:21:53",
+          "updated_at": "2021-08-20 08:21:53"
+        },
+        {
+          "id": 139763,
+          "pdfable_type": "App\\Models\\WeekMenu",
+          "pdfable_id": 25,
+          "type": "WeekMenu",
+          "path": "weekMenu/25/1800",
+          "filename": "Week-37-16:43:24-04-01-2021.pdf",
+          "created_at": "2021-08-20 08:21:54",
+          "updated_at": "2021-08-20 08:21:54"
+        },
+        {
+          "id": 139764,
+          "pdfable_type": "App\\Models\\WeekMenu",
+          "pdfable_id": 25,
+          "type": "WeekMenu",
+          "path": "weekMenu/25/2100",
+          "filename": "Week-37-16:43:24-04-01-2021.pdf",
+          "created_at": "2021-08-20 08:21:54",
+          "updated_at": "2021-08-20 08:21:54"
+        },
+        {
+          "id": 139765,
+          "pdfable_type": "App\\Models\\WeekMenu",
+          "pdfable_id": 25,
+          "type": "Groceries",
+          "path": "weekMenu/25/groceries",
+          "filename": "boodschappen_Week-37_16:43:24-04-01-2021.pdf",
+          "created_at": "2021-08-20 08:21:54",
+          "updated_at": "2021-08-20 08:21:54"
+        }
+      ]
+    }
+  }
+}
