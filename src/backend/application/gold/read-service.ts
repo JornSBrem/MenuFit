@@ -99,6 +99,8 @@ export class GoldWeekReadService {
             recipeId: meal.recipeId,
             name: meal.recipeName ?? meal.mealLabel,
             imageUrl: meal.imageUrl,
+            kcal: meal.kcal,
+            ingredients: meal.ingredients,
           });
         }
       }

@@ -282,7 +282,23 @@ struct UserRecipeRecord: Codable, Identifiable {
   let recipeId: String
   let name: String
   let imageUrl: String?
+  let kcal: Int?
+  let ingredients: [GoldMealIngredient]?
   var id: String { recipeId }
+
+  /// Zet dit record om naar een GoldWeekMealView zodat RecipeDetailSheet gebruikt kan worden.
+  func toMealView() -> GoldWeekMealView {
+    GoldWeekMealView(
+      mealId: recipeId,
+      dayLabel: "",
+      mealLabel: name,
+      recipeId: recipeId,
+      recipeName: name,
+      imageUrl: imageUrl,
+      kcal: kcal,
+      ingredients: ingredients
+    )
+  }
 }
 
 struct EmptyBody: Codable {}

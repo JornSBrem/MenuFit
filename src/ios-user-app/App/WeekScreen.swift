@@ -328,10 +328,12 @@ struct RecipeDetailSheet: View {
 
             // ── Labels ───────────────────────────────────────
             HStack(spacing: 10) {
-              Label(meal.dayLabel.capitalized, systemImage: "calendar")
-                .font(.subheadline).foregroundColor(.secondary)
-              Label(meal.mealLabel, systemImage: "clock")
-                .font(.subheadline).foregroundColor(.secondary)
+              if !meal.dayLabel.isEmpty {
+                Label(meal.dayLabel.capitalized, systemImage: "calendar")
+                  .font(.subheadline).foregroundColor(.secondary)
+                Label(meal.mealLabel, systemImage: "clock")
+                  .font(.subheadline).foregroundColor(.secondary)
+              }
             }
 
             // ── Kcal ─────────────────────────────────────────

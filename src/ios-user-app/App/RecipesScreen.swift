@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RecipesScreen: View {
   @EnvironmentObject private var viewModel: UserFlowViewModel
+  @State private var selectedMeal: GoldWeekMealView?
 
   var body: some View {
     NavigationView {
@@ -68,7 +69,10 @@ struct RecipesScreen: View {
         } else {
           List {
             ForEach(viewModel.filteredRecipes) { recipe in
-              recipeRow(recipe)
+              Button { selectedMeal = recipe.toMealView() } label: {
+                recipeRow(recipe)
+              }
+              .buttonStyle(.plain)
             }
           }
           .listStyle(.plain)
@@ -83,6 +87,10 @@ struct RecipesScreen: View {
         if viewModel.recipes.isEmpty && !viewModel.isRecipesLoading {
           Task { await viewModel.loadRecipes() }
         }
+      }
+      .sheet(item: $selectedMeal) { meal in
+        RecipeDetailSheet(meal: meal)
+          .environmentObject(viewModel)
       }
     }
   }
