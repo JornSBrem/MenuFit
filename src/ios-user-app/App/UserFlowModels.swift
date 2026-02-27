@@ -12,6 +12,8 @@ struct UserAuthSession: Codable {
   let picnicAccountId: String
   let householdId: String
   let expiresAtEpochSeconds: Int?
+  /// Ingesteld na login/register via username+password flow
+  var username: String? = nil
 }
 
 struct ApiErrorPayload: Decodable {
@@ -258,4 +260,66 @@ struct CachedWeekBundle: Codable {
   let summary: WeekSummaryResponse
   let groceries: WeekGroceriesResponse
   let cachedAt: String
+}
+
+struct DayCard {
+  let dayLabel: String
+  let meals: [GoldWeekMealView]
+  var firstMeal: GoldWeekMealView? { meals.first }
+  var mealCount: Int { meals.count }
+}
+
+struct UserRecipeRecord: Codable, Identifiable {
+  let recipeId: String
+  let name: String
+  var id: String { recipeId }
+}
+
+struct EmptyBody: Codable {}
+
+// MARK: - Auth request/response structs
+
+struct AuthLoginRequest: Codable {
+  let username: String
+  let password: String
+}
+
+struct AuthRegisterRequest: Codable {
+  let username: String
+  let password: String
+}
+
+struct AuthTokenResponse: Codable {
+  let token: String
+  let userId: String
+  let username: String
+  let expiresAtEpochSeconds: Int
+}
+
+struct AuthMeResponse: Codable {
+  let userId: String
+  let username: String
+}
+
+// MARK: - Household request/response structs
+
+struct HouseholdCreateResponse: Codable {
+  let householdId: String
+  let inviteCode: String?
+}
+
+struct HouseholdJoinRequest: Codable {
+  let code: String
+}
+
+struct HouseholdJoinResponse: Codable {
+  let householdId: String
+  let memberCount: Int
+}
+
+// MARK: - Picnic link structs
+
+struct PicnicLinkRequest: Codable {
+  let email: String
+  let password: String
 }

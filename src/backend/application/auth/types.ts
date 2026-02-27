@@ -54,3 +54,12 @@ export interface ProviderSessionRefreshPayload {
   currentRefreshToken?: string;
   expiresAtEpochSeconds: number;
 }
+
+export interface UserAccountRecord {
+  userId: string;
+  username: string;
+  /** scrypt:<salt_hex>:<hash_hex> */
+  passwordHash: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -19,7 +19,8 @@ import { AdminOperationsService } from "./application/admin/admin-operations-ser
 import { AdminDataService } from "./application/admin/admin-data-service.ts";
 import { SystemOperationsService } from "./application/system/system-operations-service.ts";
 import { SessionLifecycleService } from "./application/auth/session-lifecycle-service.ts";
-import { HouseholdService } from "./application/household/household-service.ts";
+import { UserAccountService, UserAccountServiceError } from "./application/auth/user-account-service.ts";
+import { HouseholdService, HouseholdServiceError } from "./application/household/household-service.ts";
 import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
 import { reprocessSilverTransforms } from "./application/silver/index.ts";
 import { createIngestPlan } from "./application/ingest/ingest-planner.ts";
@@ -89,6 +90,7 @@ const config = createDefaultRuntimeConfig(
 const stateStore = new PersistentStateStore(STATE_PATH);
 const auditTrail = new AuditTrailService();
 const lifecycle = new SessionLifecycleService({ stateStore, adminTtlSeconds: DEV_TOKEN_TTL });
+const userAccountService = new UserAccountService({ stateStore, lifecycle, tokenTtlSeconds: DEV_TOKEN_TTL });
 const adminOps = new AdminOperationsService({ auditTrail });
 const adminData = new AdminDataService({ auditTrail });
 const systemOps = new SystemOperationsService({ auditTrail });
@@ -151,11 +153,13 @@ const SYNONYM_DICT_VERSION = "1.0.0";
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
 /** Milliseconden wachten tussen opeenvolgende PG API requests (rate limit) */
-const PG_FETCH_DELAY_MS = 1500;
+const PG_FETCH_DELAY_MS = 4000;
+
+/** Vaste kcal-varianten die de PG API altijd teruggeeft in één weekmenu-response */
+const PG_FIXED_KCALS = [1250, 1500, 1800, 2100];
 
 async function runRealIngest(
   weeks: number[],
-  kcals: number[],
   basePersons: number[],
   jobId: string,
 ): Promise<void> {
@@ -163,7 +167,7 @@ async function runRealIngest(
   if (!job) return;
 
   try {
-    const matrix = { weeks, kcals, basePersons };
+    const matrix = { weeks, basePersons };
     const tasks = createIngestPlan(matrix, config);
 
     // --- Stap 1: dedupliceer op URL — elke unieke URL slechts 1× ophalen ---
@@ -225,71 +229,80 @@ async function runRealIngest(
     const runnableTasks = tasks.filter((t) => urlToPayload.has(t.requestUrl));
     await runBronzeIngestTasks(runnableTasks, config, cachedFetch, { continueOnError: true });
 
-    // --- Stap 3: silver/gold verwerking per week×kcal combinatie ---
+    // --- Stap 3: silver/gold verwerking per week × vaste kcal-variant ---
+    // De PG API geeft altijd data voor alle kcal-varianten in één response.
+    // Hier itereren we zelf over de 4 vaste waarden per opgehaalde week.
     const weekMenuTasks = runnableTasks.filter((t) => t.entityType === "pg.week_menu");
     job.phase = "processing";
-    job.totalProcessing = weekMenuTasks.length;
+    job.totalProcessing = weekMenuTasks.length * PG_FIXED_KCALS.length;
     job.processed = 0;
 
-    const year = new Date().getUTCFullYear();
     let goldProjected = 0;
+    let silverIdx = 0;
 
-    for (let i = 0; i < weekMenuTasks.length; i++) {
-      const task = weekMenuTasks[i];
+    for (const task of weekMenuTasks) {
       const rawPayload = urlToPayload.get(task.requestUrl);
       if (!rawPayload) {
-        job.errors.push(`Geen payload voor week=${task.week} kcal=${task.kcal}`);
-        job.processed = i + 1;
+        job.errors.push(`Geen payload voor week=${task.week}`);
+        silverIdx += PG_FIXED_KCALS.length;
+        job.processed = silverIdx;
         continue;
       }
 
-      try {
-        const pgData =
-          (rawPayload as Record<string, unknown>)["data"] ?? rawPayload;
+      // task.week is in YYYYWW-formaat (bijv. 202609); splits naar jaar + weeknummer
+      const weekNum = task.week % 100;                  // bijv. 9
+      const weekYear = Math.floor(task.week / 100);     // bijv. 2026
 
-        const silverOutputs = reprocessSilverTransforms(
-          [
+      for (const kcal of PG_FIXED_KCALS) {
+        try {
+          const pgData =
+            (rawPayload as Record<string, unknown>)["data"] ?? rawPayload;
+
+          const silverOutputs = reprocessSilverTransforms(
+            [
+              {
+                sourceObjectId: task.requestUrl,
+                payload: pgData as Parameters<typeof reprocessSilverTransforms>[0][number]["payload"],
+                year: weekYear,
+                week: weekNum,
+                kcal,
+                basePersons: task.basePersons,
+              },
+            ],
             {
-              sourceObjectId: task.requestUrl,
-              payload: pgData as Parameters<typeof reprocessSilverTransforms>[0][number]["payload"],
-              year,
-              week: task.week,
-              kcal: task.kcal,
-              basePersons: task.basePersons,
-            },
-          ],
-          {
-            transformVersion: TRANSFORM_VERSION,
-            canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
-            synonymDictVersion: SYNONYM_DICT_VERSION,
-            stateStore,
-          },
-        );
-
-        for (const silver of silverOutputs) {
-          const gold = projectSilverToGold({
-            silver,
-            context: {
-              sourceObjectId: task.requestUrl,
-              year,
-              week: task.week,
-              kcal: task.kcal,
-              basePersons: task.basePersons,
               transformVersion: TRANSFORM_VERSION,
               canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
               synonymDictVersion: SYNONYM_DICT_VERSION,
+              stateStore,
             },
-          });
-          goldReadService.upsert(gold);
-          goldProjected++;
-        }
-      } catch (err) {
-        job.errors.push(
-          `Silver/Gold fout week=${task.week} kcal=${task.kcal}: ${err instanceof Error ? err.message : String(err)}`,
-        );
-      }
+          );
 
-      job.processed = i + 1;
+          for (const silver of silverOutputs) {
+            const gold = projectSilverToGold({
+              silver,
+              context: {
+                sourceObjectId: task.requestUrl,
+                year: weekYear,
+                week: weekNum,
+                kcal,
+                basePersons: task.basePersons,
+                transformVersion: TRANSFORM_VERSION,
+                canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
+                synonymDictVersion: SYNONYM_DICT_VERSION,
+              },
+            });
+            goldReadService.upsert(gold);
+            goldProjected++;
+          }
+        } catch (err) {
+          job.errors.push(
+            `Silver/Gold fout week=${task.week} kcal=${kcal}: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+
+        silverIdx++;
+        job.processed = silverIdx;
+      }
     }
 
     job.tasksRan = tasks.length;
@@ -442,7 +455,127 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
+    if (path === "/api/v3/recipes" && method === "GET") {
+      const authResult = getAnySession(req);
+      if (!authResult.ok || !authResult.data) {
+        json(res, 401, {
+          ok: false,
+          error: authResult.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
+        });
+        return;
+      }
+      json(res, 200, { ok: true, data: goldReadService.listRecipes() });
+      return;
+    }
+
+    // ---- Auth routes (geen auth vereist) ----
+    if (path === "/api/v3/auth/register" && method === "POST") {
+      const { username, password } = body as { username?: string; password?: string };
+      if (!username || !password) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "username en password zijn verplicht." } });
+        return;
+      }
+      try {
+        const result = userAccountService.register(username, password);
+        json(res, 201, {
+          ok: true,
+          data: {
+            token: result.token,
+            userId: result.userId,
+            username: result.username,
+            expiresAtEpochSeconds: result.session.expiresAtEpochSeconds,
+          },
+        });
+      } catch (err) {
+        const code = err instanceof UserAccountServiceError ? err.code : "REGISTER_FAILED";
+        const message = err instanceof Error ? err.message : "Registratie mislukt.";
+        json(res, 409, { ok: false, error: { code, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/auth/login" && method === "POST") {
+      const { username, password } = body as { username?: string; password?: string };
+      if (!username || !password) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "username en password zijn verplicht." } });
+        return;
+      }
+      try {
+        const result = userAccountService.login(username, password);
+        json(res, 200, {
+          ok: true,
+          data: {
+            token: result.token,
+            userId: result.userId,
+            username: result.username,
+            expiresAtEpochSeconds: result.session.expiresAtEpochSeconds,
+          },
+        });
+      } catch (err) {
+        const code = err instanceof UserAccountServiceError ? err.code : "LOGIN_FAILED";
+        const message = err instanceof Error ? err.message : "Inloggen mislukt.";
+        json(res, 401, { ok: false, error: { code, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/auth/me" && method === "GET") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const account = userAccountService.findById(userAuth.data.subjectId);
+      json(res, 200, {
+        ok: true,
+        data: {
+          userId: userAuth.data.subjectId,
+          username: account?.username ?? userAuth.data.subjectId,
+        },
+      });
+      return;
+    }
+
     // ---- Household routes (user auth) ----
+    if (path === "/api/v3/household/create" && method === "POST") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." } });
+        return;
+      }
+      try {
+        const household = householdService.createHouseholdWithCode(userAuth.data.subjectId);
+        json(res, 200, { ok: true, data: { householdId: household.householdId, inviteCode: household.inviteCode } });
+      } catch (err) {
+        const code = err instanceof HouseholdServiceError ? err.code : "CREATE_FAILED";
+        const message = err instanceof Error ? err.message : "Gezin aanmaken mislukt.";
+        json(res, 409, { ok: false, error: { code, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/household/join-by-code" && method === "POST") {
+      const userAuth = getUserSession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." } });
+        return;
+      }
+      const { code } = body as { code?: string };
+      if (!code) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "code is verplicht." } });
+        return;
+      }
+      try {
+        const household = householdService.joinByCode(code, userAuth.data.subjectId);
+        json(res, 200, { ok: true, data: { householdId: household.householdId, memberCount: household.members.length } });
+      } catch (err) {
+        const code2 = err instanceof HouseholdServiceError ? err.code : "JOIN_FAILED";
+        const message = err instanceof Error ? err.message : "Koppelen aan gezin mislukt.";
+        json(res, 409, { ok: false, error: { code: code2, message } });
+      }
+      return;
+    }
+
     if (path === "/api/v3/household/bootstrap" && method === "POST") {
       const userAuth = getUserSession(req);
       if (!userAuth.ok || !userAuth.data) {
@@ -555,10 +688,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         return;
       }
 
-      const ingestBody = body as { weeks?: number[]; kcals?: number[]; basePersons?: number[] };
+      const ingestBody = body as { weeks?: number[]; basePersons?: number[] };
       const ingestWeeks = Array.isArray(ingestBody.weeks) ? ingestBody.weeks : [];
-      const ingestKcals = Array.isArray(ingestBody.kcals) ? ingestBody.kcals : [];
-      const ingestBasePersons = Array.isArray(ingestBody.basePersons) ? ingestBody.basePersons : [];
+      const ingestBasePersons = Array.isArray(ingestBody.basePersons) ? ingestBody.basePersons : [2];
 
       // Maak een job-tracking entry aan en start de ingest op de achtergrond
       const jobId = `ingest-${Date.now()}`;
@@ -575,7 +707,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       });
 
       // Start op achtergrond — niet awaiten zodat de HTTP-response direct terugkomt
-      void runRealIngest(ingestWeeks, ingestKcals, ingestBasePersons, jobId);
+      void runRealIngest(ingestWeeks, ingestBasePersons, jobId);
 
       json(res, 200, {
         ...result,
@@ -670,9 +802,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             availableWeeks: result.availableWeeks,
             probedWeeks: result.probedWeeks,
             errors: result.errors,
-            // Standaard kcal/basePersons voor "alles inladen"
-            // 1250 t/m 3000 in stappen van 250
-            defaultKcals: [1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000],
+            // Vaste kcal-varianten die de PG API altijd teruggeeft
+            defaultKcals: PG_FIXED_KCALS,
             defaultBasePersons: [2],
           },
         });
@@ -757,6 +888,12 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     if (path === "/api/v3/admin/data/mapping-overrides/delete" && method === "POST") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       json(res, 200, handleDeleteMappingOverride(adminData, session, body as any));
+      return;
+    }
+
+    // ---- Gold weekplannen (ingested data) ----
+    if (path === "/api/v3/admin/data/gold-week-plans" && method === "GET") {
+      json(res, 200, { ok: true, data: goldReadService.listWeekPlans() });
       return;
     }
 
