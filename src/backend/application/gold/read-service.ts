@@ -88,14 +88,18 @@ export class GoldWeekReadService {
       );
   }
 
-  /** Geeft alle unieke recepten terug vanuit de gold data, gesorteerd op naam. */
+  /** Geeft alle unieke recepten terug vanuit de gold data (alleen met recept + afbeelding), gesorteerd op naam. */
   listRecipes(): RecipeView[] {
     const seen = new Map<string, RecipeView>();
     for (const model of this.store.values()) {
       for (const meal of model.meals) {
-        const recipeId = meal.recipeId ?? meal.mealId;
-        if (!seen.has(recipeId)) {
-          seen.set(recipeId, { recipeId, name: meal.mealLabel });
+        if (!meal.recipeId || !meal.imageUrl) continue;
+        if (!seen.has(meal.recipeId)) {
+          seen.set(meal.recipeId, {
+            recipeId: meal.recipeId,
+            name: meal.recipeName ?? meal.mealLabel,
+            imageUrl: meal.imageUrl,
+          });
         }
       }
     }

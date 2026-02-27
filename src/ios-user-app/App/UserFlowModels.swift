@@ -281,6 +281,7 @@ struct DayCard: Identifiable {
 struct UserRecipeRecord: Codable, Identifiable {
   let recipeId: String
   let name: String
+  let imageUrl: String?
   var id: String { recipeId }
 }
 
