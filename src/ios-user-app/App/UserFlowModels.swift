@@ -54,11 +54,19 @@ struct GoldWeekPlanView: Codable {
   let generatedAt: String
 }
 
+struct GoldMealIngredient: Codable {
+  let text: String
+}
+
 struct GoldWeekMealView: Codable, Identifiable {
   let mealId: String
   let dayLabel: String
   let mealLabel: String
   let recipeId: String?
+  let recipeName: String?
+  let imageUrl: String?
+  let kcal: Int?
+  let ingredients: [GoldMealIngredient]?
 
   var id: String { mealId }
 }

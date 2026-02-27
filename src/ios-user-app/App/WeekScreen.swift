@@ -136,33 +136,38 @@ struct WeekScreen: View {
 
   private func upcomingCard(_ card: DayCard) -> some View {
     Button {
-      if let meal = card.firstMeal {
-        selectedMeal = meal
-      }
+      if let meal = card.firstMeal { selectedMeal = meal }
     } label: {
       VStack(alignment: .leading, spacing: 5) {
-        ZStack {
-          RoundedRectangle(cornerRadius: 10)
-            .fill(Color(.systemGray6))
-            .frame(width: 120, height: 80)
-          VStack(spacing: 4) {
-            Image(systemName: "fork.knife")
-              .font(.title2).foregroundColor(.orange)
-            if let meal = card.firstMeal {
-              Text(meal.mealLabel)
-                .font(.caption2).foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .padding(.horizontal, 6)
-            } else {
-              Text("Geen menu")
-                .font(.caption2).foregroundColor(.secondary)
+        Group {
+          if let urlString = card.firstMeal?.imageUrl,
+             let url = URL(string: urlString) {
+            AsyncImage(url: url) { phase in
+              switch phase {
+              case .success(let image):
+                image.resizable().scaledToFill()
+              default:
+                Color(.systemGray6)
+                  .overlay(
+                    Image(systemName: "fork.knife")
+                      .font(.title2).foregroundColor(.orange)
+                  )
+              }
             }
+          } else {
+            Color(.systemGray6)
+              .overlay(
+                Image(systemName: "fork.knife")
+                  .font(.title2).foregroundColor(.orange)
+              )
           }
         }
+        .frame(width: 120, height: 80)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+
         Text(card.dayLabel.capitalized)
           .font(.caption.bold()).foregroundColor(.primary)
-        Text(card.mealCount == 1 ? "1 recept" : "\(card.mealCount) recepten")
+        Text(card.mealCount == 1 ? "1 moment" : "\(card.mealCount) momenten")
           .font(.caption2).foregroundColor(.blue)
       }
       .frame(width: 120)
@@ -170,7 +175,7 @@ struct WeekScreen: View {
     .buttonStyle(.plain)
   }
 
-  // MARK: Maaltijden
+  // MARK: Maaltijden geselecteerde dag
 
   @ViewBuilder
   private var dayMealsSection: some View {
@@ -180,31 +185,85 @@ struct WeekScreen: View {
     } else {
       ForEach(viewModel.selectedDayMeals) { meal in
         Button { selectedMeal = meal } label: {
-          HStack(spacing: 12) {
-            Circle()
-              .fill(Color.orange.opacity(0.15))
-              .frame(width: 36, height: 36)
-              .overlay {
-                Image(systemName: "fork.knife")
-                  .foregroundColor(.orange).font(.caption)
+          VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+              mealMomentIcon(meal.mealLabel)
+
+              VStack(alignment: .leading, spacing: 2) {
+                Text(meal.mealLabel).fontWeight(.semibold)
+                if let recipeName = meal.recipeName, !recipeName.isEmpty {
+                  Text(recipeName)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                }
               }
-            VStack(alignment: .leading, spacing: 2) {
-              Text(meal.mealLabel).fontWeight(.medium)
-              if let recipeId = meal.recipeId, !recipeId.isEmpty {
-                Text(recipeId).font(.caption).foregroundColor(.secondary)
+
+              Spacer()
+
+              if let kcal = meal.kcal {
+                Text("\(kcal) kcal")
+                  .font(.caption.bold())
+                  .foregroundColor(.orange)
+                  .padding(.horizontal, 6)
+                  .padding(.vertical, 3)
+                  .background(Color.orange.opacity(0.12))
+                  .cornerRadius(6)
               }
+
+              Image(systemName: "chevron.right")
+                .font(.caption).foregroundColor(.secondary)
             }
-            Spacer()
-            Image(systemName: "chevron.right")
-              .font(.caption).foregroundColor(.secondary)
+
+            // Ingrediëntenpreview
+            if let ingredients = meal.ingredients, !ingredients.isEmpty {
+              VStack(alignment: .leading, spacing: 2) {
+                ForEach(Array(ingredients.prefix(3)), id: \.text) { ing in
+                  Text("• \(ing.text)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+                if ingredients.count > 3 {
+                  Text("+ \(ingredients.count - 3) meer…")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                }
+              }
+              .padding(.leading, 46)
+            }
           }
-          .padding(10)
+          .padding(12)
           .background(Color(.secondarySystemBackground))
-          .cornerRadius(10)
+          .cornerRadius(12)
         }
         .buttonStyle(.plain)
       }
     }
+  }
+
+  // MARK: Maaltijdmoment icoon
+
+  @ViewBuilder
+  private func mealMomentIcon(_ label: String) -> some View {
+    let (symbol, color): (String, Color) = {
+      switch label {
+      case "Ontbijt":               return ("sunrise.fill", .yellow)
+      case "Tussendoor (ochtend)":  return ("cup.and.saucer.fill", .brown)
+      case "Lunch":                 return ("sun.max.fill", .orange)
+      case "Tussendoor (middag)":   return ("leaf.fill", .green)
+      case "Diner":                 return ("moon.stars.fill", .indigo)
+      case "Snack":                 return ("star.fill", .purple)
+      default:                      return ("fork.knife", .orange)
+      }
+    }()
+    Circle()
+      .fill(color.opacity(0.15))
+      .frame(width: 36, height: 36)
+      .overlay {
+        Image(systemName: symbol)
+          .foregroundColor(color)
+          .font(.caption)
+      }
   }
 }
 
@@ -215,60 +274,92 @@ struct RecipeDetailSheet: View {
   @EnvironmentObject var viewModel: UserFlowViewModel
   @Environment(\.dismiss) private var dismiss
 
-  private var recipeName: String {
-    if let recipeId = meal.recipeId, !recipeId.isEmpty {
-      return viewModel.recipes.first(where: { $0.recipeId == recipeId })?.name ?? recipeId
-    }
+  private var displayName: String {
+    if let name = meal.recipeName, !name.isEmpty { return name }
     return meal.mealLabel
   }
 
   var body: some View {
     NavigationView {
       ScrollView {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 0) {
 
-          // Placeholder afbeelding
-          RoundedRectangle(cornerRadius: 16)
-            .fill(Color(.systemGray6))
-            .frame(maxWidth: .infinity)
-            .frame(height: 200)
-            .overlay {
-              Image(systemName: "fork.knife")
-                .font(.system(size: 54))
-                .foregroundColor(.secondary)
+          // ── Receptafbeelding ─────────────────────────────────
+          Group {
+            if let urlString = meal.imageUrl, let url = URL(string: urlString) {
+              AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                  image.resizable().scaledToFill()
+                case .failure:
+                  imagePlaceholder
+                default:
+                  Color(.systemGray6)
+                    .overlay(ProgressView())
+                }
+              }
+            } else {
+              imagePlaceholder
             }
-            .padding(.horizontal, 20)
+          }
+          .frame(maxWidth: .infinity)
+          .frame(height: 240)
+          .clipped()
+          .cornerRadius(16)
+          .padding(.horizontal, 20)
+          .padding(.top, 20)
 
-          VStack(alignment: .leading, spacing: 10) {
-            Text(recipeName)
+          VStack(alignment: .leading, spacing: 14) {
+
+            // ── Naam ─────────────────────────────────────────
+            Text(displayName)
               .font(.title2.bold())
+              .padding(.top, 4)
 
-            HStack(spacing: 16) {
+            // ── Labels ───────────────────────────────────────
+            HStack(spacing: 10) {
               Label(meal.dayLabel.capitalized, systemImage: "calendar")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-              Label(meal.mealLabel.capitalized, systemImage: "clock")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.subheadline).foregroundColor(.secondary)
+              Label(meal.mealLabel, systemImage: "clock")
+                .font(.subheadline).foregroundColor(.secondary)
             }
 
-            if let recipeId = meal.recipeId, !recipeId.isEmpty {
-              Text(recipeId)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color(.systemGray6))
-                .cornerRadius(6)
+            // ── Kcal ─────────────────────────────────────────
+            if let kcal = meal.kcal {
+              Label("\(kcal) kcal", systemImage: "flame.fill")
+                .font(.subheadline.bold())
+                .foregroundColor(.orange)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.orange.opacity(0.12))
+                .cornerRadius(8)
+            }
+
+            // ── Ingrediëntenlijst ─────────────────────────────
+            if let ingredients = meal.ingredients, !ingredients.isEmpty {
+              Divider().padding(.vertical, 4)
+
+              Text("Ingrediënten")
+                .font(.headline)
+
+              ForEach(ingredients, id: \.text) { ing in
+                HStack(alignment: .top, spacing: 8) {
+                  Text("•")
+                    .foregroundColor(.secondary)
+                    .frame(width: 12, alignment: .center)
+                  Text(ing.text)
+                    .font(.subheadline)
+                }
+              }
             }
           }
           .padding(.horizontal, 20)
+          .padding(.top, 16)
 
           Spacer(minLength: 40)
         }
-        .padding(.top, 20)
       }
-      .navigationTitle("Recept")
+      .navigationTitle(meal.mealLabel)
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
@@ -276,5 +367,14 @@ struct RecipeDetailSheet: View {
         }
       }
     }
+  }
+
+  private var imagePlaceholder: some View {
+    Color(.systemGray6)
+      .overlay(
+        Image(systemName: "fork.knife")
+          .font(.system(size: 54))
+          .foregroundColor(.secondary)
+      )
   }
 }
