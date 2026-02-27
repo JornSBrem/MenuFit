@@ -41,34 +41,30 @@ export const createIngestPlan = (
 ): IngestTask[] => {
   const tasks: IngestTask[] = [];
   const weeks = sortAscending(uniqueNumbers(matrix.weeks));
-  const kcals = sortAscending(uniqueNumbers(matrix.kcals));
   const basePersonsList = sortAscending(uniqueNumbers(matrix.basePersons));
   const entityTypes = options?.entityTypes ?? DEFAULT_ENTITY_TYPES;
 
   for (const week of weeks) {
-    for (const kcal of kcals) {
-      for (const basePersons of basePersonsList) {
-        for (const entityType of entityTypes) {
-          const endpoint = PG_ENDPOINT_BY_ENTITY_TYPE[entityType];
-          if (!endpoint) {
-            continue;
-          }
-
-          const requestUrl = buildPgEndpointUrl(
-            config,
-            endpoint,
-            endpointVariablesByEntityType(entityType, week),
-          );
-
-          tasks.push({
-            source: "pg",
-            entityType,
-            week,
-            kcal,
-            basePersons,
-            requestUrl,
-          });
+    for (const basePersons of basePersonsList) {
+      for (const entityType of entityTypes) {
+        const endpoint = PG_ENDPOINT_BY_ENTITY_TYPE[entityType];
+        if (!endpoint) {
+          continue;
         }
+
+        const requestUrl = buildPgEndpointUrl(
+          config,
+          endpoint,
+          endpointVariablesByEntityType(entityType, week),
+        );
+
+        tasks.push({
+          source: "pg",
+          entityType,
+          week,
+          basePersons,
+          requestUrl,
+        });
       }
     }
   }

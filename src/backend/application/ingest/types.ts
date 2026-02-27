@@ -2,7 +2,6 @@ import type { BronzeEntityType, BronzeObjectMetadata } from "../../domain/storag
 
 export interface IngestMatrixRequest {
   weeks: number[];
-  kcals: number[];
   basePersons: number[];
 }
 
@@ -10,7 +9,6 @@ export interface IngestTask {
   source: "pg";
   entityType: BronzeEntityType;
   week: number;
-  kcal: number;
   basePersons: number;
   requestUrl: string;
 }

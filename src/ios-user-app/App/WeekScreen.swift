@@ -364,6 +364,28 @@ struct RecipeDetailSheet: View {
                 }
               }
             }
+
+            // ── Bereidingsstappen ─────────────────────────────
+            if let steps = meal.steps, !steps.isEmpty {
+              Divider().padding(.vertical, 4)
+
+              Text("Bereiding")
+                .font(.headline)
+
+              ForEach(steps, id: \.step) { step in
+                HStack(alignment: .top, spacing: 12) {
+                  Text("\(step.step)")
+                    .font(.caption.bold())
+                    .foregroundColor(.white)
+                    .frame(width: 22, height: 22)
+                    .background(Color.orange)
+                    .clipShape(Circle())
+                  Text(step.text)
+                    .font(.subheadline)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+              }
+            }
           }
           .padding(.horizontal, 20)
           .padding(.top, 16)
@@ -374,6 +396,15 @@ struct RecipeDetailSheet: View {
       .navigationTitle(meal.mealLabel)
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
+        ToolbarItem(placement: .navigationBarLeading) {
+          if let recipeId = meal.recipeId {
+            let isFav = viewModel.isFavorite(recipeId)
+            Button { viewModel.toggleFavorite(recipeId) } label: {
+              Image(systemName: isFav ? "heart.fill" : "heart")
+                .foregroundColor(isFav ? .red : .secondary)
+            }
+          }
+        }
         ToolbarItem(placement: .navigationBarTrailing) {
           Button("Sluiten") { dismiss() }
         }

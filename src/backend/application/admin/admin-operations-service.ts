@@ -104,7 +104,6 @@ export class AdminOperationsService {
     operationId: string;
     performedBy: string;
     weeks: number[];
-    kcals: number[];
     basePersons: number[];
   }): AdminOperationReport {
     return this.execute({
@@ -113,7 +112,6 @@ export class AdminOperationsService {
       performedBy: input.performedBy,
       details: {
         weeks: input.weeks,
-        kcals: input.kcals,
         basePersons: input.basePersons,
       },
     });

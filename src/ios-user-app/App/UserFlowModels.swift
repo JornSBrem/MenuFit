@@ -58,6 +58,11 @@ struct GoldMealIngredient: Codable {
   let text: String
 }
 
+struct GoldRecipeStep: Codable {
+  let step: Int
+  let text: String
+}
+
 struct GoldWeekMealView: Codable, Identifiable {
   let mealId: String
   let dayLabel: String
@@ -67,6 +72,7 @@ struct GoldWeekMealView: Codable, Identifiable {
   let imageUrl: String?
   let kcal: Int?
   let ingredients: [GoldMealIngredient]?
+  let steps: [GoldRecipeStep]?
 
   var id: String { mealId }
 }
@@ -284,6 +290,7 @@ struct UserRecipeRecord: Codable, Identifiable {
   let imageUrl: String?
   let kcal: Int?
   let ingredients: [GoldMealIngredient]?
+  let steps: [GoldRecipeStep]?
   var id: String { recipeId }
 
   /// Zet dit record om naar een GoldWeekMealView zodat RecipeDetailSheet gebruikt kan worden.
@@ -296,7 +303,8 @@ struct UserRecipeRecord: Codable, Identifiable {
       recipeName: name,
       imageUrl: imageUrl,
       kcal: kcal,
-      ingredients: ingredients
+      ingredients: ingredients,
+      steps: steps
     )
   }
 }

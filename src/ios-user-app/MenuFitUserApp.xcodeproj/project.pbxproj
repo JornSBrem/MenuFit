@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -22,14 +22,14 @@
 		9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */; };
 		9E676865B35EDEEDE8155791 /* match-screen.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D98A28D94B69DAA9ED3D8E4 /* match-screen.png */; };
 		A262BF5AE5D2EAF1128B2BB5 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */; };
+		B2C3D4E5F6A7B8C9D0E1F2A3 /* WeekNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* WeekNavBar.swift */; };
 		C309FFCB7BE1147CF6CE9550 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE482EB44234E5DB375E836 /* Localization.swift */; };
 		C7843F6778C2273A38B57C7E /* OrderScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7DC178D1015232B3FA63D01 /* OrderScreen.swift */; };
+		D4E5F6A7B8C9D0E1F2A3B4C5 /* RecipesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D4E5F6A7B8C9D0E1F2A3B4 /* RecipesScreen.swift */; };
 		D6C5C58CD82A818C0DA2FDAF /* tabbar-week.png in Resources */ = {isa = PBXBuildFile; fileRef = 98A6E9AB3B23F72B36A7DA60 /* tabbar-week.png */; };
 		E1B0D5CE42E26DE68903EC28 /* SnapshotAssert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 336BA4F2038C7DB2E545FD4F /* SnapshotAssert.swift */; };
-		B2C3D4E5F6A7B8C9D0E1F2A3 /* WeekNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* WeekNavBar.swift */; };
-		D4E5F6A7B8C9D0E1F2A3B4C5 /* RecipesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D4E5F6A7B8C9D0E1F2A3B4 /* RecipesScreen.swift */; };
 		F6A7B8C9D0E1F2A3B4C5D6E7 /* ConfigScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F6A7B8C9D0E1F2A3B4C5D6 /* ConfigScreen.swift */; };
-		/* End PBXBuildFile section */
+/* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		7A1DA9C69F4AE3D56421D48B /* PBXContainerItemProxy */ = {
@@ -54,20 +54,20 @@
 		626EF9C1808E73CCDB998617 /* week-screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "week-screen.png"; sourceTree = "<group>"; };
 		66EA1F50A81D438604490C65 /* MenuFitUserAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitUserAppUITests.swift; sourceTree = "<group>"; };
 		7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
-		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		98A6E9AB3B23F72B36A7DA60 /* tabbar-week.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tabbar-week.png"; sourceTree = "<group>"; };
 		9D98A28D94B69DAA9ED3D8E4 /* match-screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "match-screen.png"; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* WeekNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekNavBar.swift; sourceTree = "<group>"; };
 		B7DC178D1015232B3FA63D01 /* OrderScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderScreen.swift; sourceTree = "<group>"; };
+		C3D4E5F6A7B8C9D0E1F2A3B4 /* RecipesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipesScreen.swift; sourceTree = "<group>"; };
 		C9F7813B54367774B77BC8D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CFE482EB44234E5DB375E836 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		D31B5618A6714859B8C35E13 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		DA85292A396845F477B05ABE /* order-screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "order-screen.png"; sourceTree = "<group>"; };
+		E5F6A7B8C9D0E1F2A3B4C5D6 /* ConfigScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigScreen.swift; sourceTree = "<group>"; };
 		F9346B79CF692F41BADFEC8F /* MatchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScreen.swift; sourceTree = "<group>"; };
 		FD375DB99A1D8042CD754B02 /* OfflineCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineCacheStore.swift; sourceTree = "<group>"; };
-		C3D4E5F6A7B8C9D0E1F2A3B4 /* RecipesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipesScreen.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* WeekNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekNavBar.swift; sourceTree = "<group>"; };
-		E5F6A7B8C9D0E1F2A3B4C5D6 /* ConfigScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigScreen.swift; sourceTree = "<group>"; };
-		/* End PBXFileReference section */
+/* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		6A0F5F4CAE7FA37D92E3A2A0 = {
@@ -182,7 +182,6 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					62A46139EFE13C01AF611E02 = {
-						DevelopmentTeam = YOURTEAMID;
 						ProvisioningStyle = Automatic;
 					};
 					B4BA3AD1D02E98EF40B550E6 = {
@@ -202,7 +201,6 @@
 			);
 			mainGroup = 6A0F5F4CAE7FA37D92E3A2A0;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -277,6 +275,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -378,6 +377,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

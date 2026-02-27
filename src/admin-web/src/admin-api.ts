@@ -10,6 +10,7 @@ import type {
   DeleteMappingOverrideRequest,
   DeleteRecipeRequest,
   DeleteWeekMenuRequest,
+  GoldWeekPlanRecord,
   HouseholdInvitationRecord,
   HouseholdInvitationsQuery,
   HouseholdInviteResendRequest,
@@ -97,6 +98,10 @@ export class AdminApiClient {
 
   deleteWeekMenu(body: DeleteWeekMenuRequest): Promise<ApiEnvelope<AdminOperationReport>> {
     return this.post("/api/v3/admin/data/week-menus/delete", body);
+  }
+
+  listGoldWeekPlans(): Promise<ApiEnvelope<GoldWeekPlanRecord[]>> {
+    return this.get("/api/v3/admin/data/gold-week-plans");
   }
 
   listMappingOverrides(): Promise<ApiEnvelope<AdminMappingOverrideRecord[]>> {

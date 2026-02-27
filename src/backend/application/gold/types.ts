@@ -16,6 +16,11 @@ export interface GoldMealIngredient {
   text: string;
 }
 
+export interface GoldRecipeStep {
+  step: number;
+  text: string;
+}
+
 export interface GoldMealView {
   mealId: string;
   dayLabel: string;
@@ -25,6 +30,7 @@ export interface GoldMealView {
   imageUrl?: string;
   kcal?: number;
   ingredients?: GoldMealIngredient[];
+  steps?: GoldRecipeStep[];
 }
 
 export interface GoldGroceryTotalView {
@@ -88,4 +94,5 @@ export interface RecipeView {
   imageUrl?: string;
   kcal?: number;
   ingredients?: GoldMealIngredient[];
+  steps?: GoldRecipeStep[];
 }

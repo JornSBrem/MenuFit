@@ -89,6 +89,9 @@ export const transformBronzeToSilver = (
       dayLabel: meal.day,
       mealLabel: meal.meal,
       recipeId: meal.recipeId,
+      recipeName: meal.recipeName,
+      imageUrl: meal.imageUrl,
+      kcal: meal.kcal,
       sourceObjectId: context.sourceObjectId,
       transformVersion: context.transformVersion,
     });

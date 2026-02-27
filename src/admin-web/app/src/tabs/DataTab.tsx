@@ -5,6 +5,7 @@ import type {
   AdminRecipeRecord,
   AdminWeekMenuRecord,
   AdminMappingOverrideRecord,
+  GoldWeekPlanRecord,
 } from "@lib/types.ts";
 import type { AdminDashboardController } from "@lib/admin-dashboard-controller.ts";
 import { card, section, table, th, td, btn, btnDanger, emptyMsg, fieldset, label, input, select } from "./shared-styles.ts";
@@ -255,6 +256,44 @@ function WeekMenusSection({
   );
 }
 
+// ---- Gold Week Plans ----
+function GoldWeekPlansSection({ plans }: { plans: GoldWeekPlanRecord[] }) {
+  // Groepeer op jaar voor overzicht
+  const byYear = plans.reduce<Record<number, GoldWeekPlanRecord[]>>((acc, p) => {
+    (acc[p.year] ??= []).push(p);
+    return acc;
+  }, {});
+
+  return (
+    <div style={card}>
+      <div style={section.header}>
+        <h3 style={section.title}>Gold weekdata ({plans.length} records)</h3>
+      </div>
+      {plans.length === 0 ? (
+        <p style={emptyMsg}>Geen gold weekdata gevonden. Start een ingest om data op te halen.</p>
+      ) : (
+        Object.entries(byYear)
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([year, yearPlans]) => {
+            // Unieke weken voor dit jaar (per basePersons groep)
+            const uniqueWeeks = [...new Set(yearPlans.map((p) => p.week))].sort((a, b) => a - b);
+            const kcals = [...new Set(yearPlans.map((p) => p.kcal))].sort((a, b) => a - b);
+            return (
+              <div key={year} style={{ marginBottom: 12 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, color: "#1d1d1f" }}>
+                  {year} — {uniqueWeeks.length} weken, kcal: {kcals.join(" / ")}
+                </div>
+                <div style={{ fontSize: 12, color: "#6e6e73", fontFamily: "monospace" }}>
+                  Weken: {uniqueWeeks.join(", ")}
+                </div>
+              </div>
+            );
+          })
+      )}
+    </div>
+  );
+}
+
 // ---- Mapping Overrides ----
 function MappingOverridesSection({
   overrides,
@@ -393,6 +432,7 @@ export function DataTab({ viewState, controller, onStateChange }: DataTabProps) 
         </div>
       </div>
 
+      <GoldWeekPlansSection plans={data.goldWeekPlans ?? []} />
       <RecipesSection recipes={data.recipes} controller={controller} onStateChange={onStateChange} />
       <WeekMenusSection weekMenus={data.weekMenus} controller={controller} onStateChange={onStateChange} />
       <MappingOverridesSection overrides={data.mappingOverrides} controller={controller} onStateChange={onStateChange} />

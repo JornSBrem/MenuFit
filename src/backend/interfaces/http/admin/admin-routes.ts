@@ -24,7 +24,6 @@ export interface ApiEnvelope<T> {
 export interface IngestBody {
   operationId: string;
   weeks: number[];
-  kcals: number[];
   basePersons: number[];
 }
 
@@ -171,9 +170,6 @@ const validateIngestBody = (body: IngestBody): string | null => {
   if (!Array.isArray(body.weeks) || body.weeks.length === 0) {
     return "weeks requires at least one value";
   }
-  if (!Array.isArray(body.kcals) || body.kcals.length === 0) {
-    return "kcals requires at least one value";
-  }
   if (!Array.isArray(body.basePersons) || body.basePersons.length === 0) {
     return "basePersons requires at least one value";
   }
@@ -286,7 +282,6 @@ export const handleAdminIngest = (
     operationId: body.operationId,
     performedBy: sessionResult.data.subjectId,
     weeks: body.weeks,
-    kcals: body.kcals,
     basePersons: body.basePersons,
   });
   return finalize({ ok: true, data: report });

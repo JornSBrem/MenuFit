@@ -15,6 +15,7 @@ import type {
   DeleteMappingOverrideRequest,
   DeleteRecipeRequest,
   DeleteWeekMenuRequest,
+  GoldWeekPlanRecord,
   HouseholdInvitationRecord,
   HouseholdInvitationsQuery,
   HouseholdInviteResendRequest,
@@ -47,6 +48,7 @@ export interface AdminDashboardApi {
   listWeekMenus(): Promise<ApiEnvelope<AdminWeekMenuRecord[]>>;
   upsertWeekMenu(body: UpsertWeekMenuRequest): Promise<ApiEnvelope<AdminOperationReport>>;
   deleteWeekMenu(body: DeleteWeekMenuRequest): Promise<ApiEnvelope<AdminOperationReport>>;
+  listGoldWeekPlans(): Promise<ApiEnvelope<GoldWeekPlanRecord[]>>;
   listMappingOverrides(): Promise<ApiEnvelope<AdminMappingOverrideRecord[]>>;
   upsertMappingOverride(
     body: UpsertMappingOverrideRequest,
@@ -358,6 +360,7 @@ export class AdminDashboardController {
       const recipes = this.unwrapEnvelope(await this.api.listRecipes());
       const weekMenus = this.unwrapEnvelope(await this.api.listWeekMenus());
       const mappingOverrides = this.unwrapEnvelope(await this.api.listMappingOverrides());
+      const goldWeekPlans = this.unwrapEnvelope(await this.api.listGoldWeekPlans());
 
       this.recipesById = new Map(recipes.map((entry) => [entry.recipeId, entry]));
       this.weekMenusById = new Map(weekMenus.map((entry) => [entry.weekMenuId, entry]));
@@ -368,13 +371,15 @@ export class AdminDashboardController {
         recipes: this.listRecipesEntries(),
         weekMenus: this.listWeekMenuEntries(),
         mappingOverrides: this.listMappingOverrideEntries(),
+        goldWeekPlans,
       };
       const hasData =
         data.diagnostics.totalJobs > 0 ||
         data.diagnostics.reportsGenerated > 0 ||
         data.recipes.length > 0 ||
         data.weekMenus.length > 0 ||
-        data.mappingOverrides.length > 0;
+        data.mappingOverrides.length > 0 ||
+        data.goldWeekPlans.length > 0;
       this.state.views.data = hasData ? createSuccessView(data) : createEmptyView(data);
     } catch (error) {
       this.state.views.data = createErrorView(toAdminApiError(error), previous);
@@ -617,19 +622,22 @@ export class AdminDashboardController {
     const diagnostics =
       existing?.diagnostics ??
       this.unwrapEnvelope(await this.api.getDiagnostics());
+    const goldWeekPlans = existing?.goldWeekPlans ?? [];
 
     const data = {
       diagnostics,
       recipes: this.listRecipesEntries(),
       weekMenus: this.listWeekMenuEntries(),
       mappingOverrides: this.listMappingOverrideEntries(),
+      goldWeekPlans,
     };
     const hasData =
       data.diagnostics.totalJobs > 0 ||
       data.diagnostics.reportsGenerated > 0 ||
       data.recipes.length > 0 ||
       data.weekMenus.length > 0 ||
-      data.mappingOverrides.length > 0;
+      data.mappingOverrides.length > 0 ||
+      data.goldWeekPlans.length > 0;
     this.state.views.data = hasData ? createSuccessView(data) : createEmptyView(data);
   }
 
