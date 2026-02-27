@@ -262,7 +262,8 @@ struct CachedWeekBundle: Codable {
   let cachedAt: String
 }
 
-struct DayCard {
+struct DayCard: Identifiable {
+  var id: String { dayLabel }
   let dayLabel: String
   let meals: [GoldWeekMealView]
   var firstMeal: GoldWeekMealView? { meals.first }

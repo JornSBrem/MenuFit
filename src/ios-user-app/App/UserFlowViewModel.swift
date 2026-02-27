@@ -77,6 +77,11 @@ final class UserFlowViewModel: ObservableObject {
     self.defaults = defaults
     self.authSession = authStore.session
     self.fallbackHouseholdId = fallbackHouseholdId
+    // Laad opgeslagen kcal-voorkeur uit UserDefaults
+    let savedKcal = defaults.integer(forKey: "menufit.preferred-kcal")
+    if [1250, 1500, 1800, 2100].contains(savedKcal) {
+      selection.kcal = savedKcal
+    }
     refreshAuthState()
   }
 
@@ -206,6 +211,13 @@ final class UserFlowViewModel: ObservableObject {
         lastError = AppStrings.text(.loadWeekOnlineOrOfflineFailed)
       }
     }
+  }
+
+  func setPreferredKcal(_ kcal: Int) {
+    guard fixedKcals.contains(kcal) else { return }
+    selection.kcal = kcal
+    defaults.set(kcal, forKey: "menufit.preferred-kcal")
+    Task { await loadWeekBundle() }
   }
 
   func selectMember(_ memberId: String) {
@@ -645,14 +657,23 @@ final class UserFlowViewModel: ObservableObject {
 
   var availableDayLabels: [String] {
     let meals = summary?.meals ?? []
-    var ordered: [String] = []
     var seen = Set<String>()
+    var unordered: [String] = []
     for meal in meals {
-      if seen.insert(meal.dayLabel).inserted {
-        ordered.append(meal.dayLabel)
+      let normalized = normalizeDayLabel(meal.dayLabel)
+      if seen.insert(normalized).inserted {
+        unordered.append(meal.dayLabel)
       }
     }
-    return ordered
+    let order: [String: Int] = [
+      "maandag": 0, "dinsdag": 1, "woensdag": 2, "donderdag": 3,
+      "vrijdag": 4, "zaterdag": 5, "zondag": 6,
+    ]
+    return unordered.sorted {
+      let a = order[normalizeDayLabel($0)] ?? 99
+      let b = order[normalizeDayLabel($1)] ?? 99
+      return a < b
+    }
   }
 
   var selectedDayMeals: [GoldWeekMealView] {

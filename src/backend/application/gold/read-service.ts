@@ -1,5 +1,5 @@
 import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
-import type { GoldReadModel, WeekGroceriesResponse, WeekSummaryResponse } from "./types";
+import type { GoldReadModel, GoldWeekPlanView, RecipeView, WeekGroceriesResponse, WeekSummaryResponse } from "./types";
 
 const keyFromWeek = (year: number, week: number, kcal: number, basePersons: number): string =>
   `${year}:${week}:${kcal}:${basePersons}`;
@@ -35,6 +35,34 @@ export class GoldWeekReadService {
     });
   }
 
+  /**
+   * Laadt meerdere gold-modellen in één keer in het in-memory store,
+   * zonder elke keer de stateStore te schrijven (gebruik voor bulk-recompute).
+   * Bel daarna batchPersist() om alles in één keer op te slaan.
+   */
+  batchLoad(models: GoldReadModel[]): void {
+    for (const model of models) {
+      const key = keyFromWeek(
+        model.weekPlan.year,
+        model.weekPlan.week,
+        model.weekPlan.kcal,
+        model.weekPlan.basePersons,
+      );
+      this.store.set(key, model);
+    }
+  }
+
+  /** Schrijft alle in-memory gold-modellen in één stateStore.update() naar schijf. */
+  batchPersist(): void {
+    if (!this.stateStore) return;
+    const snapshot = Array.from(this.store.entries());
+    this.stateStore.update((draft) => {
+      for (const [key, model] of snapshot) {
+        draft.goldReadModels[key] = structuredClone(model);
+      }
+    });
+  }
+
   getSummary(year: number, week: number, kcal: number, basePersons: number): WeekSummaryResponse | null {
     const model = this.resolveModel(year, week, kcal, basePersons);
     if (!model) {
@@ -47,6 +75,31 @@ export class GoldWeekReadService {
       matchStatus: model.matchStatus,
       cartPlan: model.cartPlan,
     };
+  }
+
+  /** Geeft alle opgeslagen weekplannen terug, gesorteerd op jaar/week/kcal. */
+  listWeekPlans(): GoldWeekPlanView[] {
+    return Array.from(this.store.values())
+      .map((model) => model.weekPlan)
+      .sort((a, b) =>
+        a.year !== b.year ? a.year - b.year :
+        a.week !== b.week ? a.week - b.week :
+        a.kcal - b.kcal,
+      );
+  }
+
+  /** Geeft alle unieke recepten terug vanuit de gold data, gesorteerd op naam. */
+  listRecipes(): RecipeView[] {
+    const seen = new Map<string, RecipeView>();
+    for (const model of this.store.values()) {
+      for (const meal of model.meals) {
+        const recipeId = meal.recipeId ?? meal.mealId;
+        if (!seen.has(recipeId)) {
+          seen.set(recipeId, { recipeId, name: meal.mealLabel });
+        }
+      }
+    }
+    return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name, "nl"));
   }
 
   getGroceries(year: number, week: number, kcal: number, basePersons: number): WeekGroceriesResponse | null {
