@@ -65,7 +65,7 @@ struct WeekScreen: View {
           }
 
           // ── Komende dagen ────────────────────────────────────
-          if !viewModel.upcomingDayCards.isEmpty {
+          if !upcomingRecipeMeals.isEmpty {
             Text("Komende dagen")
               .font(.title3.bold())
               .padding(.horizontal, 20)
@@ -73,8 +73,8 @@ struct WeekScreen: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
               HStack(alignment: .top, spacing: 10) {
-                ForEach(viewModel.upcomingDayCards) { card in
-                  upcomingCard(card)
+                ForEach(upcomingRecipeMeals) { meal in
+                  recipeCard(meal)
                 }
               }
               .padding(.horizontal, 16)
@@ -132,16 +132,19 @@ struct WeekScreen: View {
     }
   }
 
-  // MARK: Komende dag kaart
+  // MARK: Komende recepten (alleen maaltijden met een recept)
 
-  private func upcomingCard(_ card: DayCard) -> some View {
-    Button {
-      if let meal = card.firstMeal { selectedMeal = meal }
-    } label: {
-      VStack(alignment: .leading, spacing: 5) {
+  private var upcomingRecipeMeals: [GoldWeekMealView] {
+    viewModel.upcomingDayCards
+      .flatMap { $0.meals }
+      .filter { $0.recipeId != nil }
+  }
+
+  private func recipeCard(_ meal: GoldWeekMealView) -> some View {
+    Button { selectedMeal = meal } label: {
+      VStack(alignment: .leading, spacing: 6) {
         Group {
-          if let urlString = card.firstMeal?.imageUrl,
-             let url = URL(string: urlString) {
+          if let urlString = meal.imageUrl, let url = URL(string: urlString) {
             AsyncImage(url: url) { phase in
               switch phase {
               case .success(let image):
@@ -162,15 +165,22 @@ struct WeekScreen: View {
               )
           }
         }
-        .frame(width: 120, height: 80)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .frame(width: 130, height: 90)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
 
-        Text(card.dayLabel.capitalized)
-          .font(.caption.bold()).foregroundColor(.primary)
-        Text(card.mealCount == 1 ? "1 moment" : "\(card.mealCount) momenten")
-          .font(.caption2).foregroundColor(.blue)
+        if let recipeName = meal.recipeName, !recipeName.isEmpty {
+          Text(recipeName)
+            .font(.caption.bold())
+            .foregroundColor(.primary)
+            .lineLimit(2)
+            .multilineTextAlignment(.leading)
+        }
+        Text("\(meal.dayLabel.capitalized) · \(meal.mealLabel)")
+          .font(.caption2)
+          .foregroundColor(.secondary)
+          .lineLimit(1)
       }
-      .frame(width: 120)
+      .frame(width: 130)
     }
     .buttonStyle(.plain)
   }
