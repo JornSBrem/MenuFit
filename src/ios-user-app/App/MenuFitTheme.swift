@@ -182,7 +182,7 @@ struct MFEmptyState: View {
       if let subtitle {
         Text(subtitle)
           .font(.subheadline)
-          .foregroundColor(.tertiary)
+          .foregroundStyle(.tertiary)
           .multilineTextAlignment(.center)
           .padding(.horizontal, 40)
       }
