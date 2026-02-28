@@ -167,6 +167,46 @@ export class HouseholdService {
     return household ? structuredClone(sortMembers(household)) : null;
   }
 
+  /** Hernoem een gezin. Alleen het gezinshoofd mag dit doen. */
+  renameHousehold(householdId: string, name: string, actorUserId: string): HouseholdRecord {
+    const hid = assertNonEmpty(householdId, "householdId");
+    const actor = assertNonEmpty(actorUserId, "actorUserId");
+    const trimmedName = name.trim();
+
+    const household = this.requireHousehold(hid);
+    this.requireHead(household, actor);
+
+    household.name = trimmedName || undefined;
+    household.updatedAt = this.now();
+
+    this.persist();
+    return structuredClone(sortMembers(household));
+  }
+
+  /** Sla de kcal-voorkeur van een gezinslid op. */
+  setMemberKcal(actorUserId: string, kcal: number): HouseholdRecord {
+    const actor = assertNonEmpty(actorUserId, "actorUserId");
+    if (!Number.isFinite(kcal) || kcal <= 0) {
+      throw new HouseholdServiceError("INVALID_KCAL", "kcal moet een positief getal zijn.");
+    }
+
+    const household = this.findHouseholdByUser(actor);
+    if (!household) {
+      throw new HouseholdServiceError("HOUSEHOLD_NOT_FOUND", "Je bent niet lid van een gezin.");
+    }
+
+    const member = household.members.find((m) => m.userId === actor);
+    if (!member) {
+      throw new HouseholdServiceError("MEMBER_NOT_FOUND", "Lid niet gevonden in gezin.");
+    }
+
+    member.kcalPreference = kcal;
+    household.updatedAt = this.now();
+
+    this.persist();
+    return structuredClone(sortMembers(household));
+  }
+
   listPendingInvitationsForUser(actorUserId: string): HouseholdInvitation[] {
     const actor = assertNonEmpty(actorUserId, "actorUserId");
     return sortInvitations(this.listAllInvitations()).filter(

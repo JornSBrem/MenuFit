@@ -7,6 +7,8 @@ struct ConfigScreen: View {
   @State private var picnicEmail = ""
   @State private var picnicPassword = ""
   @State private var showInviteCode = false
+  @State private var householdName = ""
+  @State private var isEditingName = false
 
   var body: some View {
     NavigationView {
@@ -63,8 +65,101 @@ struct ConfigScreen: View {
 
         // MARK: Gezin
         Section {
-          if let household = viewModel.configHousehold {
-            // Na aanmaken: toon inviteCode
+          if let household = viewModel.configHouseholdRecord {
+            // Gezinsnaam (bewerkbaar door head)
+            let isHead = household.members.first(where: { $0.userId == viewModel.authSession?.subjectId })?.role == "head"
+
+            VStack(alignment: .leading, spacing: 8) {
+              if isEditingName {
+                HStack {
+                  TextField("Gezinsnaam", text: $householdName)
+                    .textFieldStyle(.roundedBorder)
+                  Button("Opslaan") {
+                    Task {
+                      await viewModel.renameHousehold(householdName)
+                      isEditingName = false
+                    }
+                  }
+                  .buttonStyle(.borderedProminent)
+                  .disabled(viewModel.isConfigLoading)
+                }
+              } else {
+                HStack {
+                  VStack(alignment: .leading, spacing: 2) {
+                    Text(household.name ?? "Mijn gezin")
+                      .font(.headline)
+                    Text("\(household.members.count) lid\(household.members.count == 1 ? "" : "en")")
+                      .font(.caption)
+                      .foregroundColor(.secondary)
+                  }
+                  Spacer()
+                  if isHead {
+                    Button {
+                      householdName = household.name ?? ""
+                      isEditingName = true
+                    } label: {
+                      Image(systemName: "pencil")
+                    }
+                    .buttonStyle(.bordered)
+                  }
+                }
+              }
+            }
+            .padding(.vertical, 4)
+
+            // Ledenlijst
+            ForEach(household.members) { member in
+              HStack {
+                Image(systemName: member.role == "head" ? "crown.fill" : "person.fill")
+                  .foregroundColor(member.role == "head" ? .orange : .secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(member.displayName ?? member.userId)
+                    .font(.subheadline)
+                  HStack(spacing: 8) {
+                    Text(member.role == "head" ? "Gezinshoofd" : "Lid")
+                      .font(.caption)
+                      .foregroundColor(.secondary)
+                    if let kcal = member.kcalPreference {
+                      Text("\(kcal) kcal")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                    }
+                  }
+                }
+                Spacer()
+                if member.userId == viewModel.authSession?.subjectId {
+                  Text("Jij")
+                    .font(.caption)
+                    .foregroundColor(.green)
+                }
+              }
+              .padding(.vertical, 2)
+            }
+
+            // Uitnodigingscode
+            if let code = household.inviteCode, isHead {
+              Divider()
+              HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                  Text("Uitnodigingscode")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                  Text(code)
+                    .font(.system(.body, design: .monospaced))
+                    .bold()
+                    .foregroundColor(.orange)
+                }
+                Spacer()
+                Button {
+                  UIPasteboard.general.string = code
+                } label: {
+                  Image(systemName: "doc.on.doc")
+                }
+              }
+              .padding(.vertical, 4)
+            }
+          } else if viewModel.configHousehold != nil {
+            // Zojuist aangemaakt maar record nog niet geladen
             VStack(alignment: .leading, spacing: 8) {
               Text("Gezin aangemaakt")
                 .font(.headline)
@@ -72,7 +167,7 @@ struct ConfigScreen: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
-              if let code = household.inviteCode {
+              if let code = viewModel.configHousehold?.inviteCode {
                 HStack {
                   Text(code)
                     .font(.system(.title2, design: .monospaced))
@@ -90,7 +185,10 @@ struct ConfigScreen: View {
             }
           } else {
             Button {
-              Task { await viewModel.createNewHousehold() }
+              Task {
+                await viewModel.createNewHousehold()
+                await viewModel.loadHouseholdStatus()
+              }
             } label: {
               Label("Gezin aanmaken", systemImage: "house.badge.plus")
             }

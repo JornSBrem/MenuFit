@@ -47,6 +47,15 @@ struct OrderScreen: View {
 
           // ── Boodschappenlijst ────────────────────────────────
           if viewModel.groceries != nil {
+            // ── Gezinstotalen ──────────────────────────────
+            if viewModel.householdMembers.count > 1 {
+              householdGroceriesSection
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+
+              Divider().padding(.horizontal, 16).padding(.top, 12)
+            }
+
             groceriesSection
               .padding(.horizontal, 16)
               .padding(.top, 16)
@@ -233,6 +242,81 @@ struct OrderScreen: View {
           .buttonStyle(.plain)
           .padding(.vertical, 2)
         }
+      }
+    }
+  }
+
+  // MARK: Gezinstotalen
+
+  @ViewBuilder
+  private var householdGroceriesSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack {
+        Text("Gezinstotalen").font(.title3.bold())
+        Spacer()
+        Button {
+          Task { await viewModel.loadHouseholdGroceries() }
+        } label: {
+          Image(systemName: "arrow.clockwise")
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+      }
+
+      if let hg = viewModel.householdGroceries {
+        // Ledeninfo
+        HStack(spacing: 12) {
+          ForEach(hg.memberBreakdown) { member in
+            VStack(spacing: 2) {
+              Text(member.displayName)
+                .font(.caption.weight(.semibold))
+              Text("\(member.kcal) kcal")
+                .font(.caption2)
+                .foregroundColor(.blue)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color(.tertiarySystemBackground))
+            .cornerRadius(6)
+          }
+        }
+
+        // Geaggregeerde items
+        ForEach(hg.groceries) { item in
+          HStack(spacing: 10) {
+            Image(systemName: "basket.fill")
+              .foregroundColor(.orange)
+              .font(.caption)
+            VStack(alignment: .leading, spacing: 2) {
+              Text(item.canonicalName)
+                .font(.subheadline)
+              Text(
+                "\(item.totalAmount.map { String(format: "%.2f", $0) } ?? "-") \(item.unit ?? "")"
+              )
+              .font(.caption).foregroundColor(.secondary)
+            }
+            Spacer()
+            if item.requiresReview {
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+                .font(.caption)
+            }
+          }
+          .padding(.vertical, 2)
+        }
+
+        if hg.groceries.isEmpty {
+          Text("Geen boodschappen gevonden voor dit gezin deze week.")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      } else {
+        Button {
+          Task { await viewModel.loadHouseholdGroceries() }
+        } label: {
+          Label("Gezinstotalen laden", systemImage: "basket")
+        }
+        .buttonStyle(.bordered)
       }
     }
   }

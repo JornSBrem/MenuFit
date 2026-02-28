@@ -657,6 +657,119 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
+    if (path === "/api/v3/household/rename" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const { householdId, name } = body as { householdId?: string; name?: string };
+      if (!householdId || typeof name !== "string") {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "householdId en name zijn verplicht." } });
+        return;
+      }
+      try {
+        const household = householdService.renameHousehold(householdId, name, userAuth.data.subjectId);
+        json(res, 200, { ok: true, data: { householdId: household.householdId, name: household.name } });
+      } catch (err) {
+        const code2 = err instanceof HouseholdServiceError ? err.code : "RENAME_FAILED";
+        const message = err instanceof Error ? err.message : "Hernoemen mislukt.";
+        json(res, 409, { ok: false, error: { code: code2, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/household/set-member-kcal" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const { kcal } = body as { kcal?: number };
+      if (!kcal || !Number.isFinite(kcal) || kcal <= 0) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "kcal moet een positief getal zijn." } });
+        return;
+      }
+      try {
+        const household = householdService.setMemberKcal(userAuth.data.subjectId, kcal);
+        json(res, 200, { ok: true, data: { householdId: household.householdId } });
+      } catch (err) {
+        const code2 = err instanceof HouseholdServiceError ? err.code : "SET_KCAL_FAILED";
+        const message = err instanceof Error ? err.message : "Kcal instellen mislukt.";
+        json(res, 409, { ok: false, error: { code: code2, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/household/groceries" && method === "GET") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const year = numericParam(req, "year") ?? new Date().getUTCFullYear();
+      const week = numericParam(req, "week") ?? 1;
+      const basePersons = numericParam(req, "basePersons") ?? 2;
+
+      const household = householdService.getHouseholdForUser(userAuth.data.subjectId);
+      if (!household) {
+        json(res, 404, { ok: false, error: { code: "HOUSEHOLD_NOT_FOUND", message: "Je bent niet lid van een gezin." } });
+        return;
+      }
+
+      // Aggregeer boodschappen over alle gezinsleden op basis van hun kcal-voorkeur
+      const merged = new Map<string, { totalAmount: number; unit?: string; requiresReview: boolean }>();
+      const memberBreakdown: { userId: string; displayName: string; kcal: number; itemCount: number }[] = [];
+
+      for (const member of household.members) {
+        const kcal = member.kcalPreference ?? 1800; // fallback
+        const groceries = goldReadService.getGroceries(year, week, kcal, basePersons);
+        const account = userAccountService.findById(member.userId);
+        memberBreakdown.push({
+          userId: member.userId,
+          displayName: account?.username ?? member.userId,
+          kcal,
+          itemCount: groceries?.groceries.length ?? 0,
+        });
+        if (!groceries) continue;
+        for (const item of groceries.groceries) {
+          const existing = merged.get(item.canonicalName);
+          if (existing) {
+            existing.totalAmount += item.totalAmount ?? 0;
+            existing.requiresReview = existing.requiresReview || item.requiresReview;
+            if (!existing.unit && item.unit) existing.unit = item.unit;
+          } else {
+            merged.set(item.canonicalName, {
+              totalAmount: item.totalAmount ?? 0,
+              unit: item.unit,
+              requiresReview: item.requiresReview,
+            });
+          }
+        }
+      }
+
+      const aggregatedGroceries = Array.from(merged.entries()).map(([canonicalName, data]) => ({
+        canonicalName,
+        totalAmount: Math.round((data.totalAmount + Number.EPSILON) * 1000) / 1000,
+        unit: data.unit,
+        requiresReview: data.requiresReview,
+      })).sort((a, b) => a.canonicalName.localeCompare(b.canonicalName, "nl"));
+
+      json(res, 200, {
+        ok: true,
+        data: {
+          householdId: household.householdId,
+          year,
+          week,
+          basePersons,
+          memberCount: household.members.length,
+          memberBreakdown,
+          groceries: aggregatedGroceries,
+        },
+      });
+      return;
+    }
+
     if (path === "/api/v3/household/bootstrap" && method === "POST") {
       const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
@@ -679,7 +792,16 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         });
         return;
       }
-      json(res, 200, handleHouseholdStatus(householdService, userAuth.data));
+      const statusResult = handleHouseholdStatus(householdService, userAuth.data);
+      // Verrijk members met displayName vanuit UserAccountService
+      if (statusResult.ok && statusResult.data?.household) {
+        const enrichedMembers = statusResult.data.household.members.map((m) => {
+          const account = userAccountService.findById(m.userId);
+          return { ...m, displayName: account?.username ?? m.userId };
+        });
+        statusResult.data.household = { ...statusResult.data.household, members: enrichedMembers };
+      }
+      json(res, 200, statusResult);
       return;
     }
 
