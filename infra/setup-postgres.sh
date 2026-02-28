@@ -25,7 +25,7 @@ PG_DB="menufit"
 
 echo ""
 echo "→ Database en gebruiker aanmaken..."
-sudo -u postgres psql -v ON_ERROR_STOP=1 <<SQL
+runuser -u postgres -- psql -v ON_ERROR_STOP=1 <<SQL
 DO \$\$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${PG_USER}') THEN
@@ -46,7 +46,8 @@ SQL
 echo ""
 echo "→ Schema toepassen..."
 CONN_STRING="postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/${PG_DB}"
-sudo -u postgres psql "${CONN_STRING}" -v ON_ERROR_STOP=1 -f "${SCHEMA_FILE}"
+PGPASSWORD="${PG_PASSWORD}" psql -U "${PG_USER}" -h localhost -d "${PG_DB}" \
+  -v ON_ERROR_STOP=1 -f "${SCHEMA_FILE}"
 
 echo ""
 echo "→ Environment file schrijven naar ${ENV_FILE}..."
@@ -61,8 +62,6 @@ echo "✓ PostgreSQL setup klaar!"
 echo ""
 echo "  Connection string: ${CONN_STRING}"
 echo "  Env file:          ${ENV_FILE}"
-echo ""
-echo "  Sla de connection string op een veilige plek op!"
 echo ""
 echo "  Start de backend nu met:"
 echo "  systemctl restart menufit-backend"
