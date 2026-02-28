@@ -1198,6 +1198,37 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
+    // ---- Admin: gebruiker admin-rol toekennen ----
+    if (path === "/api/v3/admin/users/set-role" && method === "POST") {
+      const adminAuth = authorizeAdminFromBearerHeader(req, lifecycle);
+      if (!adminAuth.ok) {
+        json(res, 401, { ok: false, error: adminAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const { username, adminRole } = body as { username?: string; adminRole?: string | null };
+      if (!username) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "username is verplicht." } });
+        return;
+      }
+      if (adminRole !== undefined && adminRole !== null && adminRole !== "owner" && adminRole !== "operator") {
+        json(res, 400, { ok: false, error: { code: "INVALID_ROLE", message: "adminRole moet 'owner', 'operator' of null zijn." } });
+        return;
+      }
+      try {
+        const account = userAccountService.findByUsername(username);
+        if (!account) {
+          json(res, 404, { ok: false, error: { code: "USER_NOT_FOUND", message: "Gebruiker niet gevonden." } });
+          return;
+        }
+        userAccountService.setAdminRole(account.userId, (adminRole as "owner" | "operator" | null) ?? null);
+        json(res, 200, { ok: true, data: { userId: account.userId, username: account.username, adminRole: adminRole ?? null } });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Rol instellen mislukt.";
+        json(res, 500, { ok: false, error: { code: "SET_ROLE_FAILED", message } });
+      }
+      return;
+    }
+
     if (path === "/api/v3/admin/config" && method === "POST") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = handleAdminConfigUpdate(adminOps, session, body as any);

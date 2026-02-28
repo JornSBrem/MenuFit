@@ -1,7 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import type { SessionLifecycleService } from "./session-lifecycle-service.ts";
-import type { AppSessionRecord, UserAccountRecord } from "./types.ts";
+import type { AdminRole, AppSessionRecord, UserAccountRecord } from "./types.ts";
 
 export interface UserAccountServiceOptions {
   stateStore: PersistentStateStore;
@@ -114,6 +114,15 @@ export class UserAccountService {
       throw new UserAccountServiceError("INVALID_CREDENTIALS", "Gebruikersnaam of wachtwoord is onjuist.");
     }
 
+    if (account.adminRole) {
+      const { token, session } = this.lifecycle.issueAdminSession({
+        subjectId: account.userId,
+        adminRole: account.adminRole,
+        ttlSeconds: this.tokenTtlSeconds,
+      });
+      return { token, session, userId: account.userId, username: account.username };
+    }
+
     const { token, session } = this.lifecycle.issueUserSession({
       subjectId: account.userId,
       picnicAccountId: "no-picnic",
@@ -123,8 +132,29 @@ export class UserAccountService {
     return { token, session, userId: account.userId, username: account.username };
   }
 
+  setAdminRole(userId: string, adminRole: AdminRole | null): void {
+    this.stateStore.update((draft) => {
+      const account = draft.userAccounts.find((a) => a.userId === userId);
+      if (!account) {
+        throw new UserAccountServiceError("USER_NOT_FOUND", "Gebruiker niet gevonden.");
+      }
+      if (adminRole === null) {
+        delete account.adminRole;
+      } else {
+        account.adminRole = adminRole;
+      }
+      account.updatedAt = new Date().toISOString();
+    });
+  }
+
   findById(userId: string): UserAccountRecord | undefined {
     const state = this.stateStore.read();
     return state.userAccounts.find((a) => a.userId === userId);
+  }
+
+  findByUsername(username: string): UserAccountRecord | undefined {
+    const normalizedUsername = username.trim().toLowerCase();
+    const state = this.stateStore.read();
+    return state.userAccounts.find((a) => a.username === normalizedUsername);
   }
 }
