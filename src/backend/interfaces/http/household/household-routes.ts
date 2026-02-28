@@ -9,8 +9,6 @@ import type {
 } from "../../../application/household/types.ts";
 import {
   type AnySessionContext,
-  type UserSessionContext,
-  requireUserSession,
   SessionContextError,
 } from "../auth/session-context.ts";
 
@@ -74,26 +72,20 @@ const serviceError = (error: HouseholdServiceError): ApiEnvelope<never> => ({
   },
 });
 
-const withUserSession = (
+/** Accepts both user and admin sessions — household routes only need subjectId. */
+const withAuthenticatedSession = (
   session: AnySessionContext,
-): ApiEnvelope<UserSessionContext> => {
-  try {
-    return {
-      ok: true,
-      data: requireUserSession(session),
-    };
-  } catch (error) {
-    if (error instanceof SessionContextError) {
-      return forbidden(error);
-    }
+): ApiEnvelope<AnySessionContext> => {
+  if (!session.subjectId) {
     return {
       ok: false,
       error: {
         code: "FORBIDDEN_SESSION",
-        message: "Route requires user session.",
+        message: "Route requires an authenticated session.",
       },
     };
   }
+  return { ok: true, data: session };
 };
 
 const validateInviteBody = (body: HouseholdInviteBody): string | null => {
@@ -142,7 +134,7 @@ export const handleHouseholdBootstrap = (
   service: HouseholdService,
   session: AnySessionContext,
 ): ApiEnvelope<HouseholdStatusResponse> => {
-  const sessionResult = withUserSession(session);
+  const sessionResult = withAuthenticatedSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
     return sessionResult;
   }
@@ -158,7 +150,7 @@ export const handleHouseholdStatus = (
   service: HouseholdService,
   session: AnySessionContext,
 ): ApiEnvelope<HouseholdStatusResponse> => {
-  const sessionResult = withUserSession(session);
+  const sessionResult = withAuthenticatedSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
     return sessionResult;
   }
@@ -174,7 +166,7 @@ export const handleHouseholdInvite = (
   session: AnySessionContext,
   body: HouseholdInviteBody,
 ): ApiEnvelope<HouseholdInvitation> => {
-  const sessionResult = withUserSession(session);
+  const sessionResult = withAuthenticatedSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
     return sessionResult;
   }
@@ -213,7 +205,7 @@ export const handleHouseholdAccept = (
   session: AnySessionContext,
   body: HouseholdAcceptBody,
 ): ApiEnvelope<AcceptHouseholdInvitationResult> => {
-  const sessionResult = withUserSession(session);
+  const sessionResult = withAuthenticatedSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
     return sessionResult;
   }
@@ -251,7 +243,7 @@ export const handleHouseholdRevoke = (
   session: AnySessionContext,
   body: HouseholdRevokeBody,
 ): ApiEnvelope<HouseholdInvitation> => {
-  const sessionResult = withUserSession(session);
+  const sessionResult = withAuthenticatedSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
     return sessionResult;
   }
@@ -290,7 +282,7 @@ export const handleHouseholdInvitations = (
   session: AnySessionContext,
   query: HouseholdInvitationsQuery,
 ): ApiEnvelope<HouseholdInvitation[]> => {
-  const sessionResult = withUserSession(session);
+  const sessionResult = withAuthenticatedSession(session);
   if (!sessionResult.ok || !sessionResult.data) {
     return sessionResult;
   }

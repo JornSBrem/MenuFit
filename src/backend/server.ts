@@ -581,7 +581,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/auth/me" && method === "GET") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -597,11 +597,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
-    // ---- Household routes (user auth) ----
+    // ---- Household routes (user or admin auth) ----
     if (path === "/api/v3/household/create" && method === "POST") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
-        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." } });
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
       }
       try {
@@ -616,9 +616,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/join-by-code" && method === "POST") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
-        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." } });
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
       }
       const { code } = body as { code?: string };
@@ -638,11 +638,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/bootstrap" && method === "POST") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
-          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
         });
         return;
       }
@@ -651,11 +651,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/me" && method === "GET") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
-          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
         });
         return;
       }
@@ -664,11 +664,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/invite" && method === "POST") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
-          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
         });
         return;
       }
@@ -678,11 +678,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/accept" && method === "POST") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
-          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
         });
         return;
       }
@@ -692,11 +692,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/revoke" && method === "POST") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
-          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
         });
         return;
       }
@@ -706,11 +706,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/invitations" && method === "GET") {
-      const userAuth = getUserSession(req);
+      const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
-          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "User auth required." },
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
         });
         return;
       }

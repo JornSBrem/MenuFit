@@ -10,15 +10,15 @@ const memberSession = parseSessionToken("user:member-1:token-member:picnic-membe
 const otherUserSession = parseSessionToken("user:member-2:token-member-2:picnic-member-2");
 const adminSession = parseSessionToken("admin:ops-user:token-admin:owner");
 
-test("household routes reject admin sessions", () => {
+test("household routes accept admin sessions (admin is also a user)", () => {
   const service = new HouseholdService({
     now: () => "2026-02-25T10:00:00.000Z",
   });
   const handlers = createHouseholdRouteHandlers(service);
 
   const response = handlers.bootstrap(adminSession);
-  assert.equal(response.ok, false);
-  assert.equal(response.error?.code, "FORBIDDEN_SESSION");
+  assert.equal(response.ok, true);
+  assert.ok(response.data?.household);
 });
 
 test("household routes support bootstrap invite accept and status flow", () => {
