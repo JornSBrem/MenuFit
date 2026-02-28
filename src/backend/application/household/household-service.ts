@@ -207,6 +207,76 @@ export class HouseholdService {
     return structuredClone(sortMembers(household));
   }
 
+  /** Verwijder een lid uit het gezin. Alleen het gezinshoofd mag dit doen. Het hoofd kan zichzelf niet verwijderen. */
+  removeMember(householdId: string, targetUserId: string, actorUserId: string): HouseholdRecord {
+    const hid = assertNonEmpty(householdId, "householdId");
+    const target = assertNonEmpty(targetUserId, "targetUserId");
+    const actor = assertNonEmpty(actorUserId, "actorUserId");
+
+    const household = this.requireHousehold(hid);
+    this.requireHead(household, actor);
+
+    if (target === actor) {
+      throw new HouseholdServiceError("CANNOT_REMOVE_SELF", "Het gezinshoofd kan zichzelf niet verwijderen.");
+    }
+
+    const memberIndex = household.members.findIndex((m) => m.userId === target);
+    if (memberIndex === -1) {
+      throw new HouseholdServiceError("MEMBER_NOT_FOUND", "Lid niet gevonden in dit gezin.");
+    }
+
+    household.members.splice(memberIndex, 1);
+    household.updatedAt = this.now();
+
+    this.persist();
+    return structuredClone(sortMembers(household));
+  }
+
+  /** Verlaat het gezin. Het gezinshoofd kan niet vertrekken als er nog andere leden zijn. */
+  leaveHousehold(actorUserId: string): void {
+    const actor = assertNonEmpty(actorUserId, "actorUserId");
+
+    const household = this.findHouseholdByUser(actor);
+    if (!household) {
+      throw new HouseholdServiceError("HOUSEHOLD_NOT_FOUND", "Je bent niet lid van een gezin.");
+    }
+
+    const member = household.members.find((m) => m.userId === actor);
+    if (!member) {
+      throw new HouseholdServiceError("MEMBER_NOT_FOUND", "Lid niet gevonden in gezin.");
+    }
+
+    if (member.role === "head" && household.members.length > 1) {
+      throw new HouseholdServiceError("HEAD_CANNOT_LEAVE", "Het gezinshoofd kan niet vertrekken zolang er andere leden zijn. Verwijder eerst alle leden.");
+    }
+
+    if (member.role === "head" && household.members.length === 1) {
+      // Laatste lid (het hoofd) verlaat — verwijder het gezin
+      this.householdsById.delete(household.householdId);
+    } else {
+      household.members = household.members.filter((m) => m.userId !== actor);
+      household.updatedAt = this.now();
+    }
+
+    this.persist();
+  }
+
+  /** Verwijder een gebruiker uit elk gezin waarin die zit (voor account-verwijdering). */
+  removeUserFromAllHouseholds(userId: string): void {
+    const household = this.findHouseholdByUser(userId);
+    if (!household) return;
+
+    const member = household.members.find((m) => m.userId === userId);
+    if (member?.role === "head" && household.members.length === 1) {
+      this.householdsById.delete(household.householdId);
+    } else {
+      household.members = household.members.filter((m) => m.userId !== userId);
+      household.updatedAt = this.now();
+    }
+
+    this.persist();
+  }
+
   listPendingInvitationsForUser(actorUserId: string): HouseholdInvitation[] {
     const actor = assertNonEmpty(actorUserId, "actorUserId");
     return sortInvitations(this.listAllInvitations()).filter(

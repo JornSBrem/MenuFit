@@ -9,6 +9,9 @@ struct ConfigScreen: View {
   @State private var showInviteCode = false
   @State private var householdName = ""
   @State private var isEditingName = false
+  @State private var showDeleteAccountAlert = false
+  @State private var showLeaveAlert = false
+  @State private var memberToRemove: HouseholdMember?
 
   var body: some View {
     NavigationView {
@@ -60,6 +63,20 @@ struct ConfigScreen: View {
             viewModel.clearAuthSession()
           } label: {
             Label("Uitloggen", systemImage: "rectangle.portrait.and.arrow.right")
+          }
+
+          Button(role: .destructive) {
+            showDeleteAccountAlert = true
+          } label: {
+            Label("Account verwijderen", systemImage: "trash")
+          }
+          .alert("Account verwijderen", isPresented: $showDeleteAccountAlert) {
+            Button("Verwijderen", role: .destructive) {
+              Task { await viewModel.deleteAccount() }
+            }
+            Button("Annuleer", role: .cancel) {}
+          } message: {
+            Text("Weet je zeker dat je je account permanent wilt verwijderen? Dit kan niet ongedaan worden gemaakt.")
           }
         }
 
@@ -134,6 +151,46 @@ struct ConfigScreen: View {
                 }
               }
               .padding(.vertical, 2)
+              .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                if isHead && member.userId != viewModel.authSession?.subjectId {
+                  Button(role: .destructive) {
+                    memberToRemove = member
+                  } label: {
+                    Label("Verwijder", systemImage: "trash")
+                  }
+                }
+              }
+            }
+            .alert("Lid verwijderen", isPresented: Binding(
+              get: { memberToRemove != nil },
+              set: { if !$0 { memberToRemove = nil } }
+            )) {
+              Button("Verwijderen", role: .destructive) {
+                if let member = memberToRemove {
+                  Task { await viewModel.removeMember(userId: member.userId) }
+                  memberToRemove = nil
+                }
+              }
+              Button("Annuleer", role: .cancel) { memberToRemove = nil }
+            } message: {
+              Text("Weet je zeker dat je \(memberToRemove?.displayName ?? memberToRemove?.userId ?? "dit lid") wilt verwijderen uit het gezin?")
+            }
+
+            // Gezin verlaten (voor niet-hoofd leden)
+            if !isHead {
+              Button(role: .destructive) {
+                showLeaveAlert = true
+              } label: {
+                Label("Gezin verlaten", systemImage: "figure.walk.departure")
+              }
+              .alert("Gezin verlaten", isPresented: $showLeaveAlert) {
+                Button("Verlaten", role: .destructive) {
+                  Task { await viewModel.leaveHousehold() }
+                }
+                Button("Annuleer", role: .cancel) {}
+              } message: {
+                Text("Weet je zeker dat je dit gezin wilt verlaten?")
+              }
             }
 
             // Uitnodigingscode

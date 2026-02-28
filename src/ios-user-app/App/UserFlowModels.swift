@@ -373,6 +373,24 @@ struct HouseholdSetKcalResponse: Codable {
   let householdId: String
 }
 
+struct HouseholdRemoveMemberRequest: Codable {
+  let householdId: String
+  let userId: String
+}
+
+struct HouseholdRemoveMemberResponse: Codable {
+  let householdId: String
+  let memberCount: Int
+}
+
+struct HouseholdLeaveResponse: Codable {
+  let left: Bool
+}
+
+struct AccountDeleteResponse: Codable {
+  let deleted: Bool
+}
+
 struct HouseholdGroceryMemberBreakdown: Codable, Identifiable {
   let userId: String
   let displayName: String

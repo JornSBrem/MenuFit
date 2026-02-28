@@ -127,6 +127,18 @@ final class BackendAPI {
     )
   }
 
+  func removeMember(householdId: String, userId: String) async throws -> HouseholdRemoveMemberResponse {
+    try await post(path: "/api/v3/household/remove-member", body: HouseholdRemoveMemberRequest(householdId: householdId, userId: userId))
+  }
+
+  func leaveHousehold() async throws -> HouseholdLeaveResponse {
+    try await post(path: "/api/v3/household/leave", body: EmptyBody())
+  }
+
+  func deleteAccount() async throws -> AccountDeleteResponse {
+    try await post(path: "/api/v3/auth/delete-account", body: EmptyBody())
+  }
+
   private func get<T: Decodable>(path: String, query: [URLQueryItem] = []) async throws -> T {
     guard var components = URLComponents(
       url: baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))),
