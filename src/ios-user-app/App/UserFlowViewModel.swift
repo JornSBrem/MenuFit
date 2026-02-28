@@ -97,10 +97,26 @@ final class UserFlowViewModel: ObservableObject {
       return
     }
     didBootstrap = true
+    // Laad profielgegevens van server
+    await loadUserProfile()
     await loadHouseholdStatus()
     await syncKcalToHousehold()
     await loadWeekBundle()
     await loadRecipes()
+  }
+
+  private func loadUserProfile() async {
+    do {
+      let me = try await api.fetchMe()
+      userProfile = me.profile
+      needsOnboarding = (me.onboardingCompletedAt == nil)
+      // Pas kcal selectie aan op profiel
+      if let kcal = me.profile?.kcalGoal, kcal > 0 {
+        selection.kcal = kcal
+      }
+    } catch {
+      // Stille fout: profiel laden is niet kritiek
+    }
   }
 
   func setPicnicEnabled(_ enabled: Bool) {
@@ -520,6 +536,11 @@ final class UserFlowViewModel: ObservableObject {
 
   // MARK: - Auth (username/password flow)
 
+  /// Nieuw: onboarding voltooid na registratie? Stel in vanuit onboarding flow.
+  @Published var needsOnboarding = false
+  @Published var userProfile: UserProfileData?
+  @Published var suggestedKcal: Int?
+
   func loginWithCredentials(username: String, password: String) async {
     lastError = nil
     do {
@@ -533,6 +554,8 @@ final class UserFlowViewModel: ObservableObject {
         username: response.username
       )
       authStore.save(session: session)
+      userProfile = response.profile
+      needsOnboarding = (response.onboardingCompletedAt == nil)
       clearLoadedData()
       refreshAuthState()
       await bootstrapIfNeeded()
@@ -541,10 +564,10 @@ final class UserFlowViewModel: ObservableObject {
     }
   }
 
-  func registerWithCredentials(username: String, password: String) async {
+  func registerWithCredentials(username: String, password: String, email: String? = nil, profile: UserProfileData? = nil) async {
     lastError = nil
     do {
-      let response = try await api.register(username: username, password: password)
+      let response = try await api.register(username: username, password: password, email: email, profile: profile)
       let session = UserAuthSession(
         accessToken: response.token,
         subjectId: response.userId,
@@ -554,8 +577,47 @@ final class UserFlowViewModel: ObservableObject {
         username: response.username
       )
       authStore.save(session: session)
+      userProfile = response.profile
+      needsOnboarding = true
       clearLoadedData()
       refreshAuthState()
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  func updateUserProfile(_ update: ProfileUpdateRequest) async {
+    lastError = nil
+    do {
+      let result = try await api.updateProfile(update)
+      userProfile = result.profile
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  func fetchSuggestedKcal(birthYear: Int?, gender: String?, weightKg: Double?, heightCm: Double?, activityLevel: String?) async {
+    do {
+      let result = try await api.suggestKcal(
+        KcalSuggestionRequest(
+          birthYear: birthYear,
+          gender: gender,
+          weightKg: weightKg,
+          heightCm: heightCm,
+          activityLevel: activityLevel
+        )
+      )
+      suggestedKcal = result.suggestedKcal
+    } catch {
+      // Stille fout; suggestie is optioneel
+      suggestedKcal = nil
+    }
+  }
+
+  func completeOnboardingFlow() async {
+    do {
+      _ = try await api.completeOnboarding()
+      needsOnboarding = false
       await bootstrapIfNeeded()
     } catch {
       lastError = error.localizedDescription

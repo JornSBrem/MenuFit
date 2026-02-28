@@ -12,6 +12,7 @@ struct ConfigScreen: View {
   @State private var showDeleteAccountAlert = false
   @State private var showLeaveAlert = false
   @State private var memberToRemove: HouseholdMember?
+  @State private var showProfileEdit = false
 
   var body: some View {
     NavigationView {
@@ -77,6 +78,61 @@ struct ConfigScreen: View {
             Button("Annuleer", role: .cancel) {}
           } message: {
             Text("Weet je zeker dat je je account permanent wilt verwijderen? Dit kan niet ongedaan worden gemaakt.")
+          }
+        }
+
+        // MARK: Profiel
+        Section("Profiel") {
+          if let profile = viewModel.userProfile {
+            if let name = profile.displayName, !name.isEmpty {
+              HStack {
+                Label("Naam", systemImage: "person")
+                Spacer()
+                Text(name).foregroundColor(.secondary)
+              }
+            }
+            if let year = profile.birthYear {
+              HStack {
+                Label("Geboortejaar", systemImage: "calendar")
+                Spacer()
+                Text("\(year)").foregroundColor(.secondary)
+              }
+            }
+            if let w = profile.weightKg {
+              HStack {
+                Label("Gewicht", systemImage: "scalemass")
+                Spacer()
+                Text("\(Int(w)) kg").foregroundColor(.secondary)
+              }
+            }
+            if let h = profile.heightCm {
+              HStack {
+                Label("Lengte", systemImage: "ruler")
+                Spacer()
+                Text("\(Int(h)) cm").foregroundColor(.secondary)
+              }
+            }
+            if let kcal = profile.kcalGoal {
+              HStack {
+                Label("Kcal-doel", systemImage: "flame")
+                Spacer()
+                Text("\(kcal) kcal").foregroundColor(.secondary)
+              }
+            }
+          } else {
+            Text("Nog geen profielgegevens ingesteld.")
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+          }
+
+          Button {
+            showProfileEdit = true
+          } label: {
+            Label("Profiel bewerken", systemImage: "pencil.circle")
+          }
+          .sheet(isPresented: $showProfileEdit) {
+            ProfileEditSheet()
+              .environmentObject(viewModel)
           }
         }
 

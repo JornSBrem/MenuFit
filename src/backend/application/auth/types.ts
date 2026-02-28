@@ -55,12 +55,29 @@ export interface ProviderSessionRefreshPayload {
   expiresAtEpochSeconds: number;
 }
 
+export interface UserProfileData {
+  displayName?: string;
+  birthYear?: number;
+  gender?: "male" | "female" | "other";
+  weightKg?: number;
+  heightCm?: number;
+  activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
+  kcalGoal?: number;
+  photoPath?: string;
+  allergies?: string[];
+  dietaryPreferences?: string[];
+}
+
 export interface UserAccountRecord {
   userId: string;
   username: string;
+  /** E-mailadres (primaire login-identifier na onboarding v2) */
+  email?: string;
   /** scrypt:<salt_hex>:<hash_hex> */
   passwordHash: string;
   adminRole?: AdminRole;
+  profile?: UserProfileData;
+  onboardingCompletedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

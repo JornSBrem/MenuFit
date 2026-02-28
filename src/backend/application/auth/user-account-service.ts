@@ -1,7 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import type { SessionLifecycleService } from "./session-lifecycle-service.ts";
-import type { AdminRole, AppSessionRecord, UserAccountRecord } from "./types.ts";
+import type { AdminRole, AppSessionRecord, UserAccountRecord, UserProfileData } from "./types.ts";
 
 export interface UserAccountServiceOptions {
   stateStore: PersistentStateStore;
@@ -14,6 +14,9 @@ export interface AuthResult {
   session: AppSessionRecord;
   userId: string;
   username: string;
+  email?: string;
+  profile?: UserProfileData;
+  onboardingCompletedAt?: string;
 }
 
 const SCRYPT_N = 16384;
@@ -67,13 +70,18 @@ export class UserAccountService {
     this.tokenTtlSeconds = options.tokenTtlSeconds ?? 30 * 24 * 60 * 60;
   }
 
-  register(username: string, password: string): AuthResult {
+  register(username: string, password: string, options?: { email?: string; profile?: UserProfileData }): AuthResult {
     const normalizedUsername = username.trim().toLowerCase();
     if (normalizedUsername.length < 3) {
       throw new UserAccountServiceError("USERNAME_TOO_SHORT", "Gebruikersnaam moet minimaal 3 tekens bevatten.");
     }
     if (!password || password.length < 6) {
       throw new UserAccountServiceError("PASSWORD_TOO_SHORT", "Wachtwoord moet minimaal 6 tekens bevatten.");
+    }
+
+    const normalizedEmail = options?.email?.trim().toLowerCase();
+    if (normalizedEmail && !this.isValidEmail(normalizedEmail)) {
+      throw new UserAccountServiceError("INVALID_EMAIL", "Ongeldig e-mailadres.");
     }
 
     const userId = generateUserId();
@@ -83,7 +91,9 @@ export class UserAccountService {
     const newAccount: UserAccountRecord = {
       userId,
       username: normalizedUsername,
+      email: normalizedEmail,
       passwordHash,
+      profile: options?.profile,
       createdAt: now,
       updatedAt: now,
     };
@@ -92,6 +102,12 @@ export class UserAccountService {
       const existing = draft.userAccounts.find((a) => a.username === normalizedUsername);
       if (existing) {
         throw new UserAccountServiceError("USERNAME_TAKEN", "Deze gebruikersnaam is al in gebruik.");
+      }
+      if (normalizedEmail) {
+        const existingEmail = draft.userAccounts.find((a) => a.email === normalizedEmail);
+        if (existingEmail) {
+          throw new UserAccountServiceError("EMAIL_TAKEN", "Dit e-mailadres is al in gebruik.");
+        }
       }
       draft.userAccounts.push(newAccount);
     });
@@ -102,13 +118,16 @@ export class UserAccountService {
       ttlSeconds: this.tokenTtlSeconds,
     });
 
-    return { token, session, userId, username: normalizedUsername };
+    return { token, session, userId, username: normalizedUsername, email: normalizedEmail, profile: options?.profile };
   }
 
   login(username: string, password: string): AuthResult {
-    const normalizedUsername = username.trim().toLowerCase();
+    const normalizedInput = username.trim().toLowerCase();
     const state = this.stateStore.read();
-    const account = state.userAccounts.find((a) => a.username === normalizedUsername);
+    // Zoek op username of e-mail
+    const account = state.userAccounts.find(
+      (a) => a.username === normalizedInput || a.email === normalizedInput,
+    );
 
     if (!account || !verifyPassword(password, account.passwordHash)) {
       throw new UserAccountServiceError("INVALID_CREDENTIALS", "Gebruikersnaam of wachtwoord is onjuist.");
@@ -120,7 +139,14 @@ export class UserAccountService {
         adminRole: account.adminRole,
         ttlSeconds: this.tokenTtlSeconds,
       });
-      return { token, session, userId: account.userId, username: account.username };
+      return {
+        token, session,
+        userId: account.userId,
+        username: account.username,
+        email: account.email,
+        profile: account.profile,
+        onboardingCompletedAt: account.onboardingCompletedAt,
+      };
     }
 
     const { token, session } = this.lifecycle.issueUserSession({
@@ -129,7 +155,14 @@ export class UserAccountService {
       ttlSeconds: this.tokenTtlSeconds,
     });
 
-    return { token, session, userId: account.userId, username: account.username };
+    return {
+      token, session,
+      userId: account.userId,
+      username: account.username,
+      email: account.email,
+      profile: account.profile,
+      onboardingCompletedAt: account.onboardingCompletedAt,
+    };
   }
 
   setAdminRole(userId: string, adminRole: AdminRole | null): void {
@@ -167,5 +200,67 @@ export class UserAccountService {
     const normalizedUsername = username.trim().toLowerCase();
     const state = this.stateStore.read();
     return state.userAccounts.find((a) => a.username === normalizedUsername);
+  }
+
+  findByEmail(email: string): UserAccountRecord | undefined {
+    const normalizedEmail = email.trim().toLowerCase();
+    const state = this.stateStore.read();
+    return state.userAccounts.find((a) => a.email === normalizedEmail);
+  }
+
+  /** Update profielgegevens van een gebruiker. */
+  updateProfile(userId: string, profileUpdate: Partial<UserProfileData>): UserAccountRecord {
+    let updatedAccount: UserAccountRecord | undefined;
+    this.stateStore.update((draft) => {
+      const account = draft.userAccounts.find((a) => a.userId === userId);
+      if (!account) {
+        throw new UserAccountServiceError("USER_NOT_FOUND", "Gebruiker niet gevonden.");
+      }
+      account.profile = { ...(account.profile ?? {}), ...profileUpdate };
+      account.updatedAt = new Date().toISOString();
+      updatedAccount = account;
+    });
+    return updatedAccount!;
+  }
+
+  /** Markeer onboarding als voltooid. */
+  completeOnboarding(userId: string): void {
+    this.stateStore.update((draft) => {
+      const account = draft.userAccounts.find((a) => a.userId === userId);
+      if (!account) {
+        throw new UserAccountServiceError("USER_NOT_FOUND", "Gebruiker niet gevonden.");
+      }
+      account.onboardingCompletedAt = new Date().toISOString();
+      account.updatedAt = new Date().toISOString();
+    });
+  }
+
+  /** Bereken BMR-gebaseerde kcal suggestie. */
+  suggestKcal(profile: UserProfileData): number | null {
+    const { birthYear, gender, weightKg, heightCm, activityLevel } = profile;
+    if (!birthYear || !gender || !weightKg || !heightCm) return null;
+
+    const age = new Date().getFullYear() - birthYear;
+    // Mifflin-St Jeor formule
+    let bmr: number;
+    if (gender === "male") {
+      bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+    } else {
+      bmr = 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+    }
+
+    const multipliers: Record<string, number> = {
+      sedentary: 1.2,
+      light: 1.375,
+      moderate: 1.55,
+      active: 1.725,
+      very_active: 1.9,
+    };
+    const multiplier = multipliers[activityLevel ?? "moderate"] ?? 1.55;
+    return Math.round(bmr * multiplier);
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 }

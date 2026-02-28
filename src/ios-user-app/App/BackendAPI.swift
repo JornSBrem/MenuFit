@@ -86,8 +86,11 @@ final class BackendAPI {
 
   // MARK: - Auth endpoints (geen bearer token nodig)
 
-  func register(username: String, password: String) async throws -> AuthTokenResponse {
-    try await postPublic(path: "/api/v3/auth/register", body: AuthRegisterRequest(username: username, password: password))
+  func register(username: String, password: String, email: String? = nil, profile: UserProfileData? = nil) async throws -> AuthTokenResponse {
+    try await postPublic(
+      path: "/api/v3/auth/register",
+      body: AuthRegisterRequest(username: username, password: password, email: email, profile: profile)
+    )
   }
 
   func login(username: String, password: String) async throws -> AuthTokenResponse {
@@ -96,6 +99,18 @@ final class BackendAPI {
 
   func fetchMe() async throws -> AuthMeResponse {
     try await get(path: "/api/v3/auth/me")
+  }
+
+  func updateProfile(_ update: ProfileUpdateRequest) async throws -> ProfileUpdateResponse {
+    try await post(path: "/api/v3/auth/profile", body: update)
+  }
+
+  func suggestKcal(_ request: KcalSuggestionRequest) async throws -> KcalSuggestionResponse {
+    try await post(path: "/api/v3/auth/suggest-kcal", body: request)
+  }
+
+  func completeOnboarding() async throws -> OnboardingCompleteResponse {
+    try await post(path: "/api/v3/auth/complete-onboarding", body: EmptyBody())
   }
 
   // MARK: - Household endpoints

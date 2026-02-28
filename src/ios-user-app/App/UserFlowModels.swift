@@ -325,18 +325,74 @@ struct AuthLoginRequest: Codable {
 struct AuthRegisterRequest: Codable {
   let username: String
   let password: String
+  let email: String?
+  let profile: UserProfileData?
+}
+
+struct UserProfileData: Codable {
+  var displayName: String?
+  var birthYear: Int?
+  var gender: String?
+  var weightKg: Double?
+  var heightCm: Double?
+  var activityLevel: String?
+  var kcalGoal: Int?
+  var photoPath: String?
+  var allergies: [String]?
+  var dietaryPreferences: [String]?
+}
+
+struct ProfileUpdateRequest: Codable {
+  var displayName: String?
+  var birthYear: Int?
+  var gender: String?
+  var weightKg: Double?
+  var heightCm: Double?
+  var activityLevel: String?
+  var kcalGoal: Int?
+  var allergies: [String]?
+  var dietaryPreferences: [String]?
+}
+
+struct ProfileUpdateResponse: Codable {
+  let userId: String
+  let username: String
+  let email: String?
+  let profile: UserProfileData?
+}
+
+struct KcalSuggestionRequest: Codable {
+  let birthYear: Int?
+  let gender: String?
+  let weightKg: Double?
+  let heightCm: Double?
+  let activityLevel: String?
+}
+
+struct KcalSuggestionResponse: Codable {
+  let suggestedKcal: Int?
+}
+
+struct OnboardingCompleteResponse: Codable {
+  let completed: Bool
 }
 
 struct AuthTokenResponse: Codable {
   let token: String
   let userId: String
   let username: String
+  let email: String?
+  let profile: UserProfileData?
+  let onboardingCompletedAt: String?
   let expiresAtEpochSeconds: Int
 }
 
 struct AuthMeResponse: Codable {
   let userId: String
   let username: String
+  let email: String?
+  let profile: UserProfileData?
+  let onboardingCompletedAt: String?
 }
 
 // MARK: - Household request/response structs
