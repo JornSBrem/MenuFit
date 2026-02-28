@@ -701,6 +701,68 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
+    if (path === "/api/v3/household/remove-member" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const { householdId, userId } = body as { householdId?: string; userId?: string };
+      if (!householdId || !userId) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "householdId en userId zijn verplicht." } });
+        return;
+      }
+      try {
+        const household = householdService.removeMember(householdId, userId, userAuth.data.subjectId);
+        json(res, 200, { ok: true, data: { householdId: household.householdId, memberCount: household.members.length } });
+      } catch (err) {
+        const code2 = err instanceof HouseholdServiceError ? err.code : "REMOVE_FAILED";
+        const message = err instanceof Error ? err.message : "Lid verwijderen mislukt.";
+        json(res, 409, { ok: false, error: { code: code2, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/household/leave" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      try {
+        householdService.leaveHousehold(userAuth.data.subjectId);
+        json(res, 200, { ok: true, data: { left: true } });
+      } catch (err) {
+        const code2 = err instanceof HouseholdServiceError ? err.code : "LEAVE_FAILED";
+        const message = err instanceof Error ? err.message : "Gezin verlaten mislukt.";
+        json(res, 409, { ok: false, error: { code: code2, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/auth/delete-account" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      try {
+        const userId = userAuth.data.subjectId;
+        // Verwijder gebruiker uit alle gezinnen
+        householdService.removeUserFromAllHouseholds(userId);
+        // Verwijder het account
+        userAccountService.deleteAccount(userId);
+        // Sessie ongeldig maken
+        lifecycle.invalidateBySubject(userId);
+        json(res, 200, { ok: true, data: { deleted: true } });
+      } catch (err) {
+        const code2 = err instanceof Error && "code" in err ? (err as any).code : "DELETE_FAILED";
+        const message = err instanceof Error ? err.message : "Account verwijderen mislukt.";
+        json(res, 409, { ok: false, error: { code: code2, message } });
+      }
+      return;
+    }
+
     if (path === "/api/v3/household/groceries" && method === "GET") {
       const userAuth = getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {

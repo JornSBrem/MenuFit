@@ -595,16 +595,50 @@ final class UserFlowViewModel: ObservableObject {
     configMessage = nil
     defer { isConfigLoading = false }
     do {
-      let result = try await api.renameHousehold(householdId: household.householdId, name: name)
+      _ = try await api.renameHousehold(householdId: household.householdId, name: name)
       configMessage = "Gezinsnaam bijgewerkt."
-      configHouseholdRecord = HouseholdRecord(
-        householdId: household.householdId,
-        name: result.name,
-        createdAt: household.createdAt,
-        updatedAt: household.updatedAt,
-        members: household.members,
-        inviteCode: household.inviteCode
-      )
+      await loadHouseholdStatus()
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  func removeMember(userId: String) async {
+    guard let household = configHouseholdRecord else { return }
+    isConfigLoading = true
+    configMessage = nil
+    defer { isConfigLoading = false }
+    do {
+      _ = try await api.removeMember(householdId: household.householdId, userId: userId)
+      configMessage = "Lid verwijderd."
+      await loadHouseholdStatus()
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  func leaveHousehold() async {
+    isConfigLoading = true
+    configMessage = nil
+    defer { isConfigLoading = false }
+    do {
+      _ = try await api.leaveHousehold()
+      configMessage = "Je hebt het gezin verlaten."
+      configHouseholdRecord = nil
+      configHousehold = nil
+      await loadHouseholdStatus()
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  func deleteAccount() async {
+    isConfigLoading = true
+    configMessage = nil
+    defer { isConfigLoading = false }
+    do {
+      _ = try await api.deleteAccount()
+      clearAuthSession()
     } catch {
       lastError = error.localizedDescription
     }

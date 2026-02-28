@@ -147,6 +147,17 @@ export class UserAccountService {
     });
   }
 
+  /** Verwijder een gebruikersaccount permanent. */
+  deleteAccount(userId: string): void {
+    this.stateStore.update((draft) => {
+      const index = draft.userAccounts.findIndex((a) => a.userId === userId);
+      if (index === -1) {
+        throw new UserAccountServiceError("USER_NOT_FOUND", "Gebruiker niet gevonden.");
+      }
+      draft.userAccounts.splice(index, 1);
+    });
+  }
+
   findById(userId: string): UserAccountRecord | undefined {
     const state = this.stateStore.read();
     return state.userAccounts.find((a) => a.userId === userId);

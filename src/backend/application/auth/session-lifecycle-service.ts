@@ -237,6 +237,28 @@ export class SessionLifecycleService {
     }
   }
 
+  /** Trek alle sessies van een gebruiker in (voor account-verwijdering). */
+  invalidateBySubject(subjectId: string): void {
+    const now = this.nowEpochSeconds();
+    let changed = false;
+    for (const session of this.appSessionsByTokenId.values()) {
+      if (session.subjectId === subjectId && !session.revokedAtEpochSeconds) {
+        session.revokedAtEpochSeconds = now;
+        changed = true;
+      }
+    }
+    // Verwijder ook provider-sessies
+    for (const [key, session] of this.providerSessionsByKey.entries()) {
+      if (session.subjectId === subjectId) {
+        this.providerSessionsByKey.delete(key);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.persist();
+    }
+  }
+
   upsertProviderSession(payload: ProviderSessionPayload): ProviderSessionRecord {
     const subjectId = assertNonEmpty(payload.subjectId, "subjectId");
     const accessToken = assertNonEmpty(payload.accessToken, "accessToken");
