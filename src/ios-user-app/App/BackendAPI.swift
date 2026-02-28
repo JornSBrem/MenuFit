@@ -108,6 +108,25 @@ final class BackendAPI {
     try await post(path: "/api/v3/household/join-by-code", body: HouseholdJoinRequest(code: code))
   }
 
+  func renameHousehold(householdId: String, name: String) async throws -> HouseholdRenameResponse {
+    try await post(path: "/api/v3/household/rename", body: HouseholdRenameRequest(householdId: householdId, name: name))
+  }
+
+  func setMemberKcal(kcal: Int) async throws -> HouseholdSetKcalResponse {
+    try await post(path: "/api/v3/household/set-member-kcal", body: HouseholdSetKcalRequest(kcal: kcal))
+  }
+
+  func fetchHouseholdGroceries(year: Int, week: Int, basePersons: Int) async throws -> HouseholdGroceriesResponse {
+    try await get(
+      path: "/api/v3/household/groceries",
+      query: [
+        URLQueryItem(name: "year", value: String(year)),
+        URLQueryItem(name: "week", value: String(week)),
+        URLQueryItem(name: "basePersons", value: String(basePersons)),
+      ]
+    )
+  }
+
   private func get<T: Decodable>(path: String, query: [URLQueryItem] = []) async throws -> T {
     guard var components = URLComponents(
       url: baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))),

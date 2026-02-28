@@ -56,6 +56,8 @@ final class UserFlowViewModel: ObservableObject {
 
   // Config screen state
   @Published var configHousehold: HouseholdCreateResponse?
+  @Published var configHouseholdRecord: HouseholdRecord?
+  @Published var householdGroceries: HouseholdGroceriesResponse?
   @Published var isConfigLoading = false
   @Published var configMessage: String?
 
@@ -96,6 +98,7 @@ final class UserFlowViewModel: ObservableObject {
     }
     didBootstrap = true
     await loadHouseholdStatus()
+    await syncKcalToHousehold()
     await loadWeekBundle()
     await loadRecipes()
   }
@@ -233,7 +236,10 @@ final class UserFlowViewModel: ObservableObject {
     guard fixedKcals.contains(kcal) else { return }
     selection.kcal = kcal
     defaults.set(kcal, forKey: "menufit.preferred-kcal")
-    Task { await loadWeekBundle() }
+    Task {
+      await syncKcalToHousehold()
+      await loadWeekBundle()
+    }
   }
 
   func toggleFavorite(_ recipeId: String) {
@@ -583,6 +589,48 @@ final class UserFlowViewModel: ObservableObject {
     }
   }
 
+  func renameHousehold(_ name: String) async {
+    guard let household = configHouseholdRecord else { return }
+    isConfigLoading = true
+    configMessage = nil
+    defer { isConfigLoading = false }
+    do {
+      let result = try await api.renameHousehold(householdId: household.householdId, name: name)
+      configMessage = "Gezinsnaam bijgewerkt."
+      configHouseholdRecord = HouseholdRecord(
+        householdId: household.householdId,
+        name: result.name,
+        createdAt: household.createdAt,
+        updatedAt: household.updatedAt,
+        members: household.members,
+        inviteCode: household.inviteCode
+      )
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  func syncKcalToHousehold() async {
+    do {
+      _ = try await api.setMemberKcal(kcal: selection.kcal)
+    } catch {
+      // Niet-kritiek: stil negeren als backend onbereikbaar is
+    }
+  }
+
+  func loadHouseholdGroceries() async {
+    guard authGateState == .ready else { return }
+    do {
+      householdGroceries = try await api.fetchHouseholdGroceries(
+        year: selection.year,
+        week: selection.week,
+        basePersons: selection.basePersons
+      )
+    } catch {
+      householdGroceries = nil
+    }
+  }
+
   private func buildCandidates(
     for unresolvedName: String,
     groceries: [GoldGroceryTotalView]
@@ -652,10 +700,12 @@ final class UserFlowViewModel: ObservableObject {
     checkedGroceryItemIds = []
     recipes = []
     recipesSearchText = ""
+    configHouseholdRecord = nil
+    householdGroceries = nil
     didBootstrap = false
   }
 
-  private func loadHouseholdStatus() async {
+  func loadHouseholdStatus() async {
     guard authGateState == .ready else {
       return
     }
@@ -664,6 +714,7 @@ final class UserFlowViewModel: ObservableObject {
       let response = try await api.fetchHouseholdStatus()
       let members = response.household?.members ?? []
       householdMembers = members
+      configHouseholdRecord = response.household
 
       if selectedMemberId.isEmpty {
         let currentSubject = authSession?.subjectId ?? authDraft.subjectId
@@ -675,9 +726,12 @@ final class UserFlowViewModel: ObservableObject {
       let fallbackMember = HouseholdMember(
         userId: authSession?.subjectId ?? authDraft.subjectId,
         role: "head",
-        joinedAt: ""
+        joinedAt: "",
+        displayName: authSession?.username,
+        kcalPreference: nil
       )
       householdMembers = [fallbackMember]
+      configHouseholdRecord = nil
       if selectedMemberId.isEmpty {
         selectedMemberId = fallbackMember.userId
       }

@@ -244,15 +244,19 @@ struct HouseholdStatusResponse: Codable {
 
 struct HouseholdRecord: Codable {
   let householdId: String
+  let name: String?
   let createdAt: String
   let updatedAt: String
   let members: [HouseholdMember]
+  let inviteCode: String?
 }
 
 struct HouseholdMember: Codable, Identifiable {
   let userId: String
   let role: String
   let joinedAt: String
+  let displayName: String?
+  let kcalPreference: Int?
 
   var id: String { userId }
 }
@@ -349,6 +353,43 @@ struct HouseholdJoinRequest: Codable {
 struct HouseholdJoinResponse: Codable {
   let householdId: String
   let memberCount: Int
+}
+
+struct HouseholdRenameRequest: Codable {
+  let householdId: String
+  let name: String
+}
+
+struct HouseholdRenameResponse: Codable {
+  let householdId: String
+  let name: String?
+}
+
+struct HouseholdSetKcalRequest: Codable {
+  let kcal: Int
+}
+
+struct HouseholdSetKcalResponse: Codable {
+  let householdId: String
+}
+
+struct HouseholdGroceryMemberBreakdown: Codable, Identifiable {
+  let userId: String
+  let displayName: String
+  let kcal: Int
+  let itemCount: Int
+
+  var id: String { userId }
+}
+
+struct HouseholdGroceriesResponse: Codable {
+  let householdId: String
+  let year: Int
+  let week: Int
+  let basePersons: Int
+  let memberCount: Int
+  let memberBreakdown: [HouseholdGroceryMemberBreakdown]
+  let groceries: [GoldGroceryTotalView]
 }
 
 // MARK: - Picnic link structs

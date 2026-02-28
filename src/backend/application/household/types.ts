@@ -6,10 +6,14 @@ export interface HouseholdMember {
   userId: string;
   role: HouseholdMemberRole;
   joinedAt: string;
+  /** Bewaard kcal-voorkeur zodat gezinsaggregatie mogelijk is */
+  kcalPreference?: number;
 }
 
 export interface HouseholdRecord {
   householdId: string;
+  /** Optionele naam die het gezinshoofd kan instellen */
+  name?: string;
   createdAt: string;
   updatedAt: string;
   members: HouseholdMember[];
