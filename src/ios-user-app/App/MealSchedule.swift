@@ -67,12 +67,12 @@ struct MealSchedule: Codable, Equatable {
 
   func save(defaults: UserDefaults = .standard) {
     if let data = try? JSONEncoder().encode(self) {
-      defaults.set(data, forKey: storageKey)
+      defaults.set(data, forKey: Self.storageKey)
     }
     // Schrijf ook naar App Group zodat de widget dezelfde tijden kent
     if let shared = UserDefaults(suiteName: AppGroupConstants.suiteName),
        let data = try? JSONEncoder().encode(self) {
-      shared.set(data, forKey: storageKey)
+      shared.set(data, forKey: Self.storageKey)
     }
   }
 
