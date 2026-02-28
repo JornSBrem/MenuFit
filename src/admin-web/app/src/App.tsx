@@ -83,10 +83,19 @@ export function App() {
 
   const saved = loadSavedSession();
 
+  // In productie (gehost op de container via nginx) wijzen we naar dezelfde origin;
+  // nginx proxyt /api naar de backend op poort 3000.
+  // In dev (localhost) wijzen we direct naar de backend dev server.
+  const defaultBackendUrl =
+    saved.baseUrl ??
+    (window.location.hostname === "localhost"
+      ? "http://localhost:3000"
+      : window.location.origin);
+
   if (!session) {
     return (
       <LoginGate
-        defaultBaseUrl={saved.baseUrl ?? "http://localhost:3000"}
+        defaultBaseUrl={defaultBackendUrl}
         defaultOperatorId={saved.operatorId ?? ""}
         onLogin={handleLogin}
       />
