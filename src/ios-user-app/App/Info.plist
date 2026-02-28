@@ -20,42 +20,23 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<false/>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>localhost</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSIncludesSubdomains</key>
-				<false/>
-			</dict>
-			<key>192.168.1.172</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSIncludesSubdomains</key>
-				<false/>
-			</dict>
-		</dict>
-	</dict>
 	<key>MenuFitBackendBaseURL</key>
 	<string>https://app.menufit.uk</string>
+	<key>MenuFitHouseholdId</key>
+	<string>default-household</string>
+	<key>MenuFitPicnicAccountId</key>
+	<string>picnic-default</string>
 	<key>MenuFitUserAccessToken</key>
 	<string></string>
 	<key>MenuFitUserSubjectId</key>
 	<string>ios-user</string>
-	<key>MenuFitPicnicAccountId</key>
-	<string>picnic-default</string>
-	<key>MenuFitHouseholdId</key>
-	<string>default-household</string>
 	<key>MenuFitUserTokenExpiryEpochSeconds</key>
 	<integer>0</integer>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
