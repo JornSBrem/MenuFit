@@ -729,10 +729,17 @@ export class PersistentStateStore {
     const result = spawnSync(
       "psql",
       [connectionString, "-X", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1"],
-      { encoding: "utf8", input: sql },
+      { encoding: "utf8", input: sql, timeout: 15_000 },
     );
+    if (result.error) {
+      // Spawn-level failure (e.g. psql not found, timeout, signal)
+      throw new Error(`psql spawn error: ${result.error.message}`);
+    }
     if (result.status !== 0) {
-      throw new Error(result.stderr?.trim() || "Postgres command failed.");
+      const stderr = result.stderr?.trim() || "";
+      const stdout = result.stdout?.trim() || "";
+      const details = stderr || stdout || "(no output)";
+      throw new Error(`Postgres command failed (exit ${result.status}): ${details}`);
     }
     return result.stdout ?? "";
   }
