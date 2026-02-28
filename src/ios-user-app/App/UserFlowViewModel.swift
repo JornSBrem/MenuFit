@@ -53,6 +53,7 @@ final class UserFlowViewModel: ObservableObject {
   @Published var checkedGroceryItemIds = Set<String>()
   @Published var favoriteRecipeIds = Set<String>()
   @Published var picnicEnabled: Bool = false
+  @Published var mealNotificationsEnabled: Bool = false
 
   // Config screen state
   @Published var configHousehold: HouseholdCreateResponse?
@@ -89,6 +90,7 @@ final class UserFlowViewModel: ObservableObject {
     let savedFavorites = defaults.stringArray(forKey: "menufit.favorite-recipes") ?? []
     favoriteRecipeIds = Set(savedFavorites)
     picnicEnabled = defaults.bool(forKey: "menufit.picnic-enabled")
+    mealNotificationsEnabled = defaults.bool(forKey: "menufit.meal-notifications-enabled")
     refreshAuthState()
   }
 
@@ -122,6 +124,66 @@ final class UserFlowViewModel: ObservableObject {
   func setPicnicEnabled(_ enabled: Bool) {
     picnicEnabled = enabled
     defaults.set(enabled, forKey: "menufit.picnic-enabled")
+  }
+
+  func setMealNotificationsEnabled(_ enabled: Bool) {
+    mealNotificationsEnabled = enabled
+    defaults.set(enabled, forKey: "menufit.meal-notifications-enabled")
+  }
+
+  /// Herplan alle maaltijdnotificaties en werk widget data bij.
+  func rescheduleMealNotifications() async {
+    guard mealNotificationsEnabled else { return }
+    let meals = (summary?.meals ?? []).map { meal in
+      MealDayEntry(
+        dayLabel: meal.dayLabel,
+        mealLabel: meal.mealLabel,
+        recipeName: meal.recipeName,
+        kcal: meal.kcal
+      )
+    }
+    let schedule = MealSchedule.load(defaults: defaults)
+    await MealNotificationManager.shared.scheduleMealNotifications(
+      meals: meals,
+      schedule: schedule
+    )
+  }
+
+  /// Schrijf huidige dagdata naar App Group voor de widget.
+  private func updateWidgetData() {
+    let schedule = MealSchedule.load(defaults: defaults)
+    let todayLabel = todayDayLabel()
+    let todayMeals = (summary?.meals ?? [])
+      .filter { normalizeDayLabel($0.dayLabel) == normalizeDayLabel(todayLabel) }
+
+    let widgetMeals = todayMeals.map { meal -> WidgetMealEntry in
+      let moment = schedule.momentForMealLabel(meal.mealLabel)
+      return WidgetMealEntry(
+        mealId: meal.mealId,
+        mealLabel: meal.mealLabel,
+        recipeName: meal.recipeName,
+        imageUrl: meal.imageUrl,
+        kcal: meal.kcal,
+        scheduledHour: moment?.hour,
+        scheduledMinute: moment?.minute
+      )
+    }
+    WidgetDataWriter.writeTodayMeals(
+      widgetMeals,
+      dayLabel: todayLabel,
+      year: selection.year,
+      week: selection.week
+    )
+
+    // Grocery summary
+    if let groceries {
+      let checked = checkedGroceryItemIds.count
+      let total = groceries.groceries.count
+      let top = groceries.groceries.prefix(5).map(\.canonicalName)
+      WidgetDataWriter.writeGrocerySummary(
+        WidgetGrocerySummary(totalItems: total, checkedItems: checked, topItems: top)
+      )
+    }
   }
 
   /// Zoek een recept op in de geladen receptenlijst (voor fallback ingrediënten/stappen)
@@ -225,6 +287,8 @@ final class UserFlowViewModel: ObservableObject {
       isUsingOfflineCache = false
       updateDaySelectionAfterWeekLoad()
       loadChecklistProgress()
+      updateWidgetData()
+      await rescheduleMealNotifications()
 
       let bundle = CachedWeekBundle(
         selection: selection,
@@ -241,6 +305,8 @@ final class UserFlowViewModel: ObservableObject {
         isUsingOfflineCache = true
         updateDaySelectionAfterWeekLoad()
         loadChecklistProgress()
+        updateWidgetData()
+        await rescheduleMealNotifications()
         lastError = AppStrings.text(.offlineDataLoaded, error.localizedDescription)
       } catch {
         lastError = AppStrings.text(.loadWeekOnlineOrOfflineFailed)

@@ -13,6 +13,10 @@ struct ConfigScreen: View {
   @State private var showLeaveAlert = false
   @State private var memberToRemove: HouseholdMember?
   @State private var showProfileEdit = false
+  @State private var mealSchedule = MealSchedule.load()
+  @State private var notificationsEnabled = false
+  @State private var showTimePicker = false
+  @State private var editingMomentIndex: Int?
 
   var body: some View {
     NavigationView {
@@ -349,6 +353,82 @@ struct ConfigScreen: View {
           Label("Koppel aan gezin", systemImage: "link.badge.plus")
         }
 
+        // MARK: Maaltijdmeldingen
+        Section {
+          Toggle("Maaltijdmeldingen", isOn: $notificationsEnabled)
+            .onChange(of: notificationsEnabled) { _, newValue in
+              if newValue {
+                Task {
+                  let granted = await MealNotificationManager.shared.requestPermission()
+                  if !granted {
+                    notificationsEnabled = false
+                  } else {
+                    viewModel.setMealNotificationsEnabled(true)
+                    await viewModel.rescheduleMealNotifications()
+                  }
+                }
+              } else {
+                viewModel.setMealNotificationsEnabled(false)
+                Task { await MealNotificationManager.shared.removeAllMealNotifications() }
+              }
+            }
+
+          if notificationsEnabled {
+            ForEach(Array(mealSchedule.moments.enumerated()), id: \.element.id) { index, moment in
+              Button {
+                editingMomentIndex = index
+                showTimePicker = true
+              } label: {
+                HStack(spacing: 10) {
+                  Image(systemName: MFColors.mealMomentIcon(moment.label))
+                    .foregroundColor(MFColors.mealMomentColor(moment.label))
+                    .frame(width: 24)
+                  Text(moment.label)
+                    .foregroundColor(.primary)
+                  Spacer()
+                  Text(moment.timeString)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(MFColors.accent)
+                    .monospacedDigit()
+                }
+              }
+            }
+
+            Button {
+              mealSchedule = .default
+              mealSchedule.save()
+              Task { await viewModel.rescheduleMealNotifications() }
+            } label: {
+              Label("Herstel standaardtijden", systemImage: "arrow.counterclockwise")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            }
+          }
+        } header: {
+          Label("Meldingen", systemImage: "bell.badge")
+        } footer: {
+          Text("Ontvang een herinnering bij elk eetmoment met wat je moet eten volgens je weekmenu.")
+        }
+        .onAppear {
+          notificationsEnabled = viewModel.mealNotificationsEnabled
+        }
+        .sheet(isPresented: $showTimePicker) {
+          if let index = editingMomentIndex {
+            MealTimePickerSheet(
+              moment: $mealSchedule.moments[index],
+              onSave: {
+                mealSchedule.save()
+                Task { await viewModel.rescheduleMealNotifications() }
+                showTimePicker = false
+              },
+              onCancel: {
+                showTimePicker = false
+              }
+            )
+            .presentationDetents([.height(300)])
+          }
+        }
+
         // MARK: Picnic integratie
         Section {
           Toggle("Picnic integratie", isOn: Binding(
@@ -413,6 +493,65 @@ struct ConfigScreen: View {
       }
       .navigationTitle("Instellingen")
       .navigationBarTitleDisplayMode(.large)
+    }
+  }
+}
+
+// MARK: - Meal Time Picker Sheet
+
+private struct MealTimePickerSheet: View {
+  @Binding var moment: MealMoment
+  let onSave: () -> Void
+  let onCancel: () -> Void
+
+  @State private var selectedDate = Date()
+
+  var body: some View {
+    NavigationView {
+      VStack(spacing: 20) {
+        HStack(spacing: 10) {
+          Image(systemName: MFColors.mealMomentIcon(moment.label))
+            .font(.title2)
+            .foregroundColor(MFColors.mealMomentColor(moment.label))
+          Text(moment.label)
+            .font(.title3.bold())
+        }
+        .padding(.top, 8)
+
+        DatePicker(
+          "Tijdstip",
+          selection: $selectedDate,
+          displayedComponents: .hourAndMinute
+        )
+        .datePickerStyle(.wheel)
+        .labelsHidden()
+        .environment(\.locale, Locale(identifier: "nl_NL"))
+
+        Spacer()
+      }
+      .padding()
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Annuleer") { onCancel() }
+        }
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Bewaar") {
+            let cal = Calendar.current
+            moment.hour = cal.component(.hour, from: selectedDate)
+            moment.minute = cal.component(.minute, from: selectedDate)
+            onSave()
+          }
+          .bold()
+        }
+      }
+    }
+    .onAppear {
+      // Stel de picker in op het huidige tijdstip van het moment
+      var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+      components.hour = moment.hour
+      components.minute = moment.minute
+      selectedDate = Calendar.current.date(from: components) ?? Date()
     }
   }
 }
