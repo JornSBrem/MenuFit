@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00A1B2C3D4E5F6A7B8C90001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 00A1B2C3D4E5F6A7B8C90002 /* Assets.xcassets */; };
 		00ED1399B5D2986D86AA615A /* UserFlowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 025733A3A85DF8C0EF97659F /* UserFlowViewModel.swift */; };
 		0453D7B346CF94B7BABF9C90 /* order-screen.png in Resources */ = {isa = PBXBuildFile; fileRef = DA85292A396845F477B05ABE /* order-screen.png */; };
 		07BC08D9558522998C9C3EE6 /* BackendAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5862F6F0387CA8260E450902 /* BackendAPI.swift */; };
@@ -67,6 +68,7 @@
 		E5F6A7B8C9D0E1F2A3B4C5D6 /* ConfigScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigScreen.swift; sourceTree = "<group>"; };
 		F9346B79CF692F41BADFEC8F /* MatchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScreen.swift; sourceTree = "<group>"; };
 		FD375DB99A1D8042CD754B02 /* OfflineCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineCacheStore.swift; sourceTree = "<group>"; };
+		00A1B2C3D4E5F6A7B8C90002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -101,6 +103,7 @@
 		9C96B33725F4D1EB780C2E70 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				00A1B2C3D4E5F6A7B8C90002 /* Assets.xcassets */,
 				2265786C8C844725BB4D6B7F /* AppEnvironment.swift */,
 				3F5ED2CBBE752E2434FEBB71 /* AuthSessionSetupView.swift */,
 				7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */,
@@ -141,6 +144,7 @@
 			buildConfigurationList = 569D973871D92E49EAD36F0F /* Build configuration list for PBXNativeTarget "MenuFitUserApp" */;
 			buildPhases = (
 				0C86AF19695C71BFB553D0E3 /* Sources */,
+				00A1B2C3D4E5F6A7B8C90003 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -211,6 +215,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		00A1B2C3D4E5F6A7B8C90003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00A1B2C3D4E5F6A7B8C90001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1170F57C5C4D0072E1DE7A49 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
