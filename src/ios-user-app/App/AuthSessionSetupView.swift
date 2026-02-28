@@ -43,7 +43,6 @@ struct AuthSessionSetupView: View {
           authContent
         }
       }
-      .navigationTitle("MenuFit")
       .navigationBarTitleDisplayMode(.inline)
     }
   }
@@ -51,99 +50,125 @@ struct AuthSessionSetupView: View {
   // MARK: - Login / Register Form
 
   private var authContent: some View {
-    Form {
-      Section {
-        VStack(alignment: .leading, spacing: 6) {
-          Text(isLoginMode ? "Welkom terug" : "Account aanmaken")
-            .font(.headline)
-          Text(isLoginMode
-            ? "Log in met je e-mail of gebruikersnaam."
-            : "Maak een nieuw account aan om MenuFit te gebruiken."
-          )
-          .font(.subheadline)
-          .foregroundColor(.secondary)
-        }
-        .padding(.vertical, 4)
-      }
+    ScrollView {
+      VStack(spacing: 0) {
 
-      Section {
+        // ── Brand header ──────────────────────────────────
+        VStack(spacing: 8) {
+          Image(systemName: "fork.knife.circle.fill")
+            .font(.system(size: 64))
+            .foregroundStyle(MFColors.brandGradient)
+          Text("MenuFit")
+            .font(.largeTitle.bold())
+            .foregroundStyle(MFColors.brandGradient)
+          Text(isLoginMode ? "Welkom terug" : "Account aanmaken")
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+        }
+        .padding(.top, 40)
+        .padding(.bottom, 28)
+
+        // ── Mode toggle ──────────────────────────────────
         Picker("", selection: $isLoginMode) {
           Text("Inloggen").tag(true)
           Text("Registreren").tag(false)
         }
         .pickerStyle(.segmented)
-      }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 20)
 
-      Section("Inloggegevens") {
-        TextField("E-mailadres", text: $email)
-          .textInputAutocapitalization(.never)
-          .autocorrectionDisabled(true)
-          .textContentType(.emailAddress)
-          .keyboardType(.emailAddress)
-          .accessibilityIdentifier("auth-email-field")
+        // ── Fields ───────────────────────────────────────
+        VStack(spacing: 12) {
+          authField(icon: "envelope.fill", placeholder: "E-mailadres", text: $email,
+                    contentType: .emailAddress, keyboard: .emailAddress,
+                    accessibilityId: "auth-email-field")
 
-        if !isLoginMode {
-          TextField("Gebruikersnaam", text: $username)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled(true)
-            .textContentType(.username)
-            .accessibilityIdentifier("auth-username-field")
+          if !isLoginMode {
+            authField(icon: "person.fill", placeholder: "Gebruikersnaam", text: $username,
+                      contentType: .username, accessibilityId: "auth-username-field")
+          }
+
+          authField(icon: "lock.fill", placeholder: "Wachtwoord", text: $password,
+                    isSecure: true, contentType: isLoginMode ? .password : .newPassword,
+                    accessibilityId: "auth-password-field")
+
+          if !isLoginMode {
+            authField(icon: "lock.rotation", placeholder: "Bevestig wachtwoord", text: $confirmPassword,
+                      isSecure: true, contentType: .newPassword,
+                      accessibilityId: "auth-confirm-password-field")
+          }
         }
+        .padding(.horizontal, 24)
 
-        SecureField("Wachtwoord", text: $password)
-          .textInputAutocapitalization(.never)
-          .autocorrectionDisabled(true)
-          .textContentType(isLoginMode ? .password : .newPassword)
-          .accessibilityIdentifier("auth-password-field")
-
-        if !isLoginMode {
-          SecureField("Bevestig wachtwoord", text: $confirmPassword)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled(true)
-            .textContentType(.newPassword)
-            .accessibilityIdentifier("auth-confirm-password-field")
-        }
-      }
-
-      Section {
+        // ── Submit ───────────────────────────────────────
         Button {
           submit()
         } label: {
-          HStack {
-            Spacer()
-            if isLoading {
-              ProgressView()
-            } else {
-              Text(isLoginMode ? "Inloggen" : "Account aanmaken")
-                .bold()
-            }
-            Spacer()
+          if isLoading {
+            ProgressView()
+              .tint(.white)
+          } else {
+            Text(isLoginMode ? "Inloggen" : "Account aanmaken")
           }
         }
+        .buttonStyle(.mfPrimary)
         .disabled(isLoading || !isFormValid)
+        .padding(.horizontal, 24)
+        .padding(.top, 20)
         .accessibilityIdentifier("auth-submit-button")
-      }
 
-      if let lastError = viewModel.lastError {
-        Section {
+        // ── Error ────────────────────────────────────────
+        if let lastError = viewModel.lastError {
           Text(lastError)
-            .foregroundColor(.red)
+            .foregroundColor(MFColors.error)
             .font(.footnote)
+            .padding(.horizontal, 24)
+            .padding(.top, 12)
         }
-      }
 
-      if viewModel.authGateState == .expired {
-        Section {
+        if viewModel.authGateState == .expired {
           Button("Sessie wissen", role: .destructive) {
             viewModel.clearAuthSession()
           }
+          .padding(.top, 12)
         }
+
+        Spacer(minLength: 60)
       }
     }
+    .background(Color(.systemGroupedBackground))
     .onChange(of: isLoginMode) { _ in
       viewModel.lastError = nil
       confirmPassword = ""
     }
+  }
+
+  private func authField(icon: String, placeholder: String, text: Binding<String>,
+                          isSecure: Bool = false, contentType: UITextContentType? = nil,
+                          keyboard: UIKeyboardType = .default, accessibilityId: String = "") -> some View {
+    HStack(spacing: 12) {
+      Image(systemName: icon)
+        .foregroundColor(MFColors.accent)
+        .font(.subheadline)
+        .frame(width: 20)
+      Group {
+        if isSecure {
+          SecureField(placeholder, text: text)
+        } else {
+          TextField(placeholder, text: text)
+        }
+      }
+      .textInputAutocapitalization(.never)
+      .autocorrectionDisabled(true)
+      .textContentType(contentType)
+      .keyboardType(keyboard)
+      .accessibilityIdentifier(accessibilityId)
+    }
+    .padding(14)
+    .background(
+      RoundedRectangle(cornerRadius: 12, style: .continuous)
+        .fill(Color(.secondarySystemGroupedBackground))
+    )
   }
 
   private var isFormValid: Bool {
@@ -216,75 +241,99 @@ struct AuthSessionSetupView: View {
 
   // Step 1: Profiel
   private var onboardingProfileStep: some View {
-    Form {
-      Section {
-        VStack(alignment: .leading, spacing: 6) {
-          Text("Over jou")
-            .font(.headline)
-          Text("Vul je gegevens in zodat we je een persoonlijk kcal-advies kunnen geven.")
-            .font(.subheadline)
+    ScrollView {
+      VStack(spacing: 0) {
+        MFGradientHeader(title: "Over jou", subtitle: "Vul je gegevens in voor een persoonlijk kcal-advies.")
+          .padding(.top, 12)
+
+        VStack(spacing: 16) {
+          // Persoonlijk
+          VStack(alignment: .leading, spacing: 10) {
+            MFSectionHeader(title: "Persoonlijk", icon: "person")
+            VStack(spacing: 10) {
+              TextField("Weergavenaam", text: $displayName)
+                .textContentType(.name)
+                .padding(12)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+              TextField("Geboortejaar", text: $birthYear)
+                .keyboardType(.numberPad)
+                .padding(12)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+              Picker("Geslacht", selection: $gender) {
+                ForEach(genderOptions, id: \.0) { value, label in
+                  Text(label).tag(value)
+                }
+              }
+              .pickerStyle(.segmented)
+            }
+            .padding(.horizontal, 20)
+          }
+
+          // Lichaamsgegevens
+          VStack(alignment: .leading, spacing: 10) {
+            MFSectionHeader(title: "Lichaamsgegevens", icon: "figure.stand")
+            HStack(spacing: 10) {
+              HStack {
+                TextField("Gewicht", text: $weightKg)
+                  .keyboardType(.decimalPad)
+                Text("kg").foregroundColor(.secondary).font(.subheadline)
+              }
+              .padding(12)
+              .background(Color(.secondarySystemGroupedBackground))
+              .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+              HStack {
+                TextField("Lengte", text: $heightCm)
+                  .keyboardType(.decimalPad)
+                Text("cm").foregroundColor(.secondary).font(.subheadline)
+              }
+              .padding(12)
+              .background(Color(.secondarySystemGroupedBackground))
+              .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .padding(.horizontal, 20)
+          }
+
+          // Activiteitsniveau
+          VStack(alignment: .leading, spacing: 10) {
+            MFSectionHeader(title: "Activiteitsniveau", icon: "figure.run")
+            Picker("Activiteit", selection: $activityLevel) {
+              ForEach(activityOptions, id: \.0) { value, label in
+                Text(label).tag(value)
+              }
+            }
+            .pickerStyle(.menu)
+            .padding(.horizontal, 20)
+          }
+
+          // Navigatie
+          HStack {
+            Button("Overslaan") {
+              onboardingStep = 1
+            }
             .foregroundColor(.secondary)
-        }
-        .padding(.vertical, 4)
-      }
 
-      Section("Persoonlijk") {
-        TextField("Weergavenaam", text: $displayName)
-          .textContentType(.name)
+            Spacer()
 
-        TextField("Geboortejaar", text: $birthYear)
-          .keyboardType(.numberPad)
-
-        Picker("Geslacht", selection: $gender) {
-          ForEach(genderOptions, id: \.0) { value, label in
-            Text(label).tag(value)
+            Button {
+              saveProfileAndContinue()
+            } label: {
+              Text("Volgende")
+            }
+            .buttonStyle(.mfPrimary)
+            .frame(width: 160)
           }
+          .padding(.horizontal, 24)
+          .padding(.top, 8)
         }
-      }
+        .padding(.top, 8)
 
-      Section("Lichaamsgegevens") {
-        HStack {
-          TextField("Gewicht", text: $weightKg)
-            .keyboardType(.decimalPad)
-          Text("kg")
-            .foregroundColor(.secondary)
-        }
-
-        HStack {
-          TextField("Lengte", text: $heightCm)
-            .keyboardType(.decimalPad)
-          Text("cm")
-            .foregroundColor(.secondary)
-        }
-      }
-
-      Section("Activiteitsniveau") {
-        Picker("Activiteit", selection: $activityLevel) {
-          ForEach(activityOptions, id: \.0) { value, label in
-            Text(label).tag(value)
-          }
-        }
-        .pickerStyle(.menu)
-      }
-
-      Section {
-        HStack {
-          Button("Overslaan") {
-            onboardingStep = 1
-          }
-          .foregroundColor(.secondary)
-
-          Spacer()
-
-          Button {
-            saveProfileAndContinue()
-          } label: {
-            Text("Volgende")
-              .bold()
-          }
-        }
+        Spacer(minLength: 40)
       }
     }
+    .background(Color(.systemGroupedBackground))
   }
 
   private func saveProfileAndContinue() {
@@ -319,86 +368,99 @@ struct AuthSessionSetupView: View {
 
   // Step 2: Kcal keuze
   private var onboardingKcalStep: some View {
-    Form {
-      Section {
-        VStack(alignment: .leading, spacing: 6) {
-          Text("Dagelijks kcal-doel")
-            .font(.headline)
-          Text("Kies hoeveel kilocalorieën je per dag wilt eten. We passen je weekmenu hierop aan.")
-            .font(.subheadline)
-            .foregroundColor(.secondary)
-        }
-        .padding(.vertical, 4)
-      }
+    ScrollView {
+      VStack(spacing: 0) {
+        MFGradientHeader(title: "Dagelijks kcal-doel", subtitle: "Kies hoeveel kilocalorieën je per dag wilt eten.")
+          .padding(.top, 12)
 
-      if let suggested = viewModel.suggestedKcal {
-        Section {
+        VStack(spacing: 16) {
+          // Persoonlijk advies
+          if let suggested = viewModel.suggestedKcal {
+            Button {
+              withAnimation(.snappy) { selectedKcal = suggested }
+            } label: {
+              HStack(spacing: 12) {
+                Image(systemName: "sparkles")
+                  .font(.title3)
+                  .foregroundStyle(MFColors.brandGradient)
+                VStack(alignment: .leading, spacing: 2) {
+                  Text("Persoonlijk advies")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.primary)
+                  Text("\(suggested) kcal/dag op basis van je profiel")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+                Spacer()
+                if selectedKcal == suggested {
+                  Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(MFColors.success)
+                    .font(.title3)
+                }
+              }
+              .mfCard(padding: 14, cornerRadius: 14)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+          }
+
+          // Vaste niveaus
+          VStack(alignment: .leading, spacing: 10) {
+            MFSectionHeader(title: "Kies een niveau", icon: "flame")
+            VStack(spacing: 6) {
+              ForEach(viewModel.fixedKcals, id: \.self) { kcal in
+                let selected = selectedKcal == kcal
+                Button {
+                  withAnimation(.snappy) { selectedKcal = kcal }
+                } label: {
+                  HStack {
+                    Text("\(kcal) kcal")
+                      .font(.subheadline.weight(selected ? .bold : .regular))
+                      .foregroundColor(.primary)
+                    Spacer()
+                    if selected {
+                      Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(MFColors.success)
+                    }
+                  }
+                  .mfCard(padding: 14, cornerRadius: 12)
+                  .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                      .strokeBorder(selected ? MFColors.accent : .clear, lineWidth: 2)
+                  )
+                }
+                .buttonStyle(.plain)
+              }
+            }
+            .padding(.horizontal, 16)
+          }
+
+          // Navigatie
           HStack {
-            Image(systemName: "sparkles")
-              .foregroundColor(.orange)
-            VStack(alignment: .leading) {
-              Text("Persoonlijk advies")
-                .font(.subheadline)
-                .bold()
-              Text("Op basis van je profiel raden we \(suggested) kcal/dag aan.")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            Button("Terug") {
+              onboardingStep = 0
             }
-          }
-          .padding(.vertical, 4)
+            .foregroundColor(.secondary)
 
-          Button {
-            selectedKcal = suggested
-          } label: {
-            HStack {
-              Text("\(suggested) kcal")
-                .bold()
-              Spacer()
-              if selectedKcal == suggested {
-                Image(systemName: "checkmark.circle.fill")
-                  .foregroundColor(.green)
-              }
+            Spacer()
+
+            Button {
+              finishOnboarding()
+            } label: {
+              Text("Afronden")
             }
+            .buttonStyle(.mfPrimary)
+            .frame(width: 160)
           }
+          .padding(.horizontal, 24)
+          .padding(.top, 8)
         }
-      }
+        .padding(.top, 8)
 
-      Section("Of kies een vast niveau") {
-        ForEach(viewModel.fixedKcals, id: \.self) { kcal in
-          Button {
-            selectedKcal = kcal
-          } label: {
-            HStack {
-              Text("\(kcal) kcal")
-              Spacer()
-              if selectedKcal == kcal {
-                Image(systemName: "checkmark.circle.fill")
-                  .foregroundColor(.green)
-              }
-            }
-          }
-          .foregroundColor(.primary)
-        }
-      }
-
-      Section {
-        HStack {
-          Button("Terug") {
-            onboardingStep = 0
-          }
-          .foregroundColor(.secondary)
-
-          Spacer()
-
-          Button {
-            finishOnboarding()
-          } label: {
-            Text("Afronden")
-              .bold()
-          }
-        }
+        Spacer(minLength: 40)
       }
     }
+    .background(Color(.systemGroupedBackground))
   }
 
   private func finishOnboarding() {
@@ -423,12 +485,12 @@ struct AuthSessionSetupView: View {
     VStack(spacing: 24) {
       Spacer()
       Image(systemName: "checkmark.seal.fill")
-        .font(.system(size: 64))
-        .foregroundColor(.green)
+        .font(.system(size: 72))
+        .foregroundStyle(MFColors.brandGradient)
       Text("Welkom bij MenuFit!")
-        .font(.title)
-        .bold()
-      Text("Je account is ingesteld. Geniet van je persoonlijke weekmenu's.")
+        .font(.largeTitle.bold())
+        .foregroundStyle(MFColors.brandGradient)
+      Text("Je account is ingesteld.\nGeniet van je persoonlijke weekmenu's.")
         .font(.body)
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
@@ -439,12 +501,11 @@ struct AuthSessionSetupView: View {
         Task { await viewModel.completeOnboardingFlow() }
       } label: {
         Text("Aan de slag!")
-          .bold()
-          .frame(maxWidth: .infinity)
       }
-      .buttonStyle(.borderedProminent)
+      .buttonStyle(.mfPrimary)
       .padding(.horizontal, 32)
-      .padding(.bottom, 40)
+      .padding(.bottom, 48)
     }
+    .background(Color(.systemGroupedBackground))
   }
 }

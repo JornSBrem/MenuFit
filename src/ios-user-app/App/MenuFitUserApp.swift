@@ -40,9 +40,12 @@ private struct AppRootView: View {
           .task {
             await viewModel.bootstrapIfNeeded()
           }
+          .transition(.opacity.combined(with: .move(edge: .trailing)))
       } else {
         AuthSessionSetupView()
+          .transition(.opacity.combined(with: .move(edge: .leading)))
       }
     }
+    .animation(.easeInOut(duration: 0.35), value: viewModel.authGateState == .ready)
   }
 }

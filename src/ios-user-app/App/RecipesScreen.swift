@@ -15,120 +15,116 @@ struct RecipesScreen: View {
 
   var body: some View {
     NavigationView {
-      VStack(spacing: 0) {
+      ScrollView {
+        VStack(alignment: .leading, spacing: 0) {
 
-        // ── Zoekbalk ─────────────────────────────────────────
-        HStack(spacing: 8) {
-          Image(systemName: "magnifyingglass")
-            .foregroundColor(.secondary)
-          TextField("Zoek recept...", text: $viewModel.recipesSearchText)
-            .autocorrectionDisabled()
-        }
-        .padding(10)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(10)
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-
-        // ── Filters + telling ─────────────────────────────────
-        HStack(spacing: 8) {
-          if viewModel.isRecipesLoading {
-            Text("Recepten laden...")
-              .font(.caption).foregroundColor(.secondary)
-          } else {
-            Text("\(displayedRecipes.count) recept\(displayedRecipes.count == 1 ? "" : "en")")
-              .font(.caption).foregroundColor(.secondary)
+          // ── Zoekbalk ─────────────────────────────────────────
+          HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+              .foregroundColor(.secondary)
+              .font(.subheadline)
+            TextField("Zoek recept...", text: $viewModel.recipesSearchText)
+              .autocorrectionDisabled()
+              .font(.subheadline)
           }
+          .padding(12)
+          .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+              .fill(Color(.secondarySystemGroupedBackground))
+          )
+          .padding(.horizontal, 16)
+          .padding(.top, 12)
 
-          Spacer()
-
-          // Favorieten filter
-          Button {
-            showOnlyFavorites.toggle()
-          } label: {
-            HStack(spacing: 4) {
-              Image(systemName: showOnlyFavorites ? "heart.fill" : "heart")
-                .foregroundColor(showOnlyFavorites ? .red : .secondary)
-              Text("Favorieten")
-                .font(.caption)
-                .foregroundColor(showOnlyFavorites ? .red : .secondary)
+          // ── Filters ──────────────────────────────────────────
+          HStack(spacing: 8) {
+            if viewModel.isRecipesLoading {
+              HStack(spacing: 4) {
+                ProgressView().scaleEffect(0.6)
+                Text("Laden...")
+                  .font(.caption).foregroundColor(.secondary)
+              }
+            } else {
+              Text("\(displayedRecipes.count) recept\(displayedRecipes.count == 1 ? "" : "en")")
+                .font(.caption).foregroundColor(.secondary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(showOnlyFavorites ? Color.red.opacity(0.1) : Color(.secondarySystemBackground))
-            .cornerRadius(8)
+
+            Spacer()
+
+            Button {
+              withAnimation(.snappy) { showOnlyFavorites.toggle() }
+            } label: {
+              HStack(spacing: 4) {
+                Image(systemName: showOnlyFavorites ? "heart.fill" : "heart")
+                Text("Favorieten")
+                  .font(.caption.weight(.medium))
+              }
+              .foregroundColor(showOnlyFavorites ? .red : .secondary)
+              .padding(.horizontal, 12)
+              .padding(.vertical, 7)
+              .background(
+                Capsule()
+                  .fill(showOnlyFavorites ? Color.red.opacity(0.12) : Color(.secondarySystemGroupedBackground))
+              )
+            }
+
+            Button {
+              Task { await viewModel.loadRecipes() }
+            } label: {
+              Image(systemName: "arrow.clockwise")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            }
+            .disabled(viewModel.isRecipesLoading)
           }
+          .padding(.horizontal, 16)
+          .padding(.vertical, 10)
 
-          Button {
-            Task { await viewModel.loadRecipes() }
-          } label: {
-            Image(systemName: "arrow.clockwise")
-              .font(.caption)
-              .foregroundColor(.secondary)
-          }
-          .disabled(viewModel.isRecipesLoading)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 6)
-
-        Divider()
-
-        // ── Inhoud ────────────────────────────────────────────
-        if viewModel.isRecipesLoading {
-          Spacer()
-          ProgressView("Recepten laden...")
-          Spacer()
-        } else if displayedRecipes.isEmpty {
-          Spacer()
-          VStack(spacing: 12) {
-            Image(systemName: showOnlyFavorites ? "heart.slash" : "fork.knife.circle")
-              .font(.system(size: 48))
-              .foregroundColor(.secondary)
-            Text(
-              showOnlyFavorites
-                ? "Nog geen favorieten opgeslagen.\nTik op het hartje in een recept."
+          // ── Inhoud ────────────────────────────────────────────
+          if viewModel.isRecipesLoading && displayedRecipes.isEmpty {
+            VStack(spacing: 12) {
+              ForEach(0..<5, id: \.self) { _ in
+                MFShimmer()
+                  .frame(height: 80)
+                  .padding(.horizontal, 16)
+              }
+            }
+            .padding(.top, 8)
+          } else if displayedRecipes.isEmpty {
+            MFEmptyState(
+              icon: showOnlyFavorites ? "heart.slash" : "fork.knife.circle",
+              title: showOnlyFavorites ? "Geen favorieten" : "Geen recepten",
+              subtitle: showOnlyFavorites
+                ? "Tik op het hartje in een recept om favorieten toe te voegen."
                 : viewModel.recipes.isEmpty
-                  ? "Nog geen recepten beschikbaar.\nLaad weekdata om recepten te importeren."
+                  ? "Laad weekdata om recepten te importeren."
                   : "Geen recepten gevonden voor '\(viewModel.recipesSearchText)'."
             )
-            .foregroundColor(.secondary)
-            .font(.subheadline)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 32)
-          }
-          Spacer()
-        } else {
-          List {
-            ForEach(displayedRecipes) { recipe in
-              Button { selectedMeal = recipe.toMealView() } label: {
-                recipeRow(recipe)
-              }
-              .buttonStyle(.plain)
-              .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                Button {
-                  viewModel.toggleFavorite(recipe.recipeId)
-                } label: {
-                  Label(
-                    viewModel.isFavorite(recipe.recipeId) ? "Verwijder" : "Favoriet",
-                    systemImage: viewModel.isFavorite(recipe.recipeId) ? "heart.slash" : "heart.fill"
-                  )
+          } else {
+            LazyVStack(spacing: 6) {
+              ForEach(displayedRecipes) { recipe in
+                Button { selectedMeal = recipe.toMealView() } label: {
+                  recipeRow(recipe)
                 }
-                .tint(viewModel.isFavorite(recipe.recipeId) ? .gray : .red)
+                .buttonStyle(.plain)
               }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
           }
-          .listStyle(.plain)
-          .refreshable {
-            await viewModel.loadRecipes()
-          }
+
+          Spacer(minLength: 32)
         }
       }
+      .background(Color(.systemGroupedBackground))
       .navigationTitle("Recepten")
       .navigationBarTitleDisplayMode(.large)
       .onAppear {
         if viewModel.recipes.isEmpty && !viewModel.isRecipesLoading {
           Task { await viewModel.loadRecipes() }
         }
+      }
+      .refreshable {
+        await viewModel.loadRecipes()
       }
       .sheet(item: $selectedMeal) { meal in
         RecipeDetailSheet(meal: meal)
@@ -137,52 +133,33 @@ struct RecipesScreen: View {
     }
   }
 
-  @ViewBuilder
   private func recipeRow(_ recipe: UserRecipeRecord) -> some View {
     HStack(spacing: 12) {
-      // Receptafbeelding
-      Group {
-        if let urlString = recipe.imageUrl, let url = URL(string: urlString) {
-          AsyncImage(url: url) { phase in
-            switch phase {
-            case .success(let image):
-              image.resizable().scaledToFill()
-            default:
-              Color(.systemGray5)
-                .overlay(Image(systemName: "fork.knife").foregroundColor(.gray))
-            }
-          }
-        } else {
-          Color(.systemGray5)
-            .overlay(Image(systemName: "fork.knife").foregroundColor(.gray))
-        }
-      }
-      .frame(width: 56, height: 56)
-      .clipShape(RoundedRectangle(cornerRadius: 8))
+      MFAsyncImage(urlString: recipe.imageUrl, width: 64, height: 64, cornerRadius: 12)
 
-      VStack(alignment: .leading, spacing: 3) {
+      VStack(alignment: .leading, spacing: 4) {
         Text(recipe.name)
-          .font(.subheadline.weight(.medium))
+          .font(.subheadline.weight(.semibold))
+          .foregroundColor(.primary)
           .lineLimit(2)
+          .multilineTextAlignment(.leading)
         if let kcal = recipe.kcal {
-          Text("\(kcal) kcal")
-            .font(.caption)
-            .foregroundColor(.orange)
+          MFKcalBadge(kcal: kcal)
         }
       }
 
       Spacer()
 
-      // Hartje
       Button {
         viewModel.toggleFavorite(recipe.recipeId)
       } label: {
         Image(systemName: viewModel.isFavorite(recipe.recipeId) ? "heart.fill" : "heart")
-          .foregroundColor(viewModel.isFavorite(recipe.recipeId) ? .red : Color(.systemGray3))
-          .font(.body)
+          .foregroundColor(viewModel.isFavorite(recipe.recipeId) ? .red : Color(.tertiaryLabel))
+          .font(.title3)
+          .contentTransition(.symbolEffect(.replace))
       }
       .buttonStyle(.plain)
     }
-    .padding(.vertical, 4)
+    .mfCard(padding: 12, cornerRadius: 14)
   }
 }
