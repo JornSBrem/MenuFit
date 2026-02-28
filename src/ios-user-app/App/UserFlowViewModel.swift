@@ -52,6 +52,7 @@ final class UserFlowViewModel: ObservableObject {
   @Published var selectedDayLabel = ""
   @Published var checkedGroceryItemIds = Set<String>()
   @Published var favoriteRecipeIds = Set<String>()
+  @Published var picnicEnabled: Bool = false
 
   // Config screen state
   @Published var configHousehold: HouseholdCreateResponse?
@@ -85,6 +86,7 @@ final class UserFlowViewModel: ObservableObject {
     }
     let savedFavorites = defaults.stringArray(forKey: "menufit.favorite-recipes") ?? []
     favoriteRecipeIds = Set(savedFavorites)
+    picnicEnabled = defaults.bool(forKey: "menufit.picnic-enabled")
     refreshAuthState()
   }
 
@@ -95,6 +97,17 @@ final class UserFlowViewModel: ObservableObject {
     didBootstrap = true
     await loadHouseholdStatus()
     await loadWeekBundle()
+    await loadRecipes()
+  }
+
+  func setPicnicEnabled(_ enabled: Bool) {
+    picnicEnabled = enabled
+    defaults.set(enabled, forKey: "menufit.picnic-enabled")
+  }
+
+  /// Zoek een recept op in de geladen receptenlijst (voor fallback ingrediënten/stappen)
+  func findRecipe(byId recipeId: String) -> UserRecipeRecord? {
+    recipes.first(where: { $0.recipeId == recipeId })
   }
 
   func refreshAuthState() {

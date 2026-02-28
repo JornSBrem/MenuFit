@@ -24,7 +24,7 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
-        MenuFitBackendBaseURL: https://api.menufit.local
+        MenuFitBackendBaseURL: https://app.menufit.uk
         MenuFitUserAccessToken: ""
         MenuFitUserSubjectId: ios-user
         MenuFitPicnicAccountId: picnic-default
@@ -36,6 +36,7 @@ targets:
         CODE_SIGNING_ALLOWED: YES
         CODE_SIGNING_REQUIRED: YES
         TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
   MenuFitUserAppUITests:
     type: bundle.ui-testing
     platform: iOS
