@@ -322,6 +322,60 @@ test("persistent state store supports postgres runtime persistence", () => {
   );
 });
 
+test("postgres driver handles multi-line base64 output from psql (76-char wrapping)", () => {
+  // PostgreSQL encode(…,'base64') wraps output at 76 characters.
+  // Simulate this in the mock to confirm the reader joins all lines.
+  let encodedPayload = "";
+  const calls: string[] = [];
+  const wrapBase64 = (b64: string): string => {
+    const lines: string[] = [];
+    for (let i = 0; i < b64.length; i += 76) {
+      lines.push(b64.slice(i, i + 76));
+    }
+    return lines.join("\n");
+  };
+  const mockExec = (sql: string): string => {
+    calls.push(sql);
+    if (sql.includes("CREATE TABLE IF NOT EXISTS")) return "";
+    if (sql.includes("SELECT encode(convert_to")) {
+      return encodedPayload.length > 0 ? `${wrapBase64(encodedPayload)}\n` : "";
+    }
+    if (sql.includes("INSERT INTO menufit_state_store")) {
+      const match = sql.match(/decode\('([^']+)'/u);
+      encodedPayload = match?.[1] ?? "";
+      return "";
+    }
+    return "";
+  };
+
+  const store = new PersistentStateStore("out/v3/state/postgres-ml.lock", {
+    driver: "postgres",
+    postgresConnectionString: "postgres://user:secret@localhost:5432/menufit",
+    postgresExec: mockExec,
+  });
+
+  // Write state with enough data to produce multi-line base64
+  store.update((draft) => {
+    draft.userAccounts.push({
+      userId: "user-abc123",
+      username: "testuser",
+      passwordHash: "scrypt:aaaaaaaaaaaaaaaa:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      createdAt: "2026-02-28T10:00:00.000Z",
+      updatedAt: "2026-02-28T10:00:00.000Z",
+    });
+  });
+
+  // Create a new store instance to force a fresh read from "postgres"
+  const reloaded = new PersistentStateStore("out/v3/state/postgres-ml.lock", {
+    driver: "postgres",
+    postgresConnectionString: "postgres://user:secret@localhost:5432/menufit",
+    postgresExec: mockExec,
+  });
+  const state = reloaded.read();
+  assert.equal(state.userAccounts.length, 1);
+  assert.equal(state.userAccounts[0].username, "testuser");
+});
+
 test("postgres driver requires connection string when no command executor is injected", () => {
   const store = new PersistentStateStore("out/v3/state/postgres.lock", {
     driver: "postgres",
