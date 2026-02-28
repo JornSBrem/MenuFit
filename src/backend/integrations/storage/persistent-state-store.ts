@@ -572,16 +572,18 @@ export class PersistentStateStore {
       WHERE state_id = 1;
     `);
 
-    const firstLine = output
+    // PostgreSQL encode(…,'base64') wraps at 76 chars — join all lines.
+    const base64 = output
       .split(/\r?\n/u)
       .map((line) => line.trim())
-      .find((line) => line.length > 0);
-    if (!firstLine) {
+      .filter((line) => line.length > 0)
+      .join("");
+    if (!base64) {
       return {};
     }
 
     try {
-      const jsonText = Buffer.from(firstLine, "base64").toString("utf8");
+      const jsonText = Buffer.from(base64, "base64").toString("utf8");
       return JSON.parse(jsonText) as unknown;
     } catch {
       return {};
