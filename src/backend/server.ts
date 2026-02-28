@@ -87,6 +87,7 @@ import { buildPgEndpointUrl } from "./integrations/pg/endpoint-contract.ts";
 import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
 import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
+import { createPersistentStateStore } from "./application/config/create-persistent-state-store.ts";
 import {
   authorizeAdminFromBearerHeader,
   authorizeUserFromBearerHeader,
@@ -145,7 +146,8 @@ const config = createDefaultRuntimeConfig(
 
 // ---- Services --------------------------------------------------------------
 
-const stateStore = new PersistentStateStore(STATE_PATH);
+const stateStore = createPersistentStateStore(config);
+console.log(`[boot] State store driver: ${config.get<string>("STATE_STORE_DRIVER") || "file"}`);
 const auditTrail = new AuditTrailService();
 const lifecycle = new SessionLifecycleService({ stateStore, adminTtlSeconds: DEV_TOKEN_TTL });
 const userAccountService = new UserAccountService({ stateStore, lifecycle, tokenTtlSeconds: DEV_TOKEN_TTL });
