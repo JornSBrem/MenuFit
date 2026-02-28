@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Eenmalige setup van nginx + SSL op de Proxmox LXC container
+# Eenmalige setup van nginx + SSL + backend service op de Proxmox LXC container
 # Draai als root: bash /opt/menufit/infra/setup-container.sh
 
 set -euo pipefail
@@ -31,8 +31,20 @@ systemctl enable nginx
 systemctl restart nginx
 
 echo ""
+echo "→ menufit-backend systemd service installeren..."
+cp /opt/menufit/infra/menufit-backend.service /etc/systemd/system/menufit-backend.service
+systemctl daemon-reload
+systemctl enable menufit-backend
+
+echo ""
 echo "✓ Setup klaar!"
 echo "  Admin portal: https://${IP}  (zelfondertekend cert — accepteer de browsermelding)"
+echo ""
+echo "  Volgende stap — PostgreSQL instellen (eenmalig):"
+echo "  bash /opt/menufit/infra/setup-postgres.sh"
+echo ""
+echo "  Daarna de backend starten:"
+echo "  systemctl start menufit-backend"
 echo ""
 echo "  Deployen doe je voortaan met:"
 echo "  bash /opt/menufit/deploy.sh"

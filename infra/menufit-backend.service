@@ -1,0 +1,24 @@
+[Unit]
+Description=MenuFit Backend
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/menufit
+
+# Laad postgres env vars (aangemaakt door setup-postgres.sh)
+EnvironmentFile=-/opt/menufit/infra/.postgres-env
+
+ExecStart=/usr/bin/node --experimental-strip-types src/backend/server.ts
+
+Restart=on-failure
+RestartSec=5s
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=menufit-backend
+
+[Install]
+WantedBy=multi-user.target
