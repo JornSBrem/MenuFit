@@ -25,7 +25,14 @@ const CONFIG_KEYS: { key: ConfigKey; type: "boolean" | "number" | "string"; desc
 ];
 
 function genId(): string {
-  return crypto.randomUUID();
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // Fallback voor non-secure contexts (HTTP op LAN)
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
 }
 
 function parseValue(key: ConfigKey, raw: string): string | number | boolean {

@@ -10,7 +10,14 @@ interface ExtractTabProps {
 }
 
 function genId(): string {
-  return crypto.randomUUID();
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // Fallback voor non-secure contexts (HTTP op LAN)
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
 }
 
 function statusColor(status: SystemJobRecord["status"]): string {
@@ -139,7 +146,7 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
       }
       setIngestBusy(true);
       const ingestState = await controller.runIngest({
-        operationId: crypto.randomUUID(),
+        operationId: genId(),
         weeks: discoverResult.availableWeeks,
         basePersons: discoverResult.defaultBasePersons,
       });
