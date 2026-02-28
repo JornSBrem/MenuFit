@@ -175,6 +175,25 @@
     - Admin web toont huishoudstatus, uitnodigingen en sessiediagnose in concrete UI componenten.
     - Supportacties (resend/reset/diagnose) zijn via zichtbare UI interacties uitvoerbaar.
 
+- [ ] WI-267 | type:feature | priority:P1 | status:IN-PROGRESS | title:iOS WidgetKit extensie met dagmenu en boodschappen widgets
+  - context: Gebruikers willen snel op het homescreen zien wat er vandaag gekookt wordt en welke boodschappen er nodig zijn, zonder de app te openen.
+  - acceptance:
+    - WidgetKit extensie target is geconfigureerd in project.yml met App Group voor gedeelde data.
+    - Klein widget: toont vandaag's eerste recept met naam en kcal.
+    - Medium widget: toont alle maaltijden van vandaag met receptnamen.
+    - Groot widget: toont dagmenu + komende boodschappenlijst samenvatting.
+    - Widget data wordt gedeeld via App Group container tussen app en extensie.
+    - Timeline provider haalt data uit de gedeelde cache.
+
+- [ ] WI-268 | type:feature | priority:P1 | status:IN-PROGRESS | title:iOS push notificaties met backend device token registratie
+  - context: Gebruikers willen genotificeerd worden over nieuw weekmenu, bestellingstatus en herinneringen.
+  - acceptance:
+    - App vraagt push-permissie en registreert APNs device token bij backend.
+    - Backend endpoint `/api/v3/push/register` slaat device tokens op per gebruiker.
+    - Backend endpoint `/api/v3/push/unregister` verwijdert device tokens.
+    - Push-ready notificatieservice in backend kan notificaties versturen via APNs (vereist APNs key configuratie).
+    - Notificatiecategorieën: nieuw weekmenu, bestelstatus, herinnering.
+
 ## Done (recent additions)
 
 - [x] WI-266 | type:feature | priority:P0 | status:DONE | title:Backend HTTP server entry point met dev admin token bootstrap

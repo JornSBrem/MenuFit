@@ -21,6 +21,20 @@
                ReferencedContainer = "container:MenuFitUserApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6FD464B2A30A84CF5549069D"
+               BuildableName = "MenuFitWidgetExtension.appex"
+               BlueprintName = "MenuFitWidgetExtension"
+               ReferencedContainer = "container:MenuFitUserApp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
