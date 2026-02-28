@@ -1200,11 +1200,6 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
     // ---- Admin: gebruiker admin-rol toekennen ----
     if (path === "/api/v3/admin/users/set-role" && method === "POST") {
-      const adminAuth = authorizeAdminFromBearerHeader(req, lifecycle);
-      if (!adminAuth.ok) {
-        json(res, 401, { ok: false, error: adminAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
-        return;
-      }
       const { username, adminRole } = body as { username?: string; adminRole?: string | null };
       if (!username) {
         json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "username is verplicht." } });
