@@ -254,7 +254,7 @@ struct WeekScreen: View {
       }
 
       Image(systemName: "chevron.right")
-        .font(.caption).foregroundColor(.tertiary)
+        .font(.caption).foregroundColor(Color(.tertiaryLabel))
     }
     .mfCard(padding: 14, cornerRadius: 14)
   }
