@@ -3,6 +3,7 @@ options:
   minimumXcodeGenVersion: 2.40.0
   deploymentTarget:
     iOS: "18.0"
+    watchOS: "11.0"
 settings:
   base:
     SWIFT_VERSION: 5.10
@@ -45,6 +46,8 @@ targets:
     dependencies:
       - target: MenuFitWidgetExtension
         embed: true
+      - target: MenuFitWatchApp
+        embed: true
 
   MenuFitWidgetExtension:
     type: app-extension
@@ -68,6 +71,55 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1,2"
 
+  MenuFitWatchApp:
+    type: application
+    platform: watchOS
+    sources:
+      - path: MenuFitWatch
+      - path: App/SharedWidgetData.swift
+      - path: App/MealSchedule.swift
+    info:
+      path: MenuFitWatch/Info.plist
+    entitlements:
+      path: MenuFitWatch/MenuFitWatch.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.nl.menufit.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: nl.menufit.userapp.watchkitapp
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGNING_REQUIRED: YES
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "4"
+        WATCHOS_DEPLOYMENT_TARGET: "11.0"
+    dependencies:
+      - target: MenuFitWatchWidgetExtension
+        embed: true
+
+  MenuFitWatchWidgetExtension:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: MenuFitWatchWidget
+      - path: App/SharedWidgetData.swift
+      - path: App/MealSchedule.swift
+    info:
+      path: MenuFitWatchWidget/Info.plist
+    entitlements:
+      path: MenuFitWatchWidget/MenuFitWatchWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.nl.menufit.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: nl.menufit.userapp.watchkitapp.widget
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGNING_REQUIRED: YES
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "4"
+        WATCHOS_DEPLOYMENT_TARGET: "11.0"
+
   MenuFitUserAppUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -90,3 +142,8 @@ schemes:
     test:
       targets:
         - name: MenuFitUserAppUITests
+  MenuFitWatchApp:
+    build:
+      targets:
+        MenuFitWatchApp: all
+        MenuFitWatchWidgetExtension: all
