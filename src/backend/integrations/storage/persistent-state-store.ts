@@ -389,6 +389,9 @@ const asArrayCollectionName = (value: string): ArrayCollectionName | null =>
 export class PersistentStateStore {
   private stateCache?: PersistentAppState;
 
+  /** Tracks the highest-ever counts for critical collections to detect data loss. */
+  private highWaterMark = { userAccounts: 0, authSessions: 0, households: 0 };
+
   private readonly filePath: string;
 
   private readonly driver: PersistentStateStoreDriver;
@@ -413,6 +416,7 @@ export class PersistentStateStore {
   read(): PersistentAppState {
     if (!this.stateCache) {
       this.stateCache = this.loadFromDriver();
+      this.updateHighWaterMark(this.stateCache);
     }
     return structuredClone(this.stateCache);
   }
@@ -425,8 +429,9 @@ export class PersistentStateStore {
 
   update(mutator: (draft: PersistentAppState) => void): PersistentAppState {
     return this.withWriteLock(() => {
-      const latest = this.readLatestWithoutCache();
+      const latest = this.readLatestSafe();
       mutator(latest);
+      this.validateBeforeWrite(latest);
       const persisted = this.writeUnsafe(latest);
       return structuredClone(persisted);
     });
@@ -442,28 +447,97 @@ export class PersistentStateStore {
     return this.loadFromFile();
   }
 
-  private readLatestWithoutCache(): PersistentAppState {
-    if (this.driver === "sqlite") {
-      try {
-        return migrateState(this.readRawSqliteState(this.ensureSqliteDb()));
-      } catch {
-        return defaultState();
-      }
-    }
-    if (this.driver === "postgres") {
-      try {
-        this.ensurePostgresSchema();
-        return migrateState(this.readRawPostgresState());
-      } catch {
-        return defaultState();
-      }
-    }
-
+  /**
+   * Read the latest state from the underlying store, with safety fallback.
+   * If the read fails, falls back to stateCache (last known good state) instead of
+   * returning an empty defaultState() — which previously caused data wipes.
+   */
+  private readLatestSafe(): PersistentAppState {
     try {
-      return migrateState(JSON.parse(readFileSync(this.filePath, "utf8")) as unknown);
-    } catch {
+      return this.readLatestFromDriver();
+    } catch (err) {
+      // CRITICAL: never return empty state. Fall back to the last known good cache.
+      if (this.stateCache) {
+        console.error(
+          `[PersistentStateStore] READ FAILED — falling back to cached state ` +
+          `(${this.stateCache.userAccounts.length} accounts, ` +
+          `${Object.keys(this.stateCache.authSessions).length} sessions). ` +
+          `Error: ${err instanceof Error ? err.message : String(err)}`
+        );
+        return structuredClone(this.stateCache);
+      }
+      // No cache available = first boot or truly empty. Only then is defaultState() ok.
+      console.error(
+        `[PersistentStateStore] READ FAILED — no cache available, using default state. ` +
+        `Error: ${err instanceof Error ? err.message : String(err)}`
+      );
       return defaultState();
     }
+  }
+
+  /** Read from the underlying driver, throwing on failure (never catches). */
+  private readLatestFromDriver(): PersistentAppState {
+    if (this.driver === "sqlite") {
+      return migrateState(this.readRawSqliteState(this.ensureSqliteDb()));
+    }
+    if (this.driver === "postgres") {
+      this.ensurePostgresSchema();
+      return migrateState(this.readRawPostgresState());
+    }
+    return migrateState(JSON.parse(readFileSync(this.filePath, "utf8")) as unknown);
+  }
+
+  /**
+   * Validate that a state mutation hasn't accidentally wiped critical collections.
+   * Blocks catastrophic data loss (multiple items vanishing at once) while allowing
+   * legitimate single-item deletions (e.g., deleteAccount for last user).
+   */
+  private validateBeforeWrite(next: PersistentAppState): void {
+    const accountCount = next.userAccounts?.length ?? 0;
+    const sessionCount = Array.isArray(next.authSessions) ? next.authSessions.length : 0;
+    const householdCount = Array.isArray(next.households) ? next.households.length : 0;
+
+    // Block catastrophic wipes: multiple accounts vanishing at once
+    const accountsLost = this.highWaterMark.userAccounts - accountCount;
+    if (accountsLost > 1) {
+      throw new Error(
+        `[PersistentStateStore] DATA LOSS BLOCKED: userAccounts would drop from ` +
+        `${this.highWaterMark.userAccounts} to ${accountCount} (${accountsLost} lost). Refusing to write.`
+      );
+    }
+
+    // Block catastrophic session wipe: many sessions vanishing at once
+    // (individual revocations don't remove from the array, they set revokedAtEpochSeconds)
+    const sessionsLost = this.highWaterMark.authSessions - sessionCount;
+    if (sessionsLost > 1) {
+      throw new Error(
+        `[PersistentStateStore] DATA LOSS BLOCKED: authSessions would drop from ` +
+        `${this.highWaterMark.authSessions} to ${sessionCount} (${sessionsLost} lost). Refusing to write.`
+      );
+    }
+
+    if (this.highWaterMark.households > 0 && householdCount === 0 && accountCount > 0) {
+      console.warn(
+        `[PersistentStateStore] WARNING: households dropped from ` +
+        `${this.highWaterMark.households} to 0.`
+      );
+    }
+  }
+
+  /** Update the high water mark from a known-good state. */
+  private updateHighWaterMark(state: PersistentAppState): void {
+    this.highWaterMark.userAccounts = Math.max(
+      this.highWaterMark.userAccounts,
+      state.userAccounts?.length ?? 0,
+    );
+    this.highWaterMark.authSessions = Math.max(
+      this.highWaterMark.authSessions,
+      Array.isArray(state.authSessions) ? state.authSessions.length : 0,
+    );
+    this.highWaterMark.households = Math.max(
+      this.highWaterMark.households,
+      Array.isArray(state.households) ? state.households.length : 0,
+    );
   }
 
   private writeUnsafe(next: PersistentAppState): PersistentAppState {
@@ -482,6 +556,7 @@ export class PersistentStateStore {
     }
 
     this.stateCache = normalized;
+    this.updateHighWaterMark(normalized);
     return normalized;
   }
 
@@ -502,10 +577,22 @@ export class PersistentStateStore {
         this.write(migrated);
       }
       return migrated;
-    } catch {
-      const created = defaultState();
-      this.write(created);
-      return created;
+    } catch (err: unknown) {
+      // Only create default state if the file truly doesn't exist (first boot).
+      // For parse errors on an existing file, the data may be recoverable — don't overwrite.
+      const isFileNotFound =
+        err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT";
+      if (isFileNotFound) {
+        console.info("[PersistentStateStore] First boot — creating default state file.");
+        const created = defaultState();
+        this.write(created);
+        return created;
+      }
+      console.error(
+        `[PersistentStateStore] CRITICAL: Failed to parse existing state file. ` +
+        `NOT overwriting to prevent data loss. Error: ${err instanceof Error ? err.message : String(err)}`
+      );
+      throw err;
     }
   }
 
@@ -527,10 +614,21 @@ export class PersistentStateStore {
         this.write(migrated);
       }
       return migrated;
-    } catch {
-      const created = defaultState();
-      this.write(created);
-      return created;
+    } catch (err: unknown) {
+      // readRawSqliteState throws "NO_DATA" when the table is empty (first boot).
+      const isEmptyTable =
+        err instanceof Error && err.message.includes("NO_DATA");
+      if (isEmptyTable) {
+        console.info("[PersistentStateStore] First boot — creating default SQLite state.");
+        const created = defaultState();
+        this.write(created);
+        return created;
+      }
+      console.error(
+        `[PersistentStateStore] CRITICAL: Failed to read existing SQLite state. ` +
+        `NOT overwriting to prevent data loss. Error: ${err instanceof Error ? err.message : String(err)}`
+      );
+      throw err;
     }
   }
 
@@ -547,10 +645,21 @@ export class PersistentStateStore {
         this.write(migrated);
       }
       return migrated;
-    } catch {
-      const created = defaultState();
-      this.write(created);
-      return created;
+    } catch (err: unknown) {
+      // readRawPostgresState throws "NO_DATA" when the table is empty (first boot).
+      const isEmptyTable =
+        err instanceof Error && err.message.includes("NO_DATA");
+      if (isEmptyTable) {
+        console.info("[PersistentStateStore] First boot — creating default Postgres state.");
+        const created = defaultState();
+        this.write(created);
+        return created;
+      }
+      console.error(
+        `[PersistentStateStore] CRITICAL: Failed to read existing Postgres state. ` +
+        `NOT overwriting to prevent data loss. Error: ${err instanceof Error ? err.message : String(err)}`
+      );
+      throw err;
     }
   }
 
@@ -579,15 +688,11 @@ export class PersistentStateStore {
       .filter((line) => line.length > 0)
       .join("");
     if (!base64) {
-      return {};
+      throw new Error("NO_DATA: Postgres state table is empty.");
     }
 
-    try {
-      const jsonText = Buffer.from(base64, "base64").toString("utf8");
-      return JSON.parse(jsonText) as unknown;
-    } catch {
-      return {};
-    }
+    const jsonText = Buffer.from(base64, "base64").toString("utf8");
+    return JSON.parse(jsonText) as unknown;
   }
 
   private writeToPostgres(state: PersistentAppState): void {

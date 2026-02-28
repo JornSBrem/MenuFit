@@ -492,3 +492,143 @@ test("persistent state store update avoids stale-cache overwrite across instance
     rmSync(sqlitePath, { force: true });
   }
 });
+
+test("update falls back to cache when state file is corrupted and preserves accounts", () => {
+  withTempStateFile((stateFile) => {
+    const store = new PersistentStateStore(stateFile);
+
+    // Seed the store with two user accounts
+    store.update((draft) => {
+      draft.userAccounts.push({
+        userId: "user-1",
+        username: "alice",
+        passwordHash: "hash-a",
+        passwordSalt: "salt-a",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      });
+      draft.userAccounts.push({
+        userId: "user-2",
+        username: "bob",
+        passwordHash: "hash-b",
+        passwordSalt: "salt-b",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      });
+    });
+
+    assert.equal(store.read().userAccounts.length, 2, "should have 2 accounts before corruption");
+
+    // Corrupt the state file to simulate a read failure
+    writeFileSync(stateFile, "THIS IS CORRUPT DATA", "utf8");
+
+    // update() should fall back to cached state and NOT wipe accounts
+    store.update((draft) => {
+      draft.systemJobs.push({
+        jobId: "job-safe",
+        type: "test-job",
+        status: "pending",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      });
+    });
+
+    const state = store.read();
+    assert.equal(state.userAccounts.length, 2, "accounts must NOT be wiped after corrupt read");
+    assert.equal(state.userAccounts[0].username, "alice");
+    assert.equal(state.userAccounts[1].username, "bob");
+    assert.equal(state.systemJobs.length, 1, "new job should have been added");
+  });
+});
+
+test("validateBeforeWrite blocks catastrophic data loss (multiple accounts wiped)", () => {
+  withTempStateFile((stateFile) => {
+    const store = new PersistentStateStore(stateFile);
+
+    // Seed with 3 accounts to set high water mark
+    store.update((draft) => {
+      for (let i = 1; i <= 3; i++) {
+        draft.userAccounts.push({
+          userId: `user-${i}`,
+          username: `user${i}`,
+          passwordHash: "h",
+          passwordSalt: "s",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        });
+      }
+    });
+
+    assert.equal(store.read().userAccounts.length, 3);
+
+    // Attempting to wipe all 3 accounts at once must throw
+    assert.throws(
+      () => {
+        store.update((draft) => {
+          draft.userAccounts = [];
+        });
+      },
+      /DATA LOSS BLOCKED/u,
+      "wiping all accounts at once must be blocked",
+    );
+
+    // State must still have 3 accounts
+    assert.equal(store.read().userAccounts.length, 3, "accounts must survive blocked wipe");
+  });
+});
+
+test("single account deletion is allowed by validateBeforeWrite", () => {
+  withTempStateFile((stateFile) => {
+    const store = new PersistentStateStore(stateFile);
+
+    // Seed with 2 accounts
+    store.update((draft) => {
+      draft.userAccounts.push({
+        userId: "user-1",
+        username: "alice",
+        passwordHash: "h",
+        passwordSalt: "s",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      });
+      draft.userAccounts.push({
+        userId: "user-2",
+        username: "bob",
+        passwordHash: "h",
+        passwordSalt: "s",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      });
+    });
+
+    // Deleting one account should be allowed
+    store.update((draft) => {
+      const idx = draft.userAccounts.findIndex((a) => a.userId === "user-2");
+      draft.userAccounts.splice(idx, 1);
+    });
+
+    assert.equal(store.read().userAccounts.length, 1, "single deletion must succeed");
+    assert.equal(store.read().userAccounts[0].username, "alice");
+  });
+});
+
+test("postgres driver throws NO_DATA on empty table instead of returning empty object", () => {
+  withTempStateFile((stateFile) => {
+    const emptyExec = (sql: string): string => {
+      if (sql.includes("CREATE TABLE IF NOT EXISTS")) return "";
+      if (sql.includes("SELECT encode(convert_to")) return "";
+      return "";
+    };
+
+    const store = new PersistentStateStore(stateFile, {
+      driver: "postgres",
+      postgresConnectionString: "postgresql://test:test@localhost/test",
+      postgresExec: emptyExec,
+    });
+
+    // First read should create default state (first boot)
+    const state = store.read();
+    assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
+    assert.deepEqual(state.userAccounts, []);
+  });
+});
