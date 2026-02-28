@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct RootTabView: View {
+  @EnvironmentObject private var viewModel: UserFlowViewModel
+
   var body: some View {
     TabView {
       WeekScreen()
@@ -13,15 +15,17 @@ struct RootTabView: View {
           Label(AppStrings.text(.tabRecipes), systemImage: "book.closed")
         }
 
-      OrderScreen()
-        .tabItem {
-          Label(AppStrings.text(.tabOrder), systemImage: "cart")
-        }
+      if viewModel.picnicEnabled {
+        OrderScreen()
+          .tabItem {
+            Label(AppStrings.text(.tabOrder), systemImage: "cart")
+          }
 
-      MatchScreen()
-        .tabItem {
-          Label(AppStrings.text(.tabMatch), systemImage: "slider.horizontal.3")
-        }
+        MatchScreen()
+          .tabItem {
+            Label(AppStrings.text(.tabMatch), systemImage: "slider.horizontal.3")
+          }
+      }
 
       ConfigScreen()
         .tabItem {

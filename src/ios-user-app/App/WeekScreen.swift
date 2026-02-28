@@ -3,6 +3,7 @@ import SwiftUI
 struct WeekScreen: View {
   @EnvironmentObject private var viewModel: UserFlowViewModel
   @State private var selectedMeal: GoldWeekMealView?
+  @State private var showGrocerySheet = false
 
   var body: some View {
     NavigationView {
@@ -28,6 +29,12 @@ struct WeekScreen: View {
             Button("Vandaag") { viewModel.goToToday() }
               .buttonStyle(.bordered)
             Spacer()
+            Button { showGrocerySheet = true } label: {
+              Label("Boodschappen", systemImage: "cart")
+            }
+            .buttonStyle(.bordered)
+            .tint(.green)
+            .disabled(viewModel.groceries == nil)
           }
           .padding(.horizontal, 16)
           .padding(.top, 6)
@@ -114,6 +121,10 @@ struct WeekScreen: View {
       .navigationBarTitleDisplayMode(.inline)
       .sheet(item: $selectedMeal) { meal in
         RecipeDetailSheet(meal: meal)
+          .environmentObject(viewModel)
+      }
+      .sheet(isPresented: $showGrocerySheet) {
+        GroceryListSheet()
           .environmentObject(viewModel)
       }
     }
@@ -289,6 +300,24 @@ struct RecipeDetailSheet: View {
     return meal.mealLabel
   }
 
+  /// Fallback: als meal geen ingrediënten heeft, zoek in receptenlijst
+  private var resolvedIngredients: [GoldMealIngredient] {
+    if let ing = meal.ingredients, !ing.isEmpty { return ing }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.ingredients ?? []
+    }
+    return []
+  }
+
+  /// Fallback: als meal geen stappen heeft, zoek in receptenlijst
+  private var resolvedSteps: [GoldRecipeStep] {
+    if let st = meal.steps, !st.isEmpty { return st }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.steps ?? []
+    }
+    return []
+  }
+
   var body: some View {
     NavigationView {
       ScrollView {
@@ -348,13 +377,13 @@ struct RecipeDetailSheet: View {
             }
 
             // ── Ingrediëntenlijst ─────────────────────────────
-            if let ingredients = meal.ingredients, !ingredients.isEmpty {
+            if !resolvedIngredients.isEmpty {
               Divider().padding(.vertical, 4)
 
               Text("Ingrediënten")
                 .font(.headline)
 
-              ForEach(ingredients, id: \.text) { ing in
+              ForEach(resolvedIngredients, id: \.text) { ing in
                 HStack(alignment: .top, spacing: 8) {
                   Text("•")
                     .foregroundColor(.secondary)
@@ -363,16 +392,22 @@ struct RecipeDetailSheet: View {
                     .font(.subheadline)
                 }
               }
+            } else {
+              Divider().padding(.vertical, 4)
+              Text("Ingrediënten niet beschikbaar")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .italic()
             }
 
             // ── Bereidingsstappen ─────────────────────────────
-            if let steps = meal.steps, !steps.isEmpty {
+            if !resolvedSteps.isEmpty {
               Divider().padding(.vertical, 4)
 
               Text("Bereiding")
                 .font(.headline)
 
-              ForEach(steps, id: \.step) { step in
+              ForEach(resolvedSteps, id: \.step) { step in
                 HStack(alignment: .top, spacing: 12) {
                   Text("\(step.step)")
                     .font(.caption.bold())
@@ -385,6 +420,11 @@ struct RecipeDetailSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
                 }
               }
+            } else {
+              Text("Bereidingsstappen niet beschikbaar")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .italic()
             }
           }
           .padding(.horizontal, 20)
@@ -419,5 +459,99 @@ struct RecipeDetailSheet: View {
           .font(.system(size: 54))
           .foregroundColor(.secondary)
       )
+  }
+}
+
+// MARK: - GroceryListSheet
+
+struct GroceryListSheet: View {
+  @EnvironmentObject var viewModel: UserFlowViewModel
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    NavigationView {
+      ScrollView {
+        VStack(alignment: .leading, spacing: 0) {
+          // ── Voortgang ──────────────────────────────────────
+          let progress = viewModel.groceryProgress
+          HStack {
+            Text("Boodschappen")
+              .font(.title2.bold())
+            Spacer()
+            Text("\(progress.done)/\(progress.total) afgevinkt")
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+          }
+          .padding(.horizontal, 20)
+          .padding(.top, 16)
+
+          if progress.total > 0 {
+            ProgressView(value: Double(progress.done), total: Double(progress.total))
+              .tint(.green)
+              .padding(.horizontal, 20)
+              .padding(.top, 8)
+          }
+
+          // ── Items per categorie ────────────────────────────
+          let groups = viewModel.groceryGroups
+          if groups.isEmpty {
+            VStack(spacing: 12) {
+              Image(systemName: "cart")
+                .font(.system(size: 48))
+                .foregroundColor(.secondary)
+              Text("Geen boodschappen voor deze week.")
+                .foregroundColor(.secondary)
+                .font(.subheadline)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 60)
+          } else {
+            ForEach(groups.keys.sorted(), id: \.self) { category in
+              let items = groups[category] ?? []
+              VStack(alignment: .leading, spacing: 4) {
+                Text(category)
+                  .font(.headline)
+                  .padding(.top, 16)
+                  .padding(.horizontal, 20)
+
+                ForEach(items) { item in
+                  let checked = viewModel.isGroceryChecked(item.canonicalName)
+                  Button { viewModel.toggleGroceryChecked(item.canonicalName) } label: {
+                    HStack(spacing: 10) {
+                      Image(systemName: checked ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(checked ? .green : .gray)
+                        .font(.title3)
+                      VStack(alignment: .leading, spacing: 2) {
+                        Text(item.canonicalName)
+                          .strikethrough(checked)
+                          .foregroundColor(checked ? .secondary : .primary)
+                        if let amount = item.totalAmount {
+                          Text("\(String(format: "%.2f", amount)) \(item.unit ?? "")")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        }
+                      }
+                      Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 6)
+                  }
+                  .buttonStyle(.plain)
+                }
+              }
+            }
+          }
+
+          Spacer(minLength: 32)
+        }
+      }
+      .navigationTitle("Boodschappenlijst")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button("Sluiten") { dismiss() }
+        }
+      }
+    }
   }
 }

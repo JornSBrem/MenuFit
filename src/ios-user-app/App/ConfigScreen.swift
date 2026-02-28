@@ -23,6 +23,7 @@ struct ConfigScreen: View {
                 Button("\(kcal)") {
                   viewModel.setPreferredKcal(kcal)
                 }
+                .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .background(selected ? Color.blue : Color(.systemGray5))
@@ -119,30 +120,46 @@ struct ConfigScreen: View {
           .disabled(viewModel.isConfigLoading || joinCode.trimmingCharacters(in: .whitespaces).isEmpty)
         }
 
-        // MARK: Picnic koppeling
+        // MARK: Picnic integratie
         Section {
-          TextField("E-mailadres", text: $picnicEmail)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled(true)
-            .keyboardType(.emailAddress)
-
-          SecureField("Wachtwoord", text: $picnicPassword)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled(true)
-
-          Button {
-            // Picnic linking — toekomstige implementatie
-            viewModel.configMessage = "Picnic koppeling is nog niet beschikbaar in deze versie."
-          } label: {
-            Label("Koppelen met Picnic", systemImage: "cart.badge.plus")
-          }
-          .disabled(picnicEmail.isEmpty || picnicPassword.isEmpty || viewModel.isConfigLoading)
+          Toggle("Picnic integratie", isOn: Binding(
+            get: { viewModel.picnicEnabled },
+            set: { viewModel.setPicnicEnabled($0) }
+          ))
         } header: {
-          Text("Picnic koppeling")
+          Text("Picnic")
         } footer: {
-          Text("Voer je Picnic inloggegevens in om boodschappen automatisch te synchroniseren.")
+          Text("Schakel in om de Bestellen en Match tabs te activeren.")
             .font(.caption)
             .foregroundColor(.secondary)
+        }
+
+        if viewModel.picnicEnabled {
+          // MARK: Picnic koppeling
+          Section {
+            TextField("E-mailadres", text: $picnicEmail)
+              .textInputAutocapitalization(.never)
+              .autocorrectionDisabled(true)
+              .keyboardType(.emailAddress)
+
+            SecureField("Wachtwoord", text: $picnicPassword)
+              .textInputAutocapitalization(.never)
+              .autocorrectionDisabled(true)
+
+            Button {
+              // Picnic linking — toekomstige implementatie
+              viewModel.configMessage = "Picnic koppeling is nog niet beschikbaar in deze versie."
+            } label: {
+              Label("Koppelen met Picnic", systemImage: "cart.badge.plus")
+            }
+            .disabled(picnicEmail.isEmpty || picnicPassword.isEmpty || viewModel.isConfigLoading)
+          } header: {
+            Text("Picnic koppeling")
+          } footer: {
+            Text("Voer je Picnic inloggegevens in om boodschappen automatisch te synchroniseren.")
+              .font(.caption)
+              .foregroundColor(.secondary)
+          }
         }
 
         // MARK: Fout
