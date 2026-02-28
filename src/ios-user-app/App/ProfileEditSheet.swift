@@ -25,7 +25,7 @@ struct ProfileEditSheet: View {
   var body: some View {
     NavigationView {
       Form {
-        Section("Persoonlijk") {
+        Section {
           TextField("Weergavenaam", text: $displayName)
             .textContentType(.name)
 
@@ -37,9 +37,11 @@ struct ProfileEditSheet: View {
               Text(label).tag(value)
             }
           }
+        } header: {
+          Label("Persoonlijk", systemImage: "person")
         }
 
-        Section("Lichaamsgegevens") {
+        Section {
           HStack {
             TextField("Gewicht", text: $weightKg)
               .keyboardType(.decimalPad)
@@ -53,18 +55,22 @@ struct ProfileEditSheet: View {
             Text("cm")
               .foregroundColor(.secondary)
           }
+        } header: {
+          Label("Lichaamsgegevens", systemImage: "figure.stand")
         }
 
-        Section("Activiteitsniveau") {
+        Section {
           Picker("Activiteit", selection: $activityLevel) {
             ForEach(activityOptions, id: \.0) { value, label in
               Text(label).tag(value)
             }
           }
           .pickerStyle(.menu)
+        } header: {
+          Label("Activiteitsniveau", systemImage: "figure.run")
         }
 
-        Section("Kcal-doel") {
+        Section {
           HStack {
             TextField("Kcal per dag", text: $kcalGoal)
               .keyboardType(.numberPad)
@@ -77,29 +83,33 @@ struct ProfileEditSheet: View {
           } label: {
             HStack {
               Image(systemName: "sparkles")
-                .foregroundColor(.orange)
+                .foregroundStyle(MFColors.brandGradient)
               Text("Bereken advies")
+                .foregroundColor(MFColors.accent)
             }
           }
 
           if let suggested = viewModel.suggestedKcal {
             HStack {
-              Text("Advies: \(suggested) kcal/dag")
-                .font(.subheadline)
-                .foregroundColor(.blue)
+              MFKcalBadge(kcal: suggested)
+              Text("advies/dag")
+                .font(.caption).foregroundColor(.secondary)
               Spacer()
               Button("Overnemen") {
-                kcalGoal = "\(suggested)"
+                withAnimation(.snappy) { kcalGoal = "\(suggested)" }
               }
-              .font(.subheadline)
+              .font(.subheadline.bold())
+              .foregroundColor(MFColors.accent)
             }
           }
+        } header: {
+          Label("Kcal-doel", systemImage: "flame")
         }
 
         if let error = viewModel.lastError {
           Section {
             Text(error)
-              .foregroundColor(.red)
+              .foregroundColor(MFColors.error)
               .font(.footnote)
           }
         }
@@ -116,6 +126,7 @@ struct ProfileEditSheet: View {
           }
           .disabled(isSaving)
           .bold()
+          .foregroundColor(MFColors.accent)
         }
       }
       .onAppear { loadExisting() }
