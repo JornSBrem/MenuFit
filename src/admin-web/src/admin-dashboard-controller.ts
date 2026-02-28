@@ -193,6 +193,7 @@ export class AdminDashboardController {
         recipes,
         weekMenus,
         mappingOverrides,
+        goldWeekPlans: [],
       };
       this.state.views.data = hasData
         ? createSuccessView(dataWithEntities)
