@@ -1,5 +1,7 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { mkdirSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
+import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { DatabaseSync } from "node:sqlite";
 import {
@@ -724,24 +726,52 @@ export class PersistentStateStore {
       throw new Error("STATE_STORE_POSTGRES_URL is required when STATE_STORE_DRIVER=postgres.");
     }
 
-    // Pass SQL via stdin to avoid Linux MAX_ARG_STRLEN (~128 KB) limit
-    // that is hit when the state JSON base64 grows large.
-    const result = spawnSync(
-      "psql",
-      [connectionString, "-X", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1"],
-      { encoding: "utf8", input: sql, timeout: 15_000 },
-    );
-    if (result.error) {
-      // Spawn-level failure (e.g. psql not found, timeout, signal)
-      throw new Error(`psql spawn error: ${result.error.message}`);
+    // Use temp files for SQL input and output to avoid ENOBUFS / pipe
+    // buffer exhaustion on Linux hosts with constrained memory.
+    const id = randomUUID().slice(0, 8);
+    const sqlFile = join(tmpdir(), `mf-psql-in-${id}.sql`);
+    const outFile = join(tmpdir(), `mf-psql-out-${id}.txt`);
+
+    try {
+      writeFileSync(sqlFile, sql, "utf8");
+
+      // -f sqlFile  : read SQL from file (no stdin pipe needed)
+      // -o outFile  : write query output to file (no stdout pipe needed)
+      const result = spawnSync(
+        "psql",
+        [
+          connectionString,
+          "-X", "-q", "-t", "-A",
+          "-v", "ON_ERROR_STOP=1",
+          "-f", sqlFile,
+          "-o", outFile,
+        ],
+        { encoding: "utf8", timeout: 15_000 },
+      );
+
+      if (result.error) {
+        // Spawn-level failure (e.g. psql not found, timeout, signal)
+        throw new Error(`psql spawn error: ${result.error.message}`);
+      }
+      if (result.status !== 0) {
+        const stderr = result.stderr?.trim() || "";
+        const stdout = result.stdout?.trim() || "";
+        const details = stderr || stdout || "(no output)";
+        throw new Error(`Postgres command failed (exit ${result.status}): ${details}`);
+      }
+
+      // Read the query output from the temp file
+      try {
+        return readFileSync(outFile, "utf8");
+      } catch {
+        // outFile may not exist if the SQL produced no output (e.g. INSERT)
+        return "";
+      }
+    } finally {
+      // Clean up temp files — best-effort
+      try { unlinkSync(sqlFile); } catch { /* ignore */ }
+      try { unlinkSync(outFile); } catch { /* ignore */ }
     }
-    if (result.status !== 0) {
-      const stderr = result.stderr?.trim() || "";
-      const stdout = result.stdout?.trim() || "";
-      const details = stderr || stdout || "(no output)";
-      throw new Error(`Postgres command failed (exit ${result.status}): ${details}`);
-    }
-    return result.stdout ?? "";
   }
 
   private ensureSqliteDb(): DatabaseSync {
