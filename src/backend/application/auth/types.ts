@@ -60,6 +60,7 @@ export interface UserAccountRecord {
   username: string;
   /** scrypt:<salt_hex>:<hash_hex> */
   passwordHash: string;
+  adminRole?: AdminRole;
   createdAt: string;
   updatedAt: string;
 }
