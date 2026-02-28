@@ -300,6 +300,10 @@ async function runRealIngest(
     let goldProjected = 0;
     let silverIdx = 0;
 
+    // Batch-collect silver/gold in-memory, dan één keer persisteren naar postgres
+    const allSilverUpdates: Array<{ key: string; output: import("./application/silver/types.ts").SilverTransformOutput }> = [];
+    const allGoldModels: import("./application/gold/types.ts").GoldReadModel[] = [];
+
     for (const task of weekMenuTasks) {
       const rawPayload = urlToPayload.get(task.requestUrl);
       if (!rawPayload) {
@@ -336,11 +340,14 @@ async function runRealIngest(
               transformVersion: TRANSFORM_VERSION,
               canonicalRulesetVersion: CANONICAL_RULESET_VERSION,
               synonymDictVersion: SYNONYM_DICT_VERSION,
-              stateStore,
+              // Geen stateStore — batch-write achteraf
             },
           );
 
           for (const silver of silverOutputs) {
+            const silverKey = `${weekYear}:${weekNum}:${kcal}:${task.basePersons}:${TRANSFORM_VERSION}`;
+            allSilverUpdates.push({ key: silverKey, output: silver });
+
             const gold = projectSilverToGold({
               silver,
               context: {
@@ -354,7 +361,7 @@ async function runRealIngest(
                 synonymDictVersion: SYNONYM_DICT_VERSION,
               },
             });
-            goldReadService.upsert(gold);
+            allGoldModels.push(gold);
             goldProjected++;
           }
         } catch (err) {
@@ -367,6 +374,17 @@ async function runRealIngest(
         job.processed = silverIdx;
       }
     }
+
+    // Één stateStore-update voor alle silver transforms
+    stateStore.update((draft) => {
+      for (const { key, output } of allSilverUpdates) {
+        draft.silverTransforms[key] = structuredClone(output);
+      }
+    });
+
+    // Batch-update voor gold (in-memory + één persist-write)
+    goldReadService.batchLoad(allGoldModels);
+    goldReadService.batchPersist();
 
     job.tasksRan = tasks.length;
     job.goldProjected = goldProjected;

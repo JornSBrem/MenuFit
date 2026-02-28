@@ -36,7 +36,7 @@ export const writeBronzeJson = async (
 };
 
 export const verifyBronzePayloadChecksum = (
-  metadata: BronzeObjectMetadata,
+  metadata: BronzeObjectMetadata,  cd /opt/menufit && git fetch origin && git reset --hard origin/main
   payload: unknown,
 ): boolean => {
   const payloadJson = JSON.stringify(payload);
