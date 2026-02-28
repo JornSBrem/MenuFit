@@ -27,7 +27,25 @@ function statusColor(status: SystemJobRecord["status"]): string {
   return "#6e6e73";
 }
 
+const PG_CRED_KEY = "menufit:pg-credentials";
+
+function loadSavedPgCredentials(): { email: string; password: string } | null {
+  try {
+    const raw = localStorage.getItem(PG_CRED_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.email === "string" && typeof parsed.password === "string") {
+      return parsed;
+    }
+  } catch { /* corrupt data */ }
+  return null;
+}
+
 export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabProps) {
+  const saved = loadSavedPgCredentials();
+  const [pgEmail, setPgEmail] = useState(saved?.email ?? "");
+  const [pgPassword, setPgPassword] = useState(saved?.password ?? "");
+  const [pgRemember, setPgRemember] = useState(saved !== null);
   const [pgLoginBusy, setPgLoginBusy] = useState(false);
   const [pgDiscoverBusy, setPgDiscoverBusy] = useState(false);
   const [discoverYear, setDiscoverYear] = useState(() => new Date().getFullYear());
@@ -88,17 +106,21 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
 
   const handlePgLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+    const email = pgEmail.trim();
+    const password = pgPassword;
     setPgLoginBusy(true);
     setSuccessMsg(null);
     setErrorMsg(null);
     try {
-      const nextState = await controller.pgLogin({
-        email: String(fd.get("email") ?? "").trim(),
-        password: String(fd.get("password") ?? ""),
-      });
+      const nextState = await controller.pgLogin({ email, password });
       onStateChange();
       if (!extractHasError(nextState)) {
+        // Sla credentials op of verwijder ze
+        if (pgRemember) {
+          localStorage.setItem(PG_CRED_KEY, JSON.stringify({ email, password }));
+        } else {
+          localStorage.removeItem(PG_CRED_KEY);
+        }
         setSuccessMsg("Ingelogd bij Project Gezond. Sessie-cookies zijn opgeslagen.");
       }
     } catch (err) {
@@ -286,9 +308,18 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
         )}
         <form onSubmit={(e) => void handlePgLogin(e)} style={fieldset}>
           <div style={label}>E-mailadres</div>
-          <input style={input} name="email" type="email" placeholder="naam@example.com" autoComplete="username" required />
+          <input style={input} name="email" type="email" placeholder="naam@example.com" autoComplete="username" required
+            value={pgEmail} onChange={(e) => setPgEmail(e.target.value)} />
           <div style={label}>Wachtwoord</div>
-          <input style={input} name="password" type="password" placeholder="••••••••" autoComplete="current-password" required />
+          <input style={input} name="password" type="password" placeholder="••••••••" autoComplete="current-password" required
+            value={pgPassword} onChange={(e) => setPgPassword(e.target.value)} />
+          <label style={checkboxRow}>
+            <input type="checkbox" checked={pgRemember} onChange={(e) => {
+              setPgRemember(e.target.checked);
+              if (!e.target.checked) localStorage.removeItem(PG_CRED_KEY);
+            }} />
+            <span>Onthoud inloggegevens</span>
+          </label>
           <button style={btn} type="submit" disabled={pgLoginBusy}>
             {pgLoginBusy ? "Inloggen…" : "Inloggen bij PG"}
           </button>
@@ -572,6 +603,16 @@ const pgLoginStatusBanner = {
   borderRadius: 6,
   fontSize: 13,
   marginBottom: 12,
+} as const;
+
+const checkboxRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  fontSize: 13,
+  color: "#1d1d1f",
+  cursor: "pointer",
+  margin: "4px 0",
 } as const;
 
 const discoverResultBox = {
