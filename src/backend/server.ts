@@ -551,19 +551,26 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
     // ---- Auth routes (geen auth vereist) ----
     if (path === "/api/v3/auth/register" && method === "POST") {
-      const { username, password } = body as { username?: string; password?: string };
+      const { username, password, email, profile } = body as {
+        username?: string;
+        password?: string;
+        email?: string;
+        profile?: { displayName?: string; birthYear?: number; gender?: string; weightKg?: number; heightCm?: number; activityLevel?: string; kcalGoal?: number; allergies?: string[]; dietaryPreferences?: string[] };
+      };
       if (!username || !password) {
         json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "username en password zijn verplicht." } });
         return;
       }
       try {
-        const result = userAccountService.register(username, password);
+        const result = userAccountService.register(username, password, { email, profile });
         json(res, 201, {
           ok: true,
           data: {
             token: result.token,
             userId: result.userId,
             username: result.username,
+            email: result.email,
+            profile: result.profile,
             expiresAtEpochSeconds: result.session.expiresAtEpochSeconds,
           },
         });
@@ -578,7 +585,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     if (path === "/api/v3/auth/login" && method === "POST") {
       const { username, password } = body as { username?: string; password?: string };
       if (!username || !password) {
-        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "username en password zijn verplicht." } });
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "username of email en password zijn verplicht." } });
         return;
       }
       try {
@@ -589,6 +596,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             token: result.token,
             userId: result.userId,
             username: result.username,
+            email: result.email,
+            profile: result.profile,
+            onboardingCompletedAt: result.onboardingCompletedAt,
             expiresAtEpochSeconds: result.session.expiresAtEpochSeconds,
           },
         });
@@ -612,8 +622,66 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         data: {
           userId: userAuth.data.subjectId,
           username: account?.username ?? userAuth.data.subjectId,
+          email: account?.email,
+          profile: account?.profile,
+          onboardingCompletedAt: account?.onboardingCompletedAt,
         },
       });
+      return;
+    }
+
+    if (path === "/api/v3/auth/profile" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const profileUpdate = body as Record<string, unknown>;
+      try {
+        const updated = userAccountService.updateProfile(userAuth.data.subjectId, profileUpdate);
+        json(res, 200, {
+          ok: true,
+          data: {
+            userId: updated.userId,
+            username: updated.username,
+            email: updated.email,
+            profile: updated.profile,
+          },
+        });
+      } catch (err) {
+        const code = err instanceof UserAccountServiceError ? err.code : "PROFILE_UPDATE_FAILED";
+        const message = err instanceof Error ? err.message : "Profiel bijwerken mislukt.";
+        json(res, 400, { ok: false, error: { code, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/auth/complete-onboarding" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      try {
+        userAccountService.completeOnboarding(userAuth.data.subjectId);
+        json(res, 200, { ok: true, data: { completed: true } });
+      } catch (err) {
+        const code = err instanceof UserAccountServiceError ? err.code : "ONBOARDING_FAILED";
+        const message = err instanceof Error ? err.message : "Onboarding afronden mislukt.";
+        json(res, 400, { ok: false, error: { code, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/auth/suggest-kcal" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const profileData = body as { birthYear?: number; gender?: string; weightKg?: number; heightCm?: number; activityLevel?: string };
+      const suggested = userAccountService.suggestKcal(profileData as any);
+      json(res, 200, { ok: true, data: { suggestedKcal: suggested } });
       return;
     }
 
