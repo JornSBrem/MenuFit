@@ -619,10 +619,12 @@ export class PersistentStateStore {
       throw new Error("STATE_STORE_POSTGRES_URL is required when STATE_STORE_DRIVER=postgres.");
     }
 
+    // Pass SQL via stdin to avoid Linux MAX_ARG_STRLEN (~128 KB) limit
+    // that is hit when the state JSON base64 grows large.
     const result = spawnSync(
       "psql",
-      [connectionString, "-X", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1", "-c", sql],
-      { encoding: "utf8" },
+      [connectionString, "-X", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1"],
+      { encoding: "utf8", input: sql },
     );
     if (result.status !== 0) {
       throw new Error(result.stderr?.trim() || "Postgres command failed.");
