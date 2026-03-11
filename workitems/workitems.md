@@ -2,6 +2,13 @@
 
 ## Backlog
 
+- [ ] WI-269 | type:bug | priority:P1 | status:IN-PROGRESS | title:iOS Supabase configuratie wordt niet herkend bij login/registratie
+  - context: In de iOS app verschijnt "Supabase is niet geconfigureerd." tijdens registratie/login terwijl URL en anon key zijn ingesteld. De app leest momenteel alleen exact `SupabaseProjectURL` en `SupabaseAnonKey` uit `Info.plist`, waardoor kleine variaties in key-naam of lege/whitespace waarden leiden tot een stille misconfiguratie.
+  - acceptance:
+    - iOS app accepteert naast de huidige keys ook gangbare alternatieve Supabase key-namen uit `Info.plist`.
+    - Lege/whitespace waarden worden defensief behandeld (trim + validatie) voordat `SupabaseAuthClient` wordt aangemaakt.
+    - Bij ontbrekende configuratie toont de app een diagnostische melding met welke sleutel(s) ontbreken.
+
 - [x] WI-266 | type:feature | priority:P0 | status:DONE | title:Backend HTTP server entry point met dev admin token bootstrap
   - context: Er is geen server.ts — de backend heeft alleen route handlers maar geen draaiende HTTP server. WI-265 bouwde een admin web app die naar :3000 proxyt maar de backend draait niet. Voor lokale ontwikkeling moet de operator een token kunnen krijgen zonder OAuth-flow.
   - acceptance:

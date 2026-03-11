@@ -49,11 +49,18 @@ Signing/team development:
 Runtime configuration keys in `Info.plist`:
 
 - `MenuFitBackendBaseURL`
+- `SupabaseProjectURL` (preferred)
+- `SupabaseAnonKey` (preferred)
 - `MenuFitUserAccessToken`
 - `MenuFitUserSubjectId`
 - `MenuFitPicnicAccountId`
 - `MenuFitHouseholdId`
 - `MenuFitUserTokenExpiryEpochSeconds`
+
+Supported Supabase aliases (fallback lookup):
+
+- URL: `SupabaseURL`, `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`
+- anon key: `SupabaseAnonkey`, `SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ## WI-215 UI Smoke Automation
 

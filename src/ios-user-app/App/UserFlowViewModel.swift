@@ -58,6 +58,7 @@ final class UserFlowViewModel: ObservableObject {
   private let cache: OfflineCacheStore
   private let authStore: AuthSessionStore
   private let supabaseAuth: SupabaseAuthClient?
+  private let supabaseConfigurationIssue: String?
   private let defaults: UserDefaults
   private var didBootstrap = false
 
@@ -66,12 +67,14 @@ final class UserFlowViewModel: ObservableObject {
     cache: OfflineCacheStore,
     authStore: AuthSessionStore,
     supabaseAuth: SupabaseAuthClient?,
+    supabaseConfigurationIssue: String?,
     defaults: UserDefaults = .standard
   ) {
     self.api = api
     self.cache = cache
     self.authStore = authStore
     self.supabaseAuth = supabaseAuth
+    self.supabaseConfigurationIssue = supabaseConfigurationIssue
     self.defaults = defaults
     self.authSession = authStore.session
     // Laad opgeslagen kcal-voorkeur uit UserDefaults
@@ -554,7 +557,7 @@ final class UserFlowViewModel: ObservableObject {
   func loginWithCredentials(email: String, password: String) async {
     lastError = nil
     guard let supabaseAuth else {
-      lastError = "Supabase is niet geconfigureerd."
+      lastError = supabaseConfigurationIssue ?? "Supabase is niet geconfigureerd."
       return
     }
     do {
@@ -585,7 +588,7 @@ final class UserFlowViewModel: ObservableObject {
   func registerWithCredentials(email: String, password: String) async {
     lastError = nil
     guard let supabaseAuth else {
-      lastError = "Supabase is niet geconfigureerd."
+      lastError = supabaseConfigurationIssue ?? "Supabase is niet geconfigureerd."
       return
     }
     do {

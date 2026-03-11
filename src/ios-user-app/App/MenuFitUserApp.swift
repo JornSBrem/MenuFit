@@ -15,6 +15,8 @@ struct MenuFitUserApp: App {
        let anonKey = environment.supabaseAnonKey, !anonKey.isEmpty {
       supabaseAuth = SupabaseAuthClient(projectURL: supabaseURL, anonKey: anonKey)
       authStore.supabaseAuthClient = supabaseAuth
+    } else if let issue = environment.supabaseConfigurationIssue {
+      print("[boot] \(issue)")
     }
 
     let api = BackendAPI(baseURL: environment.baseURL, tokenProvider: authStore)
@@ -27,7 +29,8 @@ struct MenuFitUserApp: App {
         api: api,
         cache: cache,
         authStore: authStore,
-        supabaseAuth: supabaseAuth
+        supabaseAuth: supabaseAuth,
+        supabaseConfigurationIssue: environment.supabaseConfigurationIssue
       )
     )
   }
