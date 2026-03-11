@@ -62,6 +62,13 @@ final class UserFlowViewModel: ObservableObject {
   @Published var isConfigLoading = false
   @Published var configMessage: String?
 
+  // Eetmeter state
+  @Published var eetmeterIsIngelogd: Bool = false
+  @Published var eetmeterDag: EetmeterDagItem? = nil
+  @Published var eetmeterDatum: String = ""
+  @Published var isEetmeterLoading = false
+  @Published var eetmeterError: String? = nil
+
   private let api: BackendAPI
   private let cache: OfflineCacheStore
   private let authStore: AuthSessionStore
@@ -1011,5 +1018,69 @@ final class UserFlowViewModel: ObservableObject {
       return "Basis"
     }
     return AppStrings.text(.groceriesCategoryOther)
+  }
+
+  // MARK: - Eetmeter
+
+  func eetmeterLogin(email: String, password: String) async {
+    isEetmeterLoading = true
+    eetmeterError = nil
+    do {
+      let response = try await api.eetmeterLogin(email: email, password: password)
+      eetmeterIsIngelogd = response.isIngelogd
+      if response.isIngelogd {
+        await loadEetmeterDag()
+      }
+    } catch {
+      eetmeterError = error.localizedDescription
+    }
+    isEetmeterLoading = false
+  }
+
+  func loadEetmeterDag(datum: String? = nil) async {
+    isEetmeterLoading = true
+    eetmeterError = nil
+    do {
+      let response = try await api.fetchEetmeterDag(datum: datum)
+      eetmeterIsIngelogd = response.isIngelogd
+      eetmeterDatum = response.datum
+      eetmeterDag = response.dag
+    } catch {
+      eetmeterError = error.localizedDescription
+    }
+    isEetmeterLoading = false
+  }
+
+  func eetmeterVorigeDag() async {
+    guard !eetmeterDatum.isEmpty else {
+      await loadEetmeterDag()
+      return
+    }
+    if let date = isoDate(from: eetmeterDatum) {
+      let vorige = Calendar.current.date(byAdding: .day, value: -1, to: date)!
+      await loadEetmeterDag(datum: isoString(from: vorige))
+    }
+  }
+
+  func eetmeterVolgendeDag() async {
+    guard !eetmeterDatum.isEmpty else { return }
+    if let date = isoDate(from: eetmeterDatum) {
+      let volgende = Calendar.current.date(byAdding: .day, value: 1, to: date)!
+      guard volgende <= Date() else { return }
+      await loadEetmeterDag(datum: isoString(from: volgende))
+    }
+  }
+
+  private func isoDate(from string: String) -> Date? {
+    let f = DateFormatter()
+    f.dateFormat = "yyyy-MM-dd"
+    f.locale = Locale(identifier: "nl_NL")
+    return f.date(from: string)
+  }
+
+  private func isoString(from date: Date) -> String {
+    let f = DateFormatter()
+    f.dateFormat = "yyyy-MM-dd"
+    return f.string(from: date)
   }
 }

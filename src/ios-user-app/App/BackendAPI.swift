@@ -168,6 +168,19 @@ final class BackendAPI {
       path: "/api/v3/push/unregister",
       body: PushTokenRequest(token: token)
     )
+  // MARK: - Eetmeter endpoints
+
+  func eetmeterLogin(email: String, password: String) async throws -> EetmeterLoginResponse {
+    try await post(
+      path: "/api/v3/eetmeter/credentials",
+      body: EetmeterLoginRequest(email: email, password: password)
+    )
+  }
+
+  func fetchEetmeterDag(datum: String? = nil) async throws -> EetmeterDagResponse {
+    var query: [URLQueryItem] = []
+    if let datum { query.append(URLQueryItem(name: "datum", value: datum)) }
+    return try await get(path: "/api/v3/eetmeter/dag", query: query)
   }
 
   private func get<T: Decodable>(path: String, query: [URLQueryItem] = []) async throws -> T {

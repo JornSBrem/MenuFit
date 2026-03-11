@@ -4,6 +4,7 @@ struct WeekScreen: View {
   @EnvironmentObject private var viewModel: UserFlowViewModel
   @State private var selectedMeal: GoldWeekMealView?
   @State private var showGrocerySheet = false
+  @State private var showEetmeterSheet = false
 
   var body: some View {
     NavigationView {
@@ -54,6 +55,16 @@ struct WeekScreen: View {
             .buttonStyle(.bordered)
             .tint(.green)
             .disabled(viewModel.groceries == nil)
+
+            Button {
+              showEetmeterSheet = true
+              Task { await viewModel.loadEetmeterDag() }
+            } label: {
+              Image(systemName: "fork.knife")
+                .font(.title3)
+            }
+            .buttonStyle(.bordered)
+            .tint(.orange)
           }
           .padding(.horizontal, 20)
           .padding(.top, 10)
@@ -101,6 +112,10 @@ struct WeekScreen: View {
       }
       .sheet(isPresented: $showGrocerySheet) {
         GroceryListSheet()
+          .environmentObject(viewModel)
+      }
+      .sheet(isPresented: $showEetmeterSheet) {
+        EetmeterDagSheet()
           .environmentObject(viewModel)
       }
     }
