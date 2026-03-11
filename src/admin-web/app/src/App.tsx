@@ -9,6 +9,7 @@ import { DataTab } from "./tabs/DataTab.tsx";
 import { SettingsTab } from "./tabs/SettingsTab.tsx";
 import { ExtractTab } from "./tabs/ExtractTab.tsx";
 import { OperationsTab } from "./tabs/OperationsTab.tsx";
+import { EetmeterTab } from "./tabs/EetmeterTab.tsx";
 
 const STORAGE_KEY = "menufit_admin_session";
 
@@ -72,6 +73,7 @@ export function App() {
     if (tab === "data") next = await ctrl.loadDataManagement();
     else if (tab === "settings") next = await ctrl.loadSettingsView();
     else if (tab === "extract") next = await ctrl.loadExtractView();
+    else if (tab === "eetmeter") next = await ctrl.loadEetmeterView();
     else next = await ctrl.loadHouseholdOperations();
     setUiState({ ...next });
   }, []);
@@ -147,6 +149,13 @@ export function App() {
           {selectedTab === "operations" && (
             <OperationsTab
               viewState={uiState.views.operations}
+              controller={ctrl}
+              onStateChange={refreshUiState}
+            />
+          )}
+          {selectedTab === "eetmeter" && (
+            <EetmeterTab
+              viewState={uiState.views.eetmeter}
               controller={ctrl}
               onStateChange={refreshUiState}
             />

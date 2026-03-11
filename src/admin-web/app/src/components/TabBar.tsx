@@ -10,6 +10,7 @@ const TABS: { id: AdminTab; label: string }[] = [
   { id: "settings", label: "Instellingen" },
   { id: "extract", label: "Extract / Jobs" },
   { id: "operations", label: "Operations" },
+  { id: "eetmeter", label: "Eetmeter" },
 ];
 
 export function TabBar({ selectedTab, onTabChange }: TabBarProps) {

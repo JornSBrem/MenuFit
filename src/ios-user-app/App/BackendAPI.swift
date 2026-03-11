@@ -154,6 +154,21 @@ final class BackendAPI {
     try await post(path: "/api/v3/auth/delete-account", body: EmptyBody())
   }
 
+  // MARK: - Eetmeter endpoints
+
+  func eetmeterLogin(email: String, password: String) async throws -> EetmeterLoginResponse {
+    try await post(
+      path: "/api/v3/eetmeter/credentials",
+      body: EetmeterLoginRequest(email: email, password: password)
+    )
+  }
+
+  func fetchEetmeterDag(datum: String? = nil) async throws -> EetmeterDagResponse {
+    var query: [URLQueryItem] = []
+    if let datum { query.append(URLQueryItem(name: "datum", value: datum)) }
+    return try await get(path: "/api/v3/eetmeter/dag", query: query)
+  }
+
   private func get<T: Decodable>(path: String, query: [URLQueryItem] = []) async throws -> T {
     guard var components = URLComponents(
       url: baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))),

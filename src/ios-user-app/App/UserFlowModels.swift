@@ -472,3 +472,55 @@ struct PicnicLinkRequest: Codable {
   let email: String
   let password: String
 }
+
+// MARK: - Eetmeter request/response structs
+
+struct EetmeterLoginRequest: Codable {
+  let email: String
+  let password: String
+}
+
+struct EetmeterLoginResponse: Codable {
+  let isIngelogd: Bool
+}
+
+struct EetmeterConsumptieItem: Codable, Identifiable {
+  let id: String
+  let productNaam: String
+  let merkNaam: String
+  let hoeveelheid: Double
+  let eenheid: String
+  let periode: Int
+  let energie: Double
+  let eiwit: Double
+  let vet: Double
+  let koolhydraten: Double
+  let vezels: Double
+}
+
+struct EetmeterMaaltijdItem: Codable, Identifiable {
+  let naam: String
+  let periode: Int
+  let energie: Double
+  let eiwit: Double
+  let vet: Double
+  let koolhydraten: Double
+  let items: [EetmeterConsumptieItem]
+
+  var id: Int { periode }
+}
+
+struct EetmeterDagItem: Codable {
+  let datum: String
+  let maaltijden: [EetmeterMaaltijdItem]
+  let totaalEnergie: Double
+  let totaalEiwit: Double
+  let totaalVet: Double
+  let totaalKoolhydraten: Double
+}
+
+struct EetmeterDagResponse: Codable {
+  let isIngelogd: Bool
+  let datum: String
+  let dag: EetmeterDagItem?
+}
