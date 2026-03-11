@@ -13,6 +13,8 @@ import type {
   CleanupRequest,
   ConfigUpdateRequest,
   DeleteMappingOverrideRequest,
+  EetmeterCredentialsRequest,
+  EetmeterViewData,
   IngestRecipeWebResult,
   ReprocessFromBronzeResult,
   DeleteRecipeRequest,
@@ -74,6 +76,8 @@ export interface AdminDashboardApi {
   getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>>;
   reprocessFromBronze(): Promise<ApiEnvelope<ReprocessFromBronzeResult>>;
   ingestRecipeWeb(): Promise<ApiEnvelope<IngestRecipeWebResult>>;
+  getEetmeterDag(datum?: string): Promise<ApiEnvelope<EetmeterViewData>>;
+  eetmeterLogin(body: EetmeterCredentialsRequest): Promise<ApiEnvelope<{ isIngelogd: boolean }>>;
 }
 
 const createEmptyView = <T>(data?: T): AdminAsyncViewState<T> => ({
@@ -144,6 +148,10 @@ export class AdminDashboardController {
         householdStatuses: [],
         invitations: [],
         sessionStatuses: [],
+      }),
+      eetmeter: createEmptyView<EetmeterViewData>({
+        isIngelogd: false,
+        datum: new Date().toISOString().split("T")[0],
       }),
     },
   };
@@ -574,6 +582,34 @@ export class AdminDashboardController {
       });
     } catch (error) {
       this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async loadEetmeterView(datum?: string): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.eetmeter.data;
+    this.state.views.eetmeter = createLoadingView(previous);
+    try {
+      const result = this.unwrapEnvelope(await this.api.getEetmeterDag(datum));
+      const hasData = result.isIngelogd && !!result.dag;
+      this.state.views.eetmeter = hasData
+        ? createSuccessView(result)
+        : createEmptyView(result);
+    } catch (error) {
+      this.state.views.eetmeter = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async eetmeterLogin(body: EetmeterCredentialsRequest): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.eetmeter.data;
+    this.state.views.eetmeter = createLoadingView(previous);
+    try {
+      this.unwrapEnvelope(await this.api.eetmeterLogin(body));
+      // Na succesvol inloggen: haal direct de dag op
+      return this.loadEetmeterView(previous?.datum);
+    } catch (error) {
+      this.state.views.eetmeter = createErrorView(toAdminApiError(error), previous);
     }
     return this.getState();
   }

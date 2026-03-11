@@ -12,6 +12,8 @@ import type {
   DeleteMappingOverrideRequest,
   DeleteRecipeRequest,
   DeleteWeekMenuRequest,
+  EetmeterCredentialsRequest,
+  EetmeterViewData,
   GoldWeekPlanRecord,
   HouseholdInvitationRecord,
   HouseholdInvitationsQuery,
@@ -156,6 +158,15 @@ export class AdminApiClient {
   diagnoseUserSession(subjectId: string): Promise<ApiEnvelope<UserSessionDiagnostic>> {
     const params = new URLSearchParams({ subjectId });
     return this.get(`/api/v3/admin/households/session-diagnose?${params.toString()}`);
+  }
+
+  getEetmeterDag(datum?: string): Promise<ApiEnvelope<EetmeterViewData>> {
+    const params = datum ? `?datum=${datum}` : "";
+    return this.get(`/api/v3/admin/eetmeter/dag${params}`);
+  }
+
+  eetmeterLogin(body: EetmeterCredentialsRequest): Promise<ApiEnvelope<{ isIngelogd: boolean }>> {
+    return this.post("/api/v3/admin/eetmeter/credentials", body);
   }
 
   private async get<T>(path: string): Promise<ApiEnvelope<T>> {
