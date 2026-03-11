@@ -3,30 +3,35 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		002A6877A9E85CCF86AEE079 /* PushRegistrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC43E1A8DD5F34A227AB436 /* PushRegistrationManager.swift */; };
 		00ED1399B5D2986D86AA615A /* UserFlowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 025733A3A85DF8C0EF97659F /* UserFlowViewModel.swift */; };
 		0453D7B346CF94B7BABF9C90 /* order-screen.png in Resources */ = {isa = PBXBuildFile; fileRef = DA85292A396845F477B05ABE /* order-screen.png */; };
 		04719629E79004FE9BB8A59B /* MenuFitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4227BF3AEF798E3617251CD /* MenuFitWatchApp.swift */; };
 		07BC08D9558522998C9C3EE6 /* BackendAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5862F6F0387CA8260E450902 /* BackendAPI.swift */; };
 		0C4D4F30178EBC899BB1E854 /* MenuFitWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4333767B565C11B480EF79 /* MenuFitWidgetBundle.swift */; };
 		0E647C1FA1549D5B30E79176 /* AuthSessionSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F5ED2CBBE752E2434FEBB71 /* AuthSessionSetupView.swift */; };
+		1497BE34235AF8DC87CF444E /* NextMealWatchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67182B208FF79062284E8862 /* NextMealWatchWidget.swift */; };
 		14C7BABDC8C1FD9D964F37E6 /* TodayMealsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB4845E02105B422FBC0656 /* TodayMealsWidget.swift */; };
 		17A9FD18E82554C450E14F31 /* MenuFitWatchWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D6780481D5DA5902C015DF71 /* MenuFitWatchWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1B4A10B4BBE66BE755EED470 /* MealSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8341DF54B0EE6980D641FA68 /* MealSchedule.swift */; };
 		1B5765E96DEAFA9B7254CAB8 /* MenuFitUserAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66EA1F50A81D438604490C65 /* MenuFitUserAppUITests.swift */; };
 		28A052B2CAD27C6BD9302D43 /* OfflineCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD375DB99A1D8042CD754B02 /* OfflineCacheStore.swift */; };
 		34E1F0A1990D1898942BA303 /* MatchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9346B79CF692F41BADFEC8F /* MatchScreen.swift */; };
+		3B32B7E50ED0B876FDE15CD0 /* MenuFitWatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 13D10713A7A8CFEEED89EF73 /* MenuFitWatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4601BE82C9E1B32149E9A37B /* WatchHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A78D60062541FA3A611CF7D /* WatchHomeView.swift */; };
+		4773644E0AF0D84D644F8D5C /* MenuFitWatchWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FBDC30CE6336FF5BC9C9EE /* MenuFitWatchWidgetBundle.swift */; };
 		4AA177D369DFC8C3F1C993FD /* ConfigScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BE4479F4C6A81AECF98FE0E /* ConfigScreen.swift */; };
 		4EACA390E388E0220B33142D /* MealNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03E8BA64018C29B17A52D03 /* MealNotificationManager.swift */; };
 		4EFDBBCB975006A33F585C61 /* SharedWidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */; };
 		568FAF82A578BEEF0A366C75 /* MenuFitUserApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB8E3243064BD44720733F3 /* MenuFitUserApp.swift */; };
+		570F290874CF06C656239AA8 /* SharedWidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */; };
 		586371043F98771AE1CD477A /* UserFlowModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3941274E4041CB58B8BC8447 /* UserFlowModels.swift */; };
-		592A78D32F53B6A600885B31 /* ExtensionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592A78D12F53B6A600885B31 /* ExtensionDelegate.swift */; };
 		5FB23588437C4E3AD6132E75 /* SharedWidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */; };
+		5FED6759F61CC02768FE0A1A /* SupabaseAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C53F61B754794D3EDA1B2C /* SupabaseAuthClient.swift */; };
 		6250BAC011286A6CA1DA9A6F /* MealSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8341DF54B0EE6980D641FA68 /* MealSchedule.swift */; };
 		6437C9FADD9C7CD29A5204E0 /* week-screen.png in Resources */ = {isa = PBXBuildFile; fileRef = 626EF9C1808E73CCDB998617 /* week-screen.png */; };
 		6839AF16B7F98CC1D1712676 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2265786C8C844725BB4D6B7F /* AppEnvironment.swift */; };
@@ -38,18 +43,17 @@
 		92961730CAEA2E1BE038EB0E /* MenuFitTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105CF1F04F83DA02917BCD1D /* MenuFitTheme.swift */; };
 		95AAD79A5BE328083245B25F /* ProfileEditSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */; };
 		9E676865B35EDEEDE8155791 /* match-screen.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D98A28D94B69DAA9ED3D8E4 /* match-screen.png */; };
-		9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */; };
-		A1B2C3D4E5F60718293A4B5C /* PushRegistrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */; };
 		A262BF5AE5D2EAF1128B2BB5 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */; };
-		B2C3D4E5F6A70819293A4B5D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */; };
 		B3B7EB9E58D1D8576328200E /* WeekNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F689360E3FDFC2EDC9293007 /* WeekNavBar.swift */; };
 		BA78D5804FE9D7D9E6578823 /* RecipesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130C8AFEA99607975BF31093 /* RecipesScreen.swift */; };
 		C309FFCB7BE1147CF6CE9550 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE482EB44234E5DB375E836 /* Localization.swift */; };
-		C3D4E5F6A7B80920384C5D6E /* SupabaseAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A5B6C7D8E9102A3B4C5D6F /* SupabaseAuthClient.swift */; };
+		C45979B022C595A7ECAEB596 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B7D5081B5236D6332EFA4CE /* AppDelegate.swift */; };
 		C7843F6778C2273A38B57C7E /* OrderScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7DC178D1015232B3FA63D01 /* OrderScreen.swift */; };
 		D6C5C58CD82A818C0DA2FDAF /* tabbar-week.png in Resources */ = {isa = PBXBuildFile; fileRef = 98A6E9AB3B23F72B36A7DA60 /* tabbar-week.png */; };
 		E1B0D5CE42E26DE68903EC28 /* SnapshotAssert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 336BA4F2038C7DB2E545FD4F /* SnapshotAssert.swift */; };
 		EBDB0DC43CF43A49875F3410 /* MealSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8341DF54B0EE6980D641FA68 /* MealSchedule.swift */; };
+		EBEF44D8FDFB61AD16E8E931 /* EetmeterDagSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0E990E53EA4B3F685F9 /* EetmeterDagSheet.swift */; };
+		FD00AF0F6498AC3770332D88 /* MealSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8341DF54B0EE6980D641FA68 /* MealSchedule.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,13 +63,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 38BF40FC739790BC05D0286F;
 			remoteInfo = MenuFitWatchWidgetExtension;
-		};
-		592A78D42F53B70700885B31 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BC57ACA37C1F6EA37F362195 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 66A458B9218BAA1A3BA72E0D;
-			remoteInfo = MenuFitWatchApp;
 		};
 		7A1DA9C69F4AE3D56421D48B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -81,9 +78,27 @@
 			remoteGlobalIDString = 6FD464B2A30A84CF5549069D;
 			remoteInfo = MenuFitWidgetExtension;
 		};
+		BAE9A9B981D826122C65F9E3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BC57ACA37C1F6EA37F362195 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 66A458B9218BAA1A3BA72E0D;
+			remoteInfo = MenuFitWatchApp;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		29352A1DEF10249AD138EA69 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				3B32B7E50ED0B876FDE15CD0 /* MenuFitWatchApp.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6C80A744936A51051A5CA603 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -111,34 +126,35 @@
 /* Begin PBXFileReference section */
 		025733A3A85DF8C0EF97659F /* UserFlowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserFlowViewModel.swift; sourceTree = "<group>"; };
 		0A4333767B565C11B480EF79 /* MenuFitWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitWidgetBundle.swift; sourceTree = "<group>"; };
+		0B7D5081B5236D6332EFA4CE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		0FC43E1A8DD5F34A227AB436 /* PushRegistrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationManager.swift; sourceTree = "<group>"; };
 		105CF1F04F83DA02917BCD1D /* MenuFitTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitTheme.swift; sourceTree = "<group>"; };
 		130C8AFEA99607975BF31093 /* RecipesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipesScreen.swift; sourceTree = "<group>"; };
-		13D10713A7A8CFEEED89EF73 /* MenuFitWatchApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MenuFitWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13D10713A7A8CFEEED89EF73 /* MenuFitWatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuFitWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedWidgetData.swift; sourceTree = "<group>"; };
 		1A7C2B347417F912C891ADC2 /* MenuFitWatchWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuFitWatchWidget.entitlements; sourceTree = "<group>"; };
-		1F3088367BF52324FE998FFB /* MenuFitUserAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MenuFitUserAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1F3088367BF52324FE998FFB /* MenuFitUserAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MenuFitUserAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2265786C8C844725BB4D6B7F /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		30A3BB57ED264ED86A1A7736 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		336BA4F2038C7DB2E545FD4F /* SnapshotAssert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotAssert.swift; sourceTree = "<group>"; };
 		3787E5A8B2E6E743E5D77BDB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3941274E4041CB58B8BC8447 /* UserFlowModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserFlowModels.swift; sourceTree = "<group>"; };
 		3F5ED2CBBE752E2434FEBB71 /* AuthSessionSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionSetupView.swift; sourceTree = "<group>"; };
+		43C53F61B754794D3EDA1B2C /* SupabaseAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthClient.swift; sourceTree = "<group>"; };
 		470C7A475423D0C7EFC969B3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4EB8E3243064BD44720733F3 /* MenuFitUserApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitUserApp.swift; sourceTree = "<group>"; };
+		50D1A0E990E53EA4B3F685F9 /* EetmeterDagSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EetmeterDagSheet.swift; sourceTree = "<group>"; };
 		5862F6F0387CA8260E450902 /* BackendAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendAPI.swift; sourceTree = "<group>"; };
-		592A78D12F53B6A600885B31 /* ExtensionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionDelegate.swift; sourceTree = "<group>"; };
-		592A78D22F53B6A600885B31 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekScreen.swift; sourceTree = "<group>"; };
 		5EB4845E02105B422FBC0656 /* TodayMealsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayMealsWidget.swift; sourceTree = "<group>"; };
 		626EF9C1808E73CCDB998617 /* week-screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "week-screen.png"; sourceTree = "<group>"; };
 		66EA1F50A81D438604490C65 /* MenuFitUserAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitUserAppUITests.swift; sourceTree = "<group>"; };
 		67182B208FF79062284E8862 /* NextMealWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextMealWatchWidget.swift; sourceTree = "<group>"; };
 		7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
-		81655C9A4DB8EEA09CF97D2E /* MenuFitWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MenuFitWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		81655C9A4DB8EEA09CF97D2E /* MenuFitWidgetExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MenuFitWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8341DF54B0EE6980D641FA68 /* MealSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealSchedule.swift; sourceTree = "<group>"; };
-		834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EetmeterDagSheet.swift; sourceTree = "<group>"; };
 		8A78D60062541FA3A611CF7D /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
-		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8BE4479F4C6A81AECF98FE0E /* ConfigScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigScreen.swift; sourceTree = "<group>"; };
 		95D60726DCEF5651017DA3ED /* MenuFitWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuFitWidgetExtension.entitlements; sourceTree = "<group>"; };
 		98A6E9AB3B23F72B36A7DA60 /* tabbar-week.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tabbar-week.png"; sourceTree = "<group>"; };
@@ -149,15 +165,12 @@
 		C6FBDC30CE6336FF5BC9C9EE /* MenuFitWatchWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitWatchWidgetBundle.swift; sourceTree = "<group>"; };
 		C9F7813B54367774B77BC8D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CFE482EB44234E5DB375E836 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
-		D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationManager.swift; sourceTree = "<group>"; };
 		D31B5618A6714859B8C35E13 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		D6780481D5DA5902C015DF71 /* MenuFitWatchWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MenuFitWatchWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA85292A396845F477B05ABE /* order-screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "order-screen.png"; sourceTree = "<group>"; };
-		E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E770DA6EA973B040032A2FC1 /* MenuFitWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuFitWatch.entitlements; sourceTree = "<group>"; };
 		EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEditSheet.swift; sourceTree = "<group>"; };
 		F03E8BA64018C29B17A52D03 /* MealNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealNotificationManager.swift; sourceTree = "<group>"; };
-		F4A5B6C7D8E9102A3B4C5D6F /* SupabaseAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthClient.swift; sourceTree = "<group>"; };
 		F689360E3FDFC2EDC9293007 /* WeekNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekNavBar.swift; sourceTree = "<group>"; };
 		F89A75D1E0560A207F9E78BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F9346B79CF692F41BADFEC8F /* MatchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScreen.swift; sourceTree = "<group>"; };
@@ -176,15 +189,6 @@
 			path = MenuFitWatch;
 			sourceTree = "<group>";
 		};
-		592A78D02F53B6A500885B31 /* MenuFitWatchExtension */ = {
-			isa = PBXGroup;
-			children = (
-				592A78D12F53B6A600885B31 /* ExtensionDelegate.swift */,
-				592A78D22F53B6A600885B31 /* Info.plist */,
-			);
-			path = MenuFitWatchExtension;
-			sourceTree = "<group>";
-		};
 		6A0F5F4CAE7FA37D92E3A2A0 = {
 			isa = PBXGroup;
 			children = (
@@ -194,7 +198,6 @@
 				A5E715CB84ADA2A5F6A36152 /* MenuFitWidget */,
 				9653E8271E8019EE5C7D9407 /* UITests */,
 				8411F50A90A9FDAC50CE1258 /* Products */,
-				592A78D02F53B6A500885B31 /* MenuFitWatchExtension */,
 			);
 			sourceTree = "<group>";
 		};
@@ -223,13 +226,14 @@
 		9C96B33725F4D1EB780C2E70 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */,
+				0B7D5081B5236D6332EFA4CE /* AppDelegate.swift */,
 				2265786C8C844725BB4D6B7F /* AppEnvironment.swift */,
 				3787E5A8B2E6E743E5D77BDB /* Assets.xcassets */,
 				3F5ED2CBBE752E2434FEBB71 /* AuthSessionSetupView.swift */,
 				7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */,
 				5862F6F0387CA8260E450902 /* BackendAPI.swift */,
 				8BE4479F4C6A81AECF98FE0E /* ConfigScreen.swift */,
+				50D1A0E990E53EA4B3F685F9 /* EetmeterDagSheet.swift */,
 				C9F7813B54367774B77BC8D4 /* Info.plist */,
 				CFE482EB44234E5DB375E836 /* Localization.swift */,
 				F9346B79CF692F41BADFEC8F /* MatchScreen.swift */,
@@ -241,16 +245,15 @@
 				FD375DB99A1D8042CD754B02 /* OfflineCacheStore.swift */,
 				B7DC178D1015232B3FA63D01 /* OrderScreen.swift */,
 				EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */,
-				D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */,
-				F4A5B6C7D8E9102A3B4C5D6F /* SupabaseAuthClient.swift */,
+				0FC43E1A8DD5F34A227AB436 /* PushRegistrationManager.swift */,
 				130C8AFEA99607975BF31093 /* RecipesScreen.swift */,
 				D31B5618A6714859B8C35E13 /* RootTabView.swift */,
 				19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */,
+				43C53F61B754794D3EDA1B2C /* SupabaseAuthClient.swift */,
 				3941274E4041CB58B8BC8447 /* UserFlowModels.swift */,
 				025733A3A85DF8C0EF97659F /* UserFlowViewModel.swift */,
 				F689360E3FDFC2EDC9293007 /* WeekNavBar.swift */,
 				59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */,
-				834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -306,7 +309,7 @@
 			);
 			productName = MenuFitWatchWidgetExtension;
 			productReference = D6780481D5DA5902C015DF71 /* MenuFitWatchWidgetExtension.appex */;
-			productType = "com.apple.product-type.watchkit2-extension";
+			productType = "com.apple.product-type.app-extension";
 		};
 		62A46139EFE13C01AF611E02 /* MenuFitUserApp */ = {
 			isa = PBXNativeTarget;
@@ -315,6 +318,7 @@
 				0C86AF19695C71BFB553D0E3 /* Sources */,
 				8FC4743F1B6F4B65648604F4 /* Resources */,
 				F505FEF3AC4751C1D55BEDCD /* Embed Foundation Extensions */,
+				29352A1DEF10249AD138EA69 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
@@ -333,6 +337,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 11A5F6A2171B16ABF28048D4 /* Build configuration list for PBXNativeTarget "MenuFitWatchApp" */;
 			buildPhases = (
+				28B7BC4A686142BF9F535384 /* Sources */,
 				6C80A744936A51051A5CA603 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -345,7 +350,7 @@
 			);
 			productName = MenuFitWatchApp;
 			productReference = 13D10713A7A8CFEEED89EF73 /* MenuFitWatchApp.app */;
-			productType = "com.apple.product-type.application.watchapp2";
+			productType = "com.apple.product-type.application";
 		};
 		6FD464B2A30A84CF5549069D /* MenuFitWidgetExtension */ = {
 			isa = PBXNativeTarget;
@@ -393,18 +398,23 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					38BF40FC739790BC05D0286F = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					62A46139EFE13C01AF611E02 = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					66A458B9218BAA1A3BA72E0D = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					6FD464B2A30A84CF5549069D = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					B4BA3AD1D02E98EF40B550E6 = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 						TestTargetID = 62A46139EFE13C01AF611E02;
 					};
@@ -420,6 +430,7 @@
 			);
 			mainGroup = 6A0F5F4CAE7FA37D92E3A2A0;
 			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -459,11 +470,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C45979B022C595A7ECAEB596 /* AppDelegate.swift in Sources */,
 				6839AF16B7F98CC1D1712676 /* AppEnvironment.swift in Sources */,
 				0E647C1FA1549D5B30E79176 /* AuthSessionSetupView.swift in Sources */,
 				A262BF5AE5D2EAF1128B2BB5 /* AuthSessionStore.swift in Sources */,
 				07BC08D9558522998C9C3EE6 /* BackendAPI.swift in Sources */,
 				4AA177D369DFC8C3F1C993FD /* ConfigScreen.swift in Sources */,
+				EBEF44D8FDFB61AD16E8E931 /* EetmeterDagSheet.swift in Sources */,
 				C309FFCB7BE1147CF6CE9550 /* Localization.swift in Sources */,
 				34E1F0A1990D1898942BA303 /* MatchScreen.swift in Sources */,
 				4EACA390E388E0220B33142D /* MealNotificationManager.swift in Sources */,
@@ -473,17 +486,26 @@
 				28A052B2CAD27C6BD9302D43 /* OfflineCacheStore.swift in Sources */,
 				C7843F6778C2273A38B57C7E /* OrderScreen.swift in Sources */,
 				95AAD79A5BE328083245B25F /* ProfileEditSheet.swift in Sources */,
+				002A6877A9E85CCF86AEE079 /* PushRegistrationManager.swift in Sources */,
 				BA78D5804FE9D7D9E6578823 /* RecipesScreen.swift in Sources */,
 				748342154DC6D5C1CA201765 /* RootTabView.swift in Sources */,
 				6CE21F7ECFD608C3815B3515 /* SharedWidgetData.swift in Sources */,
+				5FED6759F61CC02768FE0A1A /* SupabaseAuthClient.swift in Sources */,
 				586371043F98771AE1CD477A /* UserFlowModels.swift in Sources */,
 				00ED1399B5D2986D86AA615A /* UserFlowViewModel.swift in Sources */,
 				B3B7EB9E58D1D8576328200E /* WeekNavBar.swift in Sources */,
 				9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */,
-				9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */,
-				A1B2C3D4E5F60718293A4B5C /* PushRegistrationManager.swift in Sources */,
-				C3D4E5F6A7B80920384C5D6E /* SupabaseAuthClient.swift in Sources */,
-				B2C3D4E5F6A70819293A4B5D /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		28B7BC4A686142BF9F535384 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6250BAC011286A6CA1DA9A6F /* MealSchedule.swift in Sources */,
+				04719629E79004FE9BB8A59B /* MenuFitWatchApp.swift in Sources */,
+				570F290874CF06C656239AA8 /* SharedWidgetData.swift in Sources */,
+				4601BE82C9E1B32149E9A37B /* WatchHomeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -502,11 +524,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6250BAC011286A6CA1DA9A6F /* MealSchedule.swift in Sources */,
-				04719629E79004FE9BB8A59B /* MenuFitWatchApp.swift in Sources */,
+				FD00AF0F6498AC3770332D88 /* MealSchedule.swift in Sources */,
+				4773644E0AF0D84D644F8D5C /* MenuFitWatchWidgetBundle.swift in Sources */,
+				1497BE34235AF8DC87CF444E /* NextMealWatchWidget.swift in Sources */,
 				5FB23588437C4E3AD6132E75 /* SharedWidgetData.swift in Sources */,
-				4601BE82C9E1B32149E9A37B /* WatchHomeView.swift in Sources */,
-				592A78D32F53B6A600885B31 /* ExtensionDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -525,7 +546,7 @@
 		9D35CAA567BBD96375290D41 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 66A458B9218BAA1A3BA72E0D /* MenuFitWatchApp */;
-			targetProxy = 592A78D42F53B70700885B31 /* PBXContainerItemProxy */;
+			targetProxy = BAE9A9B981D826122C65F9E3 /* PBXContainerItemProxy */;
 		};
 		A9CA63A7C238FF3F5FE48C2B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -553,7 +574,6 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = App/MenuFitUserApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -572,7 +592,6 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWatch/MenuFitWatch.entitlements;
-				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.menufit.userapp.watchkitapp;
@@ -589,7 +608,6 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWidget/MenuFitWidgetExtension.entitlements;
-				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -676,7 +694,6 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWatch/MenuFitWatch.entitlements;
-				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.menufit.userapp.watchkitapp;
@@ -693,7 +710,6 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
-				DEVELOPMENT_TEAM = 483B3YQKWN;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -713,7 +729,6 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = App/MenuFitUserApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -731,7 +746,6 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
-				DEVELOPMENT_TEAM = 483B3YQKWN;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -748,16 +762,15 @@
 			buildSettings = {
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_ENTITLEMENTS = MenuFitWatch/MenuFitWatch.entitlements;
-				DEVELOPMENT_TEAM = 483B3YQKWN;
+				CODE_SIGN_ENTITLEMENTS = MenuFitWatchWidget/MenuFitWatchWidget.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = MenuFitWatchExtension/Info.plist;
+				INFOPLIST_FILE = MenuFitWatchWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = nl.menufit.userapp.watchkitapp.watchkitextension;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.menufit.userapp.watchkitapp.widget;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
@@ -770,16 +783,15 @@
 			buildSettings = {
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_ENTITLEMENTS = MenuFitWatch/MenuFitWatch.entitlements;
-				DEVELOPMENT_TEAM = 483B3YQKWN;
+				CODE_SIGN_ENTITLEMENTS = MenuFitWatchWidget/MenuFitWatchWidget.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = MenuFitWatchExtension/Info.plist;
+				INFOPLIST_FILE = MenuFitWatchWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = nl.menufit.userapp.watchkitapp.watchkitextension;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.menufit.userapp.watchkitapp.widget;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
@@ -793,7 +805,6 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWidget/MenuFitWidgetExtension.entitlements;
-				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

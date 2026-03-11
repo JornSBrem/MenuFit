@@ -38,6 +38,9 @@ targets:
         com.apple.security.application-groups:
           - group.nl.menufit.shared
     settings:
+      configFiles:
+        Debug: Config/AppConfig.xcconfig
+        Release: Config/AppConfig.xcconfig
       base:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGNING_ALLOWED: YES

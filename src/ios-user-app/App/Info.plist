@@ -22,15 +22,21 @@
 	<string>1</string>
 	<key>MenuFitBackendBaseURL</key>
 	<string>https://app.menufit.uk</string>
+	<key>MenuFitHouseholdId</key>
+	<string>default-household</string>
+	<key>MenuFitPicnicAccountId</key>
+	<string>picnic-default</string>
+	<key>MenuFitUserAccessToken</key>
+	<string></string>
+	<key>MenuFitUserSubjectId</key>
+	<string>ios-user</string>
+	<key>MenuFitUserTokenExpiryEpochSeconds</key>
+	<integer>0</integer>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 	</dict>
-	<key>SupabaseAnonKey</key>
-	<string>$(SUPABASE_ANON_KEY)</string>
-	<key>SupabaseProjectURL</key>
-	<string>$(SUPABASE_PROJECT_URL)</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

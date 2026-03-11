@@ -62,6 +62,13 @@ Supported Supabase aliases (fallback lookup):
 - URL: `SupabaseURL`, `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`
 - anon key: `SupabaseAnonkey`, `SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
+Secret handling (no secrets in git):
+
+- `App/Info.plist` uses build variables (`$(SUPABASE_PROJECT_URL)`, `$(SUPABASE_ANON_KEY)`, `$(MENUFIT_BACKEND_BASE_URL)`).
+- Copy `Config/LocalSecrets.xcconfig.example` to `Config/LocalSecrets.xcconfig`.
+- Fill local values in `LocalSecrets.xcconfig` (this file is ignored by git).
+- Shared defaults live in `Config/AppConfig.xcconfig`.
+
 ## WI-215 UI Smoke Automation
 
 - UI smoke test file: `UITests/MenuFitUserAppUITests.swift`
