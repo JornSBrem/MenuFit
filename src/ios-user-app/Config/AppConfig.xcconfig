@@ -1,5 +1,0 @@
-MENUFIT_BACKEND_BASE_URL = https://app.menufit.uk
-SUPABASE_PROJECT_URL =
-SUPABASE_ANON_KEY =
-
-#include? "LocalSecrets.xcconfig"
