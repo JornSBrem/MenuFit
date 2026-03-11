@@ -28,6 +28,20 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A16727C91A07DB5B6A4B6044"
+               BuildableName = "MenuFitWatchExtension.appex"
+               BlueprintName = "MenuFitWatchExtension"
+               ReferencedContainer = "container:MenuFitUserApp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "38BF40FC739790BC05D0286F"
                BuildableName = "MenuFitWatchWidgetExtension.appex"
                BlueprintName = "MenuFitWatchWidgetExtension"

@@ -54,7 +54,8 @@ struct AppEnvironment {
       }
       let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
       if !trimmed.isEmpty {
-        return trimmed
+        // Xcode build settings from xcconfig can contain escaped slashes (https:\\/\\/...)
+        return trimmed.replacingOccurrences(of: "\\/", with: "/")
       }
     }
     return nil

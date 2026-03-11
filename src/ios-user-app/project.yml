@@ -8,7 +8,7 @@ settings:
   base:
     SWIFT_VERSION: 5.10
     PRODUCT_BUNDLE_IDENTIFIER: nl.menufit.userapp
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "Jorn Brem"
     CODE_SIGN_STYLE: Automatic
 targets:
   MenuFitUserApp:
@@ -23,6 +23,13 @@ targets:
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
         MenuFitBackendBaseURL: $(MENUFIT_BACKEND_BASE_URL)
@@ -39,10 +46,10 @@ targets:
         aps-environment: development
         com.apple.security.application-groups:
           - group.nl.menufit.shared
+    configFiles:
+      Debug: Config/AppConfig.xcconfig
+      Release: Config/AppConfig.xcconfig
     settings:
-      configFiles:
-        Debug: Config/AppConfig.xcconfig
-        Release: Config/AppConfig.xcconfig
       base:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGNING_ALLOWED: YES
@@ -64,6 +71,9 @@ targets:
       - path: App/MealSchedule.swift
     info:
       path: MenuFitWidget/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
       path: MenuFitWidget/MenuFitWidgetExtension.entitlements
       properties:
@@ -78,14 +88,13 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
 
   MenuFitWatchApp:
-    type: application
+    type: application.watchapp2
     platform: watchOS
-    sources:
-      - path: MenuFitWatch
-      - path: App/SharedWidgetData.swift
-      - path: App/MealSchedule.swift
     info:
       path: MenuFitWatch/Info.plist
+      properties:
+        WKWatchKitApp: true
+        WKCompanionAppBundleIdentifier: nl.menufit.userapp
     entitlements:
       path: MenuFitWatch/MenuFitWatch.entitlements
       properties:
@@ -100,8 +109,34 @@ targets:
         TARGETED_DEVICE_FAMILY: "4"
         WATCHOS_DEPLOYMENT_TARGET: "11.0"
     dependencies:
+      - target: MenuFitWatchExtension
+        embed: true
       - target: MenuFitWatchWidgetExtension
         embed: true
+
+  MenuFitWatchExtension:
+    type: watchkit2-extension
+    platform: watchOS
+    sources:
+      - path: MenuFitWatchExtension
+      - path: App/SharedWidgetData.swift
+      - path: App/MealSchedule.swift
+    info:
+      path: MenuFitWatchExtension/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.watchkit
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ExtensionDelegate
+          NSExtensionAttributes:
+            WKAppBundleIdentifier: nl.menufit.userapp.watchkitapp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: nl.menufit.userapp.watchkitapp.watchkitextension
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGNING_REQUIRED: YES
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "4"
+        WATCHOS_DEPLOYMENT_TARGET: "11.0"
 
   MenuFitWatchWidgetExtension:
     type: app-extension
@@ -112,6 +147,9 @@ targets:
       - path: App/MealSchedule.swift
     info:
       path: MenuFitWatchWidget/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
       path: MenuFitWatchWidget/MenuFitWatchWidget.entitlements
       properties:
@@ -152,4 +190,5 @@ schemes:
     build:
       targets:
         MenuFitWatchApp: all
+        MenuFitWatchExtension: all
         MenuFitWatchWidgetExtension: all
