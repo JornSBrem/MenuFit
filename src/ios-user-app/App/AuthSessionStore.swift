@@ -32,26 +32,67 @@ final class AuthSessionStore: AccessTokenProvider {
   private let decoder = JSONDecoder()
   private let nowEpochSeconds: () -> Int
 
+  /// Optionele SupabaseAuthClient voor automatische token refresh.
+  var supabaseAuthClient: SupabaseAuthClient?
+
   private(set) var session: UserAuthSession?
+
+  /// True wanneer een refresh al bezig is (voorkomt dubbele refresh calls).
+  private var isRefreshing = false
 
   init(
     defaults: UserDefaults = .standard,
-    nowEpochSeconds: @escaping () -> Int = { Int(Date().timeIntervalSince1970) },
-    fallbackSession: UserAuthSession? = nil
+    nowEpochSeconds: @escaping () -> Int = { Int(Date().timeIntervalSince1970) }
   ) {
     self.defaults = defaults
     self.nowEpochSeconds = nowEpochSeconds
     self.session = Self.load(defaults: defaults, decoder: decoder)
-
-    if session == nil, let fallbackSession {
-      save(session: fallbackSession)
-    }
   }
 
   func accessToken() throws -> String {
     guard let session else {
       throw AuthSessionStoreError.missingSession
     }
+    if let expiry = session.expiresAtEpochSeconds, expiry <= nowEpochSeconds() {
+      throw AuthSessionStoreError.expiredSession
+    }
+    return session.accessToken
+  }
+
+  /// Geeft een geldig access token terug; vernieuwt automatisch als het bijna verloopt.
+  func validAccessToken() async throws -> String {
+    guard let session else {
+      throw AuthSessionStoreError.missingSession
+    }
+
+    // Vernieuw als token binnen 5 minuten verloopt
+    if let expiry = session.expiresAtEpochSeconds,
+       expiry - nowEpochSeconds() < 300,
+       !session.refreshToken.isEmpty,
+       let client = supabaseAuthClient,
+       !isRefreshing {
+      isRefreshing = true
+      defer { isRefreshing = false }
+      do {
+        let response = try await client.refreshSession(refreshToken: session.refreshToken)
+        let newSession = UserAuthSession(
+          accessToken: response.access_token,
+          refreshToken: response.refresh_token,
+          subjectId: response.user.id,
+          email: response.user.email,
+          expiresAtEpochSeconds: nowEpochSeconds() + response.expires_in,
+          username: session.username
+        )
+        save(session: newSession)
+        return newSession.accessToken
+      } catch {
+        // Refresh mislukt — geef bestaand token terug als het nog geldig is
+        if let expiry = session.expiresAtEpochSeconds, expiry <= nowEpochSeconds() {
+          throw AuthSessionStoreError.expiredSession
+        }
+      }
+    }
+
     if let expiry = session.expiresAtEpochSeconds, expiry <= nowEpochSeconds() {
       throw AuthSessionStoreError.expiredSession
     }

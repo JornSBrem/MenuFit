@@ -12,14 +12,6 @@ enum OrderSyncOutcome {
   case failed
 }
 
-struct AuthSessionDraft {
-  var accessToken: String
-  var subjectId: String
-  var picnicAccountId: String
-  var householdId: String
-  var expiresAtEpochText: String
-}
-
 @MainActor
 final class UserFlowViewModel: ObservableObject {
   let fixedKcals: [Int] = [1250, 1500, 1800, 2100]
@@ -40,13 +32,6 @@ final class UserFlowViewModel: ObservableObject {
   @Published var lastMatchEvaluation: MatchWorkflowEvaluateResponse?
   @Published var lastMatchReview: MatchReviewActionResponse?
   @Published var authGateState: AuthGateState = .onboarding
-  @Published var authDraft = AuthSessionDraft(
-    accessToken: "",
-    subjectId: "ios-user",
-    picnicAccountId: "picnic-default",
-    householdId: "default-household",
-    expiresAtEpochText: ""
-  )
   @Published var householdMembers: [HouseholdMember] = []
   @Published var selectedMemberId = ""
   @Published var selectedDayLabel = ""
@@ -72,7 +57,7 @@ final class UserFlowViewModel: ObservableObject {
   private let api: BackendAPI
   private let cache: OfflineCacheStore
   private let authStore: AuthSessionStore
-  private let fallbackHouseholdId: String
+  private let supabaseAuth: SupabaseAuthClient?
   private let defaults: UserDefaults
   private var didBootstrap = false
 
@@ -80,15 +65,15 @@ final class UserFlowViewModel: ObservableObject {
     api: BackendAPI,
     cache: OfflineCacheStore,
     authStore: AuthSessionStore,
-    defaults: UserDefaults = .standard,
-    fallbackHouseholdId: String = "default-household"
+    supabaseAuth: SupabaseAuthClient?,
+    defaults: UserDefaults = .standard
   ) {
     self.api = api
     self.cache = cache
     self.authStore = authStore
+    self.supabaseAuth = supabaseAuth
     self.defaults = defaults
     self.authSession = authStore.session
-    self.fallbackHouseholdId = fallbackHouseholdId
     // Laad opgeslagen kcal-voorkeur uit UserDefaults
     let savedKcal = defaults.integer(forKey: "menufit.preferred-kcal")
     if [1250, 1500, 1800, 2100].contains(savedKcal) {
@@ -210,62 +195,11 @@ final class UserFlowViewModel: ObservableObject {
     case let .expired(session):
       authSession = session
       authGateState = .expired
-      preloadAuthDraft(from: session)
       didBootstrap = false
     case let .valid(session):
       authSession = session
       authGateState = .ready
-      preloadAuthDraft(from: session)
     }
-  }
-
-  func saveAuthSessionFromDraft() -> Bool {
-    let token = authDraft.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
-    let subjectId = authDraft.subjectId.trimmingCharacters(in: .whitespacesAndNewlines)
-    let picnicAccountId = authDraft.picnicAccountId.trimmingCharacters(in: .whitespacesAndNewlines)
-    let householdId = authDraft.householdId.trimmingCharacters(in: .whitespacesAndNewlines)
-    let expiryText = authDraft.expiresAtEpochText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-    guard !token.isEmpty else {
-      lastError = AppStrings.text(.onboardingTokenRequired)
-      return false
-    }
-    guard !subjectId.isEmpty else {
-      lastError = AppStrings.text(.onboardingSubjectRequired)
-      return false
-    }
-    guard !picnicAccountId.isEmpty else {
-      lastError = AppStrings.text(.onboardingPicnicRequired)
-      return false
-    }
-    guard !householdId.isEmpty else {
-      lastError = AppStrings.text(.onboardingHouseholdRequired)
-      return false
-    }
-
-    var expiry: Int?
-    if !expiryText.isEmpty {
-      guard let parsed = Int(expiryText), parsed > 0 else {
-        lastError = AppStrings.text(.onboardingExpiryInvalid)
-        return false
-      }
-      expiry = parsed
-    }
-
-    authStore.save(
-      session: UserAuthSession(
-        accessToken: token,
-        subjectId: subjectId,
-        picnicAccountId: picnicAccountId,
-        householdId: householdId,
-        expiresAtEpochSeconds: expiry
-      )
-    )
-
-    clearLoadedData()
-    lastError = nil
-    refreshAuthState()
-    return true
   }
 
   func clearAuthSession() {
@@ -477,7 +411,7 @@ final class UserFlowViewModel: ObservableObject {
       )
     }
 
-    let householdId = authSession?.householdId ?? fallbackHouseholdId
+    let householdId = configHouseholdRecord?.householdId ?? "default-household"
     let request = CartSyncRequestBody(
       idempotencyKey: "\(summary.weekPlan.weekPlanId)-\(householdId)",
       weekPlanId: summary.weekPlan.weekPlanId,
@@ -617,46 +551,60 @@ final class UserFlowViewModel: ObservableObject {
   @Published var userProfile: UserProfileData?
   @Published var suggestedKcal: Int?
 
-  func loginWithCredentials(username: String, password: String) async {
+  func loginWithCredentials(email: String, password: String) async {
     lastError = nil
+    guard let supabaseAuth else {
+      lastError = "Supabase is niet geconfigureerd."
+      return
+    }
     do {
-      let response = try await api.login(username: username, password: password)
+      let authResponse = try await supabaseAuth.signIn(email: email, password: password)
+      let now = Int(Date().timeIntervalSince1970)
       let session = UserAuthSession(
-        accessToken: response.token,
-        subjectId: response.userId,
-        picnicAccountId: "no-picnic",
-        householdId: "",
-        expiresAtEpochSeconds: response.expiresAtEpochSeconds,
-        username: response.username
+        accessToken: authResponse.access_token,
+        refreshToken: authResponse.refresh_token,
+        subjectId: authResponse.user.id,
+        email: authResponse.user.email,
+        expiresAtEpochSeconds: now + authResponse.expires_in
       )
       authStore.save(session: session)
-      userProfile = response.profile
-      needsOnboarding = (response.onboardingCompletedAt == nil)
       clearLoadedData()
       refreshAuthState()
-      await bootstrapIfNeeded()
+      // Haal profiel op van backend (auto-provisioning)
+      let me = try await api.fetchMe()
+      userProfile = me.profile
+      needsOnboarding = (me.onboardingCompletedAt == nil)
+      if !needsOnboarding {
+        await bootstrapIfNeeded()
+      }
     } catch {
       lastError = error.localizedDescription
     }
   }
 
-  func registerWithCredentials(username: String, password: String, email: String? = nil, profile: UserProfileData? = nil) async {
+  func registerWithCredentials(email: String, password: String) async {
     lastError = nil
+    guard let supabaseAuth else {
+      lastError = "Supabase is niet geconfigureerd."
+      return
+    }
     do {
-      let response = try await api.register(username: username, password: password, email: email, profile: profile)
+      let authResponse = try await supabaseAuth.signUp(email: email, password: password)
+      let now = Int(Date().timeIntervalSince1970)
       let session = UserAuthSession(
-        accessToken: response.token,
-        subjectId: response.userId,
-        picnicAccountId: "no-picnic",
-        householdId: "",
-        expiresAtEpochSeconds: response.expiresAtEpochSeconds,
-        username: response.username
+        accessToken: authResponse.access_token,
+        refreshToken: authResponse.refresh_token,
+        subjectId: authResponse.user.id,
+        email: authResponse.user.email,
+        expiresAtEpochSeconds: now + authResponse.expires_in
       )
       authStore.save(session: session)
-      userProfile = response.profile
-      needsOnboarding = true
       clearLoadedData()
       refreshAuthState()
+      // Haal profiel op (auto-provisioning op backend)
+      _ = try await api.fetchMe()
+      userProfile = nil
+      needsOnboarding = true
     } catch {
       lastError = error.localizedDescription
     }
@@ -848,16 +796,6 @@ final class UserFlowViewModel: ObservableObject {
       .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
   }
 
-  private func preloadAuthDraft(from session: UserAuthSession) {
-    authDraft = AuthSessionDraft(
-      accessToken: session.accessToken,
-      subjectId: session.subjectId,
-      picnicAccountId: session.picnicAccountId,
-      householdId: session.householdId,
-      expiresAtEpochText: session.expiresAtEpochSeconds.map(String.init) ?? ""
-    )
-  }
-
   private func clearLoadedData() {
     summary = nil
     groceries = nil
@@ -889,14 +827,14 @@ final class UserFlowViewModel: ObservableObject {
       configHouseholdRecord = response.household
 
       if selectedMemberId.isEmpty {
-        let currentSubject = authSession?.subjectId ?? authDraft.subjectId
+        let currentSubject = authSession?.subjectId ?? "unknown"
         selectedMemberId = members.first(where: { $0.userId == currentSubject })?.userId
           ?? members.first?.userId
           ?? currentSubject
       }
     } catch {
       let fallbackMember = HouseholdMember(
-        userId: authSession?.subjectId ?? authDraft.subjectId,
+        userId: authSession?.subjectId ?? "unknown",
         role: "head",
         joinedAt: "",
         displayName: authSession?.username,

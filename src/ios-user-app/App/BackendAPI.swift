@@ -84,18 +84,7 @@ final class BackendAPI {
     try await get(path: "/api/v3/recipes")
   }
 
-  // MARK: - Auth endpoints (geen bearer token nodig)
-
-  func register(username: String, password: String, email: String? = nil, profile: UserProfileData? = nil) async throws -> AuthTokenResponse {
-    try await postPublic(
-      path: "/api/v3/auth/register",
-      body: AuthRegisterRequest(username: username, password: password, email: email, profile: profile)
-    )
-  }
-
-  func login(username: String, password: String) async throws -> AuthTokenResponse {
-    try await postPublic(path: "/api/v3/auth/login", body: AuthLoginRequest(username: username, password: password))
-  }
+  // MARK: - Auth endpoints
 
   func fetchMe() async throws -> AuthMeResponse {
     try await get(path: "/api/v3/auth/me")
@@ -212,18 +201,6 @@ final class BackendAPI {
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     try applyAuthorization(to: &request)
-    request.httpBody = try encoder.encode(body)
-
-    return try await perform(request)
-  }
-
-  /// POST zonder Authorization header (voor login/register endpoints)
-  private func postPublic<TBody: Encodable, TData: Decodable>(path: String, body: TBody) async throws -> TData {
-    let url = baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.setValue("application/json", forHTTPHeaderField: "Accept")
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.httpBody = try encoder.encode(body)
 
     return try await perform(request)

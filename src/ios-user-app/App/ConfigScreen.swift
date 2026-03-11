@@ -62,7 +62,7 @@ struct ConfigScreen: View {
                 .font(.title2)
                 .foregroundStyle(MFColors.brandGradient)
               VStack(alignment: .leading, spacing: 2) {
-                Text(session.username ?? session.subjectId)
+                Text(session.username ?? session.email ?? session.subjectId)
                   .font(.subheadline.weight(.medium))
                 Text("Ingelogd")
                   .font(.caption)

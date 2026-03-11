@@ -25,6 +25,8 @@ import { HouseholdService, HouseholdServiceError } from "./application/household
 import { PushNotificationService, PushNotificationServiceError } from "./application/push/push-notification-service.ts";
 import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
 import type { GoldMealIngredient, GoldReadModel, GoldRecipeStep } from "./application/gold/index.ts";
+import { JwksClient } from "./integrations/oidc/jwks-client.ts";
+import { JwtVerifier, JwtVerificationError } from "./integrations/oidc/jwt-verifier.ts";
 
 /** Interne type alias voor stap-verrijking */
 type GoldRecipeStepData = GoldRecipeStep;
@@ -159,6 +161,22 @@ const systemOps = new SystemOperationsService({ auditTrail });
 const householdService = new HouseholdService({ stateStore });
 const pushService = new PushNotificationService({ stateStore });
 const goldReadService = new GoldWeekReadService({ stateStore });
+
+// ---- Supabase JWT validation (optional, enabled when SUPABASE_PROJECT_URL is set) ---
+
+const supabaseProjectUrl = (config.get<string>("SUPABASE_PROJECT_URL") || "").replace(/\/+$/, "");
+let supabaseJwtVerifier: JwtVerifier | null = null;
+
+if (supabaseProjectUrl) {
+  const jwksClient = new JwksClient({
+    jwksUri: `${supabaseProjectUrl}/auth/v1/.well-known/jwks.json`,
+    cacheMaxAgeMs: 60 * 60 * 1000, // 1 uur cache (keys roteren zelden)
+  });
+  supabaseJwtVerifier = new JwtVerifier({ jwksClient });
+  console.log(`[boot] Supabase JWT validation enabled for ${supabaseProjectUrl}`);
+} else {
+  console.log("[boot] Supabase JWT validation disabled (SUPABASE_PROJECT_URL not set)");
+}
 
 // ---- Dev tokens ------------------------------------------------------------
 
@@ -458,17 +476,50 @@ function getAdminSession(req: IncomingMessage) {
   return authorizeAdminFromBearerHeader(lifecycle, getAuthHeader(req));
 }
 
-function getUserSession(req: IncomingMessage) {
-  return authorizeUserFromBearerHeader(lifecycle, getAuthHeader(req));
+async function validateSupabaseJwt(token: string): Promise<import("./interfaces/http/auth/session-middleware.ts").MiddlewareEnvelope<import("./interfaces/http/auth/session-context.ts").UserSessionContext>> {
+  if (!supabaseJwtVerifier) {
+    return { ok: false, error: { code: "SUPABASE_NOT_CONFIGURED", message: "Supabase JWT validation is not configured." } };
+  }
+  try {
+    const { claims } = await supabaseJwtVerifier.verify(token, {
+      issuer: `${supabaseProjectUrl}/auth/v1`,
+      audience: "authenticated",
+    });
+    return {
+      ok: true,
+      data: {
+        sessionKind: "user",
+        subjectId: claims.sub as string,
+        tokenId: (claims.jti as string) ?? "",
+        picnicAccountId: "",
+        expiresAtEpochSeconds: claims.exp as number,
+      },
+    };
+  } catch (error) {
+    const message = error instanceof JwtVerificationError ? error.message : "JWT validation failed.";
+    return { ok: false, error: { code: "JWT_INVALID", message } };
+  }
 }
 
-/** Accepts either a user or admin bearer token (for public-ish data endpoints). */
-function getAnySession(req: IncomingMessage) {
+async function getUserSession(req: IncomingMessage) {
+  const header = getAuthHeader(req);
+  const token = header.replace(/^bearer\s+/i, "").trim();
+
+  // Als het token punten bevat is het een JWT (Supabase), anders een custom token
+  if (token.includes(".") && supabaseJwtVerifier) {
+    return validateSupabaseJwt(token);
+  }
+
+  return authorizeUserFromBearerHeader(lifecycle, header);
+}
+
+/** Accepts either a user or admin bearer token, or a Supabase JWT. */
+async function getAnySession(req: IncomingMessage) {
   const adminResult = getAdminSession(req);
   if (adminResult.ok) {
     return adminResult;
   }
-  return getUserSession(req);
+  return await getUserSession(req);
 }
 
 function queryParam(req: IncomingMessage, name: string): string | undefined {
@@ -511,7 +562,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
     // ---- Week routes (user or admin auth) ----
     if (path === "/api/v3/week/summary" && method === "GET") {
-      const authResult = getAnySession(req);
+      const authResult = await getAnySession(req);
       if (!authResult.ok || !authResult.data) {
         json(res, 401, {
           ok: false,
@@ -530,7 +581,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/week/groceries" && method === "GET") {
-      const authResult = getAnySession(req);
+      const authResult = await getAnySession(req);
       if (!authResult.ok || !authResult.data) {
         json(res, 401, {
           ok: false,
@@ -549,7 +600,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/recipes" && method === "GET") {
-      const authResult = getAnySession(req);
+      const authResult = await getAnySession(req);
       if (!authResult.ok || !authResult.data) {
         json(res, 401, {
           ok: false,
@@ -623,27 +674,28 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/auth/me" && method === "GET") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
       }
-      const account = userAccountService.findById(userAuth.data.subjectId);
+      // Auto-provision: maak account aan als het nog niet bestaat (bijv. eerste login via Supabase)
+      const account = userAccountService.ensureAccount(userAuth.data.subjectId);
       json(res, 200, {
         ok: true,
         data: {
           userId: userAuth.data.subjectId,
-          username: account?.username ?? userAuth.data.subjectId,
-          email: account?.email,
-          profile: account?.profile,
-          onboardingCompletedAt: account?.onboardingCompletedAt,
+          username: account.username ?? userAuth.data.subjectId,
+          email: account.email,
+          profile: account.profile,
+          onboardingCompletedAt: account.onboardingCompletedAt,
         },
       });
       return;
     }
 
     if (path === "/api/v3/auth/profile" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -669,7 +721,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/auth/complete-onboarding" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -686,7 +738,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/auth/suggest-kcal" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -699,7 +751,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
     // ---- Household routes (user or admin auth) ----
     if (path === "/api/v3/household/create" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -716,7 +768,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/join-by-code" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -738,7 +790,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/rename" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -760,7 +812,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/set-member-kcal" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -782,7 +834,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/remove-member" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -804,7 +856,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/leave" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -821,7 +873,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/auth/delete-account" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -844,7 +896,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/groceries" && method === "GET") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, { ok: false, error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -913,7 +965,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/bootstrap" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
@@ -926,7 +978,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/me" && method === "GET") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
@@ -948,7 +1000,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/invite" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
@@ -962,7 +1014,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/accept" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
@@ -976,7 +1028,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/revoke" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
@@ -990,7 +1042,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/household/invitations" && method === "GET") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
@@ -1004,7 +1056,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/push/register" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
@@ -1031,7 +1083,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     // ---- Eetmeter routes (gebruikers én admins) ----
 
     if (path === "/api/v3/eetmeter/credentials" && method === "POST") {
-      const anyAuth = getAnySession(req);
+      const anyAuth = await getAnySession(req);
       if (!anyAuth.ok || !anyAuth.data) {
         json(res, 401, { ok: false, error: anyAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;
@@ -1056,7 +1108,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/push/unregister" && method === "POST") {
-      const userAuth = getAnySession(req);
+      const userAuth = await getAnySession(req);
       if (!userAuth.ok || !userAuth.data) {
         json(res, 401, {
           ok: false,
@@ -1075,7 +1127,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     if (path === "/api/v3/eetmeter/dag" && method === "GET") {
-      const anyAuth = getAnySession(req);
+      const anyAuth = await getAnySession(req);
       if (!anyAuth.ok || !anyAuth.data) {
         json(res, 401, { ok: false, error: anyAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
         return;

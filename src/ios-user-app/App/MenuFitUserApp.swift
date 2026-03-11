@@ -7,7 +7,16 @@ struct MenuFitUserApp: App {
 
   init() {
     let environment = AppEnvironment.load()
-    let authStore = AuthSessionStore(fallbackSession: environment.defaultSession)
+    let authStore = AuthSessionStore()
+
+    // Maak SupabaseAuthClient aan als geconfigureerd
+    var supabaseAuth: SupabaseAuthClient?
+    if let supabaseURL = environment.supabaseProjectURL,
+       let anonKey = environment.supabaseAnonKey, !anonKey.isEmpty {
+      supabaseAuth = SupabaseAuthClient(projectURL: supabaseURL, anonKey: anonKey)
+      authStore.supabaseAuthClient = supabaseAuth
+    }
+
     let api = BackendAPI(baseURL: environment.baseURL, tokenProvider: authStore)
     guard let cache = try? OfflineCacheStore() else {
       fatalError("Could not initialize offline cache.")
@@ -18,7 +27,7 @@ struct MenuFitUserApp: App {
         api: api,
         cache: cache,
         authStore: authStore,
-        fallbackHouseholdId: environment.defaultSession?.householdId ?? "default-household"
+        supabaseAuth: supabaseAuth
       )
     )
   }

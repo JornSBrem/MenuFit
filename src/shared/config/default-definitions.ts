@@ -205,6 +205,13 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     meta: { hotReload: true, sensitive: false, restartRequired: false },
   },
   {
+    key: "SUPABASE_PROJECT_URL",
+    description: "Supabase project URL for JWT validation (e.g. https://xxxxx.supabase.co).",
+    kind: "string",
+    defaultValue: "",
+    meta: { hotReload: false, sensitive: false, restartRequired: true },
+  },
+  {
     key: "FEATURE_FLAGS_JSON",
     description: "Feature flags as JSON object.",
     kind: "json",

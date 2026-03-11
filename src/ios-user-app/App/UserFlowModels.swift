@@ -8,11 +8,10 @@ struct ApiEnvelope<T: Decodable>: Decodable {
 
 struct UserAuthSession: Codable {
   let accessToken: String
+  let refreshToken: String
   let subjectId: String
-  let picnicAccountId: String
-  let householdId: String
+  let email: String?
   let expiresAtEpochSeconds: Int?
-  /// Ingesteld na login/register via username+password flow
   var username: String? = nil
 }
 
@@ -315,19 +314,7 @@ struct UserRecipeRecord: Codable, Identifiable {
 
 struct EmptyBody: Codable {}
 
-// MARK: - Auth request/response structs
-
-struct AuthLoginRequest: Codable {
-  let username: String
-  let password: String
-}
-
-struct AuthRegisterRequest: Codable {
-  let username: String
-  let password: String
-  let email: String?
-  let profile: UserProfileData?
-}
+// MARK: - Auth/profile structs
 
 struct UserProfileData: Codable {
   var displayName: String?
@@ -375,16 +362,6 @@ struct KcalSuggestionResponse: Codable {
 
 struct OnboardingCompleteResponse: Codable {
   let completed: Bool
-}
-
-struct AuthTokenResponse: Codable {
-  let token: String
-  let userId: String
-  let username: String
-  let email: String?
-  let profile: UserProfileData?
-  let onboardingCompletedAt: String?
-  let expiresAtEpochSeconds: Int
 }
 
 struct AuthMeResponse: Codable {

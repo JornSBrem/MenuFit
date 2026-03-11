@@ -35,16 +35,17 @@
 		748342154DC6D5C1CA201765 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D31B5618A6714859B8C35E13 /* RootTabView.swift */; };
 		754934725D62C4614C7B7E58 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3787E5A8B2E6E743E5D77BDB /* Assets.xcassets */; };
 		9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */; };
-		9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */; };
-		A1B2C3D4E5F60718293A4B5C /* PushRegistrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */; };
-		B2C3D4E5F6A70819293A4B5D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */; };
 		92961730CAEA2E1BE038EB0E /* MenuFitTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105CF1F04F83DA02917BCD1D /* MenuFitTheme.swift */; };
 		95AAD79A5BE328083245B25F /* ProfileEditSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */; };
 		9E676865B35EDEEDE8155791 /* match-screen.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D98A28D94B69DAA9ED3D8E4 /* match-screen.png */; };
+		9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* PushRegistrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */; };
 		A262BF5AE5D2EAF1128B2BB5 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */; };
+		B2C3D4E5F6A70819293A4B5D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */; };
 		B3B7EB9E58D1D8576328200E /* WeekNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F689360E3FDFC2EDC9293007 /* WeekNavBar.swift */; };
 		BA78D5804FE9D7D9E6578823 /* RecipesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130C8AFEA99607975BF31093 /* RecipesScreen.swift */; };
 		C309FFCB7BE1147CF6CE9550 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE482EB44234E5DB375E836 /* Localization.swift */; };
+		C3D4E5F6A7B80920384C5D6E /* SupabaseAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A5B6C7D8E9102A3B4C5D6F /* SupabaseAuthClient.swift */; };
 		C7843F6778C2273A38B57C7E /* OrderScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7DC178D1015232B3FA63D01 /* OrderScreen.swift */; };
 		D6C5C58CD82A818C0DA2FDAF /* tabbar-week.png in Resources */ = {isa = PBXBuildFile; fileRef = 98A6E9AB3B23F72B36A7DA60 /* tabbar-week.png */; };
 		E1B0D5CE42E26DE68903EC28 /* SnapshotAssert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 336BA4F2038C7DB2E545FD4F /* SnapshotAssert.swift */; };
@@ -116,8 +117,6 @@
 		19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedWidgetData.swift; sourceTree = "<group>"; };
 		1A7C2B347417F912C891ADC2 /* MenuFitWatchWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuFitWatchWidget.entitlements; sourceTree = "<group>"; };
 		1F3088367BF52324FE998FFB /* MenuFitUserAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MenuFitUserAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationManager.swift; sourceTree = "<group>"; };
-		E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2265786C8C844725BB4D6B7F /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		30A3BB57ED264ED86A1A7736 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		336BA4F2038C7DB2E545FD4F /* SnapshotAssert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotAssert.swift; sourceTree = "<group>"; };
@@ -130,7 +129,6 @@
 		592A78D12F53B6A600885B31 /* ExtensionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionDelegate.swift; sourceTree = "<group>"; };
 		592A78D22F53B6A600885B31 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekScreen.swift; sourceTree = "<group>"; };
-		834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EetmeterDagSheet.swift; sourceTree = "<group>"; };
 		5EB4845E02105B422FBC0656 /* TodayMealsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayMealsWidget.swift; sourceTree = "<group>"; };
 		626EF9C1808E73CCDB998617 /* week-screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "week-screen.png"; sourceTree = "<group>"; };
 		66EA1F50A81D438604490C65 /* MenuFitUserAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitUserAppUITests.swift; sourceTree = "<group>"; };
@@ -138,6 +136,7 @@
 		7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
 		81655C9A4DB8EEA09CF97D2E /* MenuFitWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MenuFitWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8341DF54B0EE6980D641FA68 /* MealSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealSchedule.swift; sourceTree = "<group>"; };
+		834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EetmeterDagSheet.swift; sourceTree = "<group>"; };
 		8A78D60062541FA3A611CF7D /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
 		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8BE4479F4C6A81AECF98FE0E /* ConfigScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigScreen.swift; sourceTree = "<group>"; };
@@ -150,12 +149,15 @@
 		C6FBDC30CE6336FF5BC9C9EE /* MenuFitWatchWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitWatchWidgetBundle.swift; sourceTree = "<group>"; };
 		C9F7813B54367774B77BC8D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CFE482EB44234E5DB375E836 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
+		D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationManager.swift; sourceTree = "<group>"; };
 		D31B5618A6714859B8C35E13 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		D6780481D5DA5902C015DF71 /* MenuFitWatchWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MenuFitWatchWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA85292A396845F477B05ABE /* order-screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "order-screen.png"; sourceTree = "<group>"; };
+		E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E770DA6EA973B040032A2FC1 /* MenuFitWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuFitWatch.entitlements; sourceTree = "<group>"; };
 		EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEditSheet.swift; sourceTree = "<group>"; };
 		F03E8BA64018C29B17A52D03 /* MealNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealNotificationManager.swift; sourceTree = "<group>"; };
+		F4A5B6C7D8E9102A3B4C5D6F /* SupabaseAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuthClient.swift; sourceTree = "<group>"; };
 		F689360E3FDFC2EDC9293007 /* WeekNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekNavBar.swift; sourceTree = "<group>"; };
 		F89A75D1E0560A207F9E78BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F9346B79CF692F41BADFEC8F /* MatchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScreen.swift; sourceTree = "<group>"; };
@@ -240,6 +242,7 @@
 				B7DC178D1015232B3FA63D01 /* OrderScreen.swift */,
 				EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */,
 				D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */,
+				F4A5B6C7D8E9102A3B4C5D6F /* SupabaseAuthClient.swift */,
 				130C8AFEA99607975BF31093 /* RecipesScreen.swift */,
 				D31B5618A6714859B8C35E13 /* RootTabView.swift */,
 				19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */,
@@ -479,6 +482,7 @@
 				9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */,
 				9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5C /* PushRegistrationManager.swift in Sources */,
+				C3D4E5F6A7B80920384C5D6E /* SupabaseAuthClient.swift in Sources */,
 				B2C3D4E5F6A70819293A4B5D /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -196,6 +196,29 @@ export class UserAccountService {
     return state.userAccounts.find((a) => a.userId === userId);
   }
 
+  /** Auto-provision een account voor een extern geauthenticeerde gebruiker (bijv. Supabase). */
+  ensureAccount(userId: string): UserAccountRecord {
+    const existing = this.findById(userId);
+    if (existing) return existing;
+
+    const now = new Date().toISOString();
+    const newAccount: UserAccountRecord = {
+      userId,
+      username: userId,
+      passwordHash: "external",
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.stateStore.update((draft) => {
+      if (!draft.userAccounts.find((a) => a.userId === userId)) {
+        draft.userAccounts.push(newAccount);
+      }
+    });
+
+    return this.findById(userId) ?? newAccount;
+  }
+
   findByUsername(username: string): UserAccountRecord | undefined {
     const normalizedUsername = username.trim().toLowerCase();
     const state = this.stateStore.read();

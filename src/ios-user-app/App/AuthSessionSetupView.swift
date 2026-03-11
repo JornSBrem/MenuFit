@@ -7,7 +7,6 @@ struct AuthSessionSetupView: View {
 
   @State private var isLoginMode = true
   @State private var email = ""
-  @State private var username = ""
   @State private var password = ""
   @State private var confirmPassword = ""
   @State private var isLoading = false
@@ -82,11 +81,6 @@ struct AuthSessionSetupView: View {
           authField(icon: "envelope.fill", placeholder: "E-mailadres", text: $email,
                     contentType: .emailAddress, keyboard: .emailAddress,
                     accessibilityId: "auth-email-field")
-
-          if !isLoginMode {
-            authField(icon: "person.fill", placeholder: "Gebruikersnaam", text: $username,
-                      contentType: .username, accessibilityId: "auth-username-field")
-          }
 
           authField(icon: "lock.fill", placeholder: "Wachtwoord", text: $password,
                     isSecure: true, contentType: isLoginMode ? .password : .newPassword,
@@ -173,12 +167,8 @@ struct AuthSessionSetupView: View {
 
   private var isFormValid: Bool {
     let hasEmail = !email.trimmingCharacters(in: .whitespaces).isEmpty
-    let hasPassword = !password.isEmpty
-    if isLoginMode {
-      return hasEmail && hasPassword
-    }
-    let hasUsername = !username.trimmingCharacters(in: .whitespaces).isEmpty
-    return hasEmail && hasUsername && hasPassword
+    let hasPassword = password.count >= 6
+    return hasEmail && hasPassword
   }
 
   private func submit() {
@@ -190,8 +180,8 @@ struct AuthSessionSetupView: View {
         viewModel.lastError = "Wachtwoorden komen niet overeen."
         return
       }
-      if username.trimmingCharacters(in: .whitespaces).count < 3 {
-        viewModel.lastError = "Gebruikersnaam moet minimaal 3 tekens zijn."
+      if password.count < 6 {
+        viewModel.lastError = "Wachtwoord moet minimaal 6 tekens zijn."
         return
       }
     }
@@ -201,20 +191,13 @@ struct AuthSessionSetupView: View {
 
     Task {
       if isLoginMode {
-        // Login: veld kan email of username zijn
-        await viewModel.loginWithCredentials(username: trimmedEmail, password: password)
-        // Na login: check of onboarding nodig is
+        await viewModel.loginWithCredentials(email: trimmedEmail, password: password)
         if viewModel.needsOnboarding {
           showOnboarding = true
           onboardingStep = 0
         }
       } else {
-        let trimmedUsername = username.trimmingCharacters(in: .whitespaces)
-        await viewModel.registerWithCredentials(
-          username: trimmedUsername,
-          password: password,
-          email: trimmedEmail
-        )
+        await viewModel.registerWithCredentials(email: trimmedEmail, password: password)
         if viewModel.lastError == nil {
           showOnboarding = true
           onboardingStep = 0
