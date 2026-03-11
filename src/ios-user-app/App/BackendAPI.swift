@@ -154,6 +154,20 @@ final class BackendAPI {
     try await post(path: "/api/v3/auth/delete-account", body: EmptyBody())
   }
 
+  // MARK: - Push notification endpoints
+
+  func registerPushToken(_ token: String) async throws {
+    let _: PushTokenResponse = try await post(
+      path: "/api/v3/push/register",
+      body: PushTokenRequest(token: token)
+    )
+  }
+
+  func unregisterPushToken(_ token: String) async throws {
+    let _: PushTokenResponse = try await post(
+      path: "/api/v3/push/unregister",
+      body: PushTokenRequest(token: token)
+    )
   // MARK: - Eetmeter endpoints
 
   func eetmeterLogin(email: String, password: String) async throws -> EetmeterLoginResponse {

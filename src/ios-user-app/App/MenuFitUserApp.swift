@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct MenuFitUserApp: App {
+  @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @StateObject private var viewModel: UserFlowViewModel
 
   init() {

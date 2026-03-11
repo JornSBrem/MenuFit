@@ -447,6 +447,14 @@ struct AccountDeleteResponse: Codable {
   let deleted: Bool
 }
 
+struct PushTokenRequest: Codable {
+  let token: String
+}
+
+struct PushTokenResponse: Codable {
+  let ok: Bool
+}
+
 struct HouseholdGroceryMemberBreakdown: Codable, Identifiable {
   let userId: String
   let displayName: String

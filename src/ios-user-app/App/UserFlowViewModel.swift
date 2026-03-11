@@ -106,6 +106,9 @@ final class UserFlowViewModel: ObservableObject {
       return
     }
     didBootstrap = true
+    // Activeer push token registratie zodra de API client beschikbaar is
+    PushRegistrationManager.shared.backendAPI = api
+    PushRegistrationManager.shared.registerIfNeeded()
     // Laad profielgegevens van server
     await loadUserProfile()
     await loadHouseholdStatus()

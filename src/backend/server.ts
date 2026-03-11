@@ -22,6 +22,7 @@ import { SystemOperationsService } from "./application/system/system-operations-
 import { SessionLifecycleService } from "./application/auth/session-lifecycle-service.ts";
 import { UserAccountService, UserAccountServiceError } from "./application/auth/user-account-service.ts";
 import { HouseholdService, HouseholdServiceError } from "./application/household/household-service.ts";
+import { PushNotificationService, PushNotificationServiceError } from "./application/push/push-notification-service.ts";
 import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
 import type { GoldMealIngredient, GoldReadModel, GoldRecipeStep } from "./application/gold/index.ts";
 
@@ -156,6 +157,7 @@ const adminOps = new AdminOperationsService({ auditTrail });
 const adminData = new AdminDataService({ auditTrail });
 const systemOps = new SystemOperationsService({ auditTrail });
 const householdService = new HouseholdService({ stateStore });
+const pushService = new PushNotificationService({ stateStore });
 const goldReadService = new GoldWeekReadService({ stateStore });
 
 // ---- Dev tokens ------------------------------------------------------------
@@ -1001,6 +1003,27 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
+    if (path === "/api/v3/push/register" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, {
+          ok: false,
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
+        });
+        return;
+      }
+      const { token } = body as { token?: string };
+      if (!token || typeof token !== "string") {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "token is verplicht." } });
+        return;
+      }
+      try {
+        pushService.registerToken(userAuth.data.subjectId, token);
+        json(res, 200, { ok: true });
+      } catch (err) {
+        const code = err instanceof PushNotificationServiceError ? err.code : "REGISTER_FAILED";
+        const message = err instanceof Error ? err.message : "Registratie mislukt.";
+        json(res, 400, { ok: false, error: { code, message } });
     // ---- Eetmeter routes (gebruikers én admins) ----
 
     if (path === "/api/v3/eetmeter/credentials" && method === "POST") {
@@ -1028,6 +1051,22 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
+    if (path === "/api/v3/push/unregister" && method === "POST") {
+      const userAuth = getAnySession(req);
+      if (!userAuth.ok || !userAuth.data) {
+        json(res, 401, {
+          ok: false,
+          error: userAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." },
+        });
+        return;
+      }
+      const { token } = body as { token?: string };
+      if (!token || typeof token !== "string") {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "token is verplicht." } });
+        return;
+      }
+      pushService.unregisterToken(userAuth.data.subjectId, token);
+      json(res, 200, { ok: true });
     if (path === "/api/v3/eetmeter/dag" && method === "GET") {
       const anyAuth = getAnySession(req);
       if (!anyAuth.ok || !anyAuth.data) {
