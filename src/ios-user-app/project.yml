@@ -34,6 +34,7 @@ targets:
     entitlements:
       path: App/MenuFitUserApp.entitlements
       properties:
+        aps-environment: development
         com.apple.security.application-groups:
           - group.nl.menufit.shared
     settings:

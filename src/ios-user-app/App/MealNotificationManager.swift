@@ -21,6 +21,8 @@ final class MealNotificationManager {
       let granted = try await center.requestAuthorization(options: [.alert, .badge, .sound])
       if granted {
         await registerCategories()
+        // Registreer ook voor remote APNs notifications
+        PushRegistrationManager.shared.registerIfNeeded()
       }
       return granted
     } catch {
