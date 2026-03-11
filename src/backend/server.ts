@@ -472,8 +472,72 @@ function getAuthHeader(req: IncomingMessage): string {
   return typeof h === "string" ? h : "";
 }
 
-function getAdminSession(req: IncomingMessage) {
-  return authorizeAdminFromBearerHeader(lifecycle, getAuthHeader(req));
+function deriveAdminRoleFromClaims(claims: Record<string, unknown>): "owner" | "operator" | null {
+  const directRole = typeof claims.role === "string" ? claims.role : undefined;
+  const namespacedRole = typeof claims["menufit:role"] === "string" ? claims["menufit:role"] : undefined;
+  const appMetadata = claims.app_metadata as Record<string, unknown> | undefined;
+  const appMetadataRole = appMetadata && typeof appMetadata.role === "string" ? appMetadata.role : undefined;
+
+  const rawRole = (directRole ?? namespacedRole ?? appMetadataRole ?? "").toLowerCase();
+  if (rawRole === "owner" || rawRole === "operator") {
+    return rawRole;
+  }
+  return null;
+}
+
+async function getAdminSession(req: IncomingMessage): Promise<import("./interfaces/http/auth/session-middleware.ts").MiddlewareEnvelope<import("./interfaces/http/auth/session-context.ts").AdminSessionContext>> {
+  const internalAdmin = authorizeAdminFromBearerHeader(lifecycle, getAuthHeader(req));
+  if (internalAdmin.ok) {
+    return internalAdmin;
+  }
+
+  const header = getAuthHeader(req);
+  const token = header.replace(/^bearer\s+/i, "").trim();
+  if (!token.includes(".") || !supabaseJwtVerifier) {
+    return internalAdmin;
+  }
+
+  try {
+    const { claims } = await supabaseJwtVerifier.verify(token, {
+      issuer: `${supabaseProjectUrl}/auth/v1`,
+      audience: "authenticated",
+    });
+    const subjectId = String(claims.sub ?? "");
+    if (!subjectId) {
+      return { ok: false, error: { code: "JWT_INVALID", message: "JWT missing subject claim." } };
+    }
+
+    // First trust explicit admin role claims; fallback to backend-admin role mapping.
+    let adminRole = deriveAdminRoleFromClaims(claims as Record<string, unknown>);
+    if (!adminRole) {
+      const account = userAccountService.ensureAccount(subjectId);
+      adminRole = account.adminRole ?? null;
+    }
+    if (!adminRole) {
+      return {
+        ok: false,
+        error: {
+          code: "FORBIDDEN_SESSION",
+          message: "Route requires admin session.",
+          hint: "Set adminRole to operator/owner for this user.",
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        sessionKind: "admin",
+        subjectId,
+        tokenId: typeof claims.jti === "string" ? claims.jti : "",
+        adminRole,
+        expiresAtEpochSeconds: typeof claims.exp === "number" ? claims.exp : undefined,
+      },
+    };
+  } catch (error) {
+    const message = error instanceof JwtVerificationError ? error.message : "JWT validation failed.";
+    return { ok: false, error: { code: "JWT_INVALID", message } };
+  }
 }
 
 async function validateSupabaseJwt(token: string): Promise<import("./interfaces/http/auth/session-middleware.ts").MiddlewareEnvelope<import("./interfaces/http/auth/session-context.ts").UserSessionContext>> {
@@ -515,7 +579,7 @@ async function getUserSession(req: IncomingMessage) {
 
 /** Accepts either a user or admin bearer token, or a Supabase JWT. */
 async function getAnySession(req: IncomingMessage) {
-  const adminResult = getAdminSession(req);
+  const adminResult = await getAdminSession(req);
   if (adminResult.ok) {
     return adminResult;
   }
@@ -1161,7 +1225,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
 
     // All remaining routes require admin auth
-    const authResult = getAdminSession(req);
+    const authResult = await getAdminSession(req);
     if (!authResult.ok || !authResult.data) {
       json(res, 401, {
         ok: false,
