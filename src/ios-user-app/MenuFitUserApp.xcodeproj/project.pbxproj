@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -133,7 +133,7 @@
 		13D10713A7A8CFEEED89EF73 /* MenuFitWatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuFitWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedWidgetData.swift; sourceTree = "<group>"; };
 		1A7C2B347417F912C891ADC2 /* MenuFitWatchWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuFitWatchWidget.entitlements; sourceTree = "<group>"; };
-		1F3088367BF52324FE998FFB /* MenuFitUserAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MenuFitUserAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1F3088367BF52324FE998FFB /* MenuFitUserAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MenuFitUserAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2265786C8C844725BB4D6B7F /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		30A3BB57ED264ED86A1A7736 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		336BA4F2038C7DB2E545FD4F /* SnapshotAssert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotAssert.swift; sourceTree = "<group>"; };
@@ -151,10 +151,10 @@
 		66EA1F50A81D438604490C65 /* MenuFitUserAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitUserAppUITests.swift; sourceTree = "<group>"; };
 		67182B208FF79062284E8862 /* NextMealWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextMealWatchWidget.swift; sourceTree = "<group>"; };
 		7B5C05E24FDD8C9C8DB0ACAF /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
-		81655C9A4DB8EEA09CF97D2E /* MenuFitWidgetExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MenuFitWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		81655C9A4DB8EEA09CF97D2E /* MenuFitWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MenuFitWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8341DF54B0EE6980D641FA68 /* MealSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealSchedule.swift; sourceTree = "<group>"; };
 		8A78D60062541FA3A611CF7D /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
-		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AE9053097E3B73C81A6F1D7 /* MenuFitUserApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenuFitUserApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8BE4479F4C6A81AECF98FE0E /* ConfigScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigScreen.swift; sourceTree = "<group>"; };
 		95D60726DCEF5651017DA3ED /* MenuFitWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuFitWidgetExtension.entitlements; sourceTree = "<group>"; };
 		98A6E9AB3B23F72B36A7DA60 /* tabbar-week.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tabbar-week.png"; sourceTree = "<group>"; };
@@ -398,23 +398,18 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					38BF40FC739790BC05D0286F = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					62A46139EFE13C01AF611E02 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					66A458B9218BAA1A3BA72E0D = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					6FD464B2A30A84CF5549069D = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					B4BA3AD1D02E98EF40B550E6 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 						TestTargetID = 62A46139EFE13C01AF611E02;
 					};
@@ -430,7 +425,6 @@
 			);
 			mainGroup = 6A0F5F4CAE7FA37D92E3A2A0;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -574,6 +568,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = App/MenuFitUserApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -592,6 +587,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWatch/MenuFitWatch.entitlements;
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.menufit.userapp.watchkitapp;
@@ -608,6 +604,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWidget/MenuFitWidgetExtension.entitlements;
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -694,6 +691,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWatch/MenuFitWatch.entitlements;
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.menufit.userapp.watchkitapp;
@@ -710,6 +708,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -729,6 +728,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = App/MenuFitUserApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -746,6 +746,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -763,6 +764,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWatchWidget/MenuFitWatchWidget.entitlements;
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWatchWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -784,6 +786,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWatchWidget/MenuFitWatchWidget.entitlements;
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWatchWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -805,6 +808,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = MenuFitWidget/MenuFitWidgetExtension.entitlements;
+				DEVELOPMENT_TEAM = 483B3YQKWN;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MenuFitWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

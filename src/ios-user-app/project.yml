@@ -25,7 +25,9 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
-        MenuFitBackendBaseURL: https://app.menufit.uk
+        MenuFitBackendBaseURL: $(MENUFIT_BACKEND_BASE_URL)
+        SupabaseProjectURL: $(SUPABASE_PROJECT_URL)
+        SupabaseAnonKey: $(SUPABASE_ANON_KEY)
         MenuFitUserAccessToken: ""
         MenuFitUserSubjectId: ios-user
         MenuFitPicnicAccountId: picnic-default

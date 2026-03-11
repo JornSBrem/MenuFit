@@ -131,7 +131,7 @@ struct AuthSessionSetupView: View {
       }
     }
     .background(Color(.systemGroupedBackground))
-    .onChange(of: isLoginMode) { _ in
+    .onChange(of: isLoginMode) { _, _ in
       viewModel.lastError = nil
       confirmPassword = ""
     }

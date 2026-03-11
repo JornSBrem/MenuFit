@@ -81,15 +81,14 @@ struct WeekNavBar: View {
       .onAppear {
         proxy.scrollTo(viewModel.selection.week, anchor: .center)
       }
-      .onChange(of: viewModel.selection.week) { week in
+      .onChange(of: viewModel.selection.week) { _, week in
         withAnimation(.easeInOut(duration: 0.2)) {
           proxy.scrollTo(week, anchor: .center)
         }
       }
-      .onChange(of: viewModel.selection.year) { _ in
+      .onChange(of: viewModel.selection.year) { _, _ in
         proxy.scrollTo(viewModel.selection.week, anchor: .center)
       }
     }
   }
 }
-

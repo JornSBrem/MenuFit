@@ -21,7 +21,7 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>MenuFitBackendBaseURL</key>
-	<string>https://app.menufit.uk</string>
+	<string>$(MENUFIT_BACKEND_BASE_URL)</string>
 	<key>MenuFitHouseholdId</key>
 	<string>default-household</string>
 	<key>MenuFitPicnicAccountId</key>
@@ -37,6 +37,10 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 	</dict>
+	<key>SupabaseAnonKey</key>
+	<string>$(SUPABASE_ANON_KEY)</string>
+	<key>SupabaseProjectURL</key>
+	<string>$(SUPABASE_PROJECT_URL)</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

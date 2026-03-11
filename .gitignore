@@ -14,3 +14,4 @@ out/
 
 # iOS local secrets (do not commit)
 src/ios-user-app/Config/LocalSecrets.xcconfig
+src/ios-user-app/Config/AppConfig.xcconfig
