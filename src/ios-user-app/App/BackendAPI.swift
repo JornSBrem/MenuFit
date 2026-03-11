@@ -154,6 +154,22 @@ final class BackendAPI {
     try await post(path: "/api/v3/auth/delete-account", body: EmptyBody())
   }
 
+  // MARK: - Push notification endpoints
+
+  func registerPushToken(_ token: String) async throws {
+    let _: PushTokenResponse = try await post(
+      path: "/api/v3/push/register",
+      body: PushTokenRequest(token: token)
+    )
+  }
+
+  func unregisterPushToken(_ token: String) async throws {
+    let _: PushTokenResponse = try await post(
+      path: "/api/v3/push/unregister",
+      body: PushTokenRequest(token: token)
+    )
+  }
+
   private func get<T: Decodable>(path: String, query: [URLQueryItem] = []) async throws -> T {
     guard var components = URLComponents(
       url: baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))),
