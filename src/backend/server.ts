@@ -1024,6 +1024,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         const code = err instanceof PushNotificationServiceError ? err.code : "REGISTER_FAILED";
         const message = err instanceof Error ? err.message : "Registratie mislukt.";
         json(res, 400, { ok: false, error: { code, message } });
+      }
+      return;
+    }
+
     // ---- Eetmeter routes (gebruikers én admins) ----
 
     if (path === "/api/v3/eetmeter/credentials" && method === "POST") {
@@ -1067,6 +1071,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       }
       pushService.unregisterToken(userAuth.data.subjectId, token);
       json(res, 200, { ok: true });
+      return;
+    }
+
     if (path === "/api/v3/eetmeter/dag" && method === "GET") {
       const anyAuth = getAnySession(req);
       if (!anyAuth.ok || !anyAuth.data) {

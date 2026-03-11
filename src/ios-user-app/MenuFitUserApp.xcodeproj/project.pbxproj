@@ -35,6 +35,7 @@
 		748342154DC6D5C1CA201765 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D31B5618A6714859B8C35E13 /* RootTabView.swift */; };
 		754934725D62C4614C7B7E58 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3787E5A8B2E6E743E5D77BDB /* Assets.xcassets */; };
 		9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */; };
+		9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */; };
 		92961730CAEA2E1BE038EB0E /* MenuFitTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105CF1F04F83DA02917BCD1D /* MenuFitTheme.swift */; };
 		95AAD79A5BE328083245B25F /* ProfileEditSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */; };
 		9E676865B35EDEEDE8155791 /* match-screen.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D98A28D94B69DAA9ED3D8E4 /* match-screen.png */; };
@@ -125,6 +126,7 @@
 		592A78D12F53B6A600885B31 /* ExtensionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionDelegate.swift; sourceTree = "<group>"; };
 		592A78D22F53B6A600885B31 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekScreen.swift; sourceTree = "<group>"; };
+		834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EetmeterDagSheet.swift; sourceTree = "<group>"; };
 		5EB4845E02105B422FBC0656 /* TodayMealsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayMealsWidget.swift; sourceTree = "<group>"; };
 		626EF9C1808E73CCDB998617 /* week-screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "week-screen.png"; sourceTree = "<group>"; };
 		66EA1F50A81D438604490C65 /* MenuFitUserAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuFitUserAppUITests.swift; sourceTree = "<group>"; };
@@ -239,6 +241,7 @@
 				025733A3A85DF8C0EF97659F /* UserFlowViewModel.swift */,
 				F689360E3FDFC2EDC9293007 /* WeekNavBar.swift */,
 				59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */,
+				834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -468,6 +471,7 @@
 				00ED1399B5D2986D86AA615A /* UserFlowViewModel.swift in Sources */,
 				B3B7EB9E58D1D8576328200E /* WeekNavBar.swift in Sources */,
 				9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */,
+				9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
