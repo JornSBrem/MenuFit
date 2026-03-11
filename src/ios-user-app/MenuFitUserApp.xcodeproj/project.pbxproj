@@ -36,6 +36,8 @@
 		754934725D62C4614C7B7E58 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3787E5A8B2E6E743E5D77BDB /* Assets.xcassets */; };
 		9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A584D9D7E22BD3195F9A3C /* WeekScreen.swift */; };
 		9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834316205AE4490DB094CB58 /* EetmeterDagSheet.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* PushRegistrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */; };
+		B2C3D4E5F6A70819293A4B5D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */; };
 		92961730CAEA2E1BE038EB0E /* MenuFitTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105CF1F04F83DA02917BCD1D /* MenuFitTheme.swift */; };
 		95AAD79A5BE328083245B25F /* ProfileEditSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */; };
 		9E676865B35EDEEDE8155791 /* match-screen.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D98A28D94B69DAA9ED3D8E4 /* match-screen.png */; };
@@ -114,6 +116,8 @@
 		19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedWidgetData.swift; sourceTree = "<group>"; };
 		1A7C2B347417F912C891ADC2 /* MenuFitWatchWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MenuFitWatchWidget.entitlements; sourceTree = "<group>"; };
 		1F3088367BF52324FE998FFB /* MenuFitUserAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MenuFitUserAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationManager.swift; sourceTree = "<group>"; };
+		E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2265786C8C844725BB4D6B7F /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		30A3BB57ED264ED86A1A7736 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		336BA4F2038C7DB2E545FD4F /* SnapshotAssert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotAssert.swift; sourceTree = "<group>"; };
@@ -217,6 +221,7 @@
 		9C96B33725F4D1EB780C2E70 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				E3F4A5B6C7D8091A2B3C4D5E /* AppDelegate.swift */,
 				2265786C8C844725BB4D6B7F /* AppEnvironment.swift */,
 				3787E5A8B2E6E743E5D77BDB /* Assets.xcassets */,
 				3F5ED2CBBE752E2434FEBB71 /* AuthSessionSetupView.swift */,
@@ -234,6 +239,7 @@
 				FD375DB99A1D8042CD754B02 /* OfflineCacheStore.swift */,
 				B7DC178D1015232B3FA63D01 /* OrderScreen.swift */,
 				EC02C7FDCAEC425DF0F2A52D /* ProfileEditSheet.swift */,
+				D2E3F4A5B6C70829314D5E6F /* PushRegistrationManager.swift */,
 				130C8AFEA99607975BF31093 /* RecipesScreen.swift */,
 				D31B5618A6714859B8C35E13 /* RootTabView.swift */,
 				19D91A2E90B8F0D8ACA06ACF /* SharedWidgetData.swift */,
@@ -472,6 +478,8 @@
 				B3B7EB9E58D1D8576328200E /* WeekNavBar.swift in Sources */,
 				9288952A0F329C6EC635FF9D /* WeekScreen.swift in Sources */,
 				9E70695C19EE447AAE2424DA /* EetmeterDagSheet.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* PushRegistrationManager.swift in Sources */,
+				B2C3D4E5F6A70819293A4B5D /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

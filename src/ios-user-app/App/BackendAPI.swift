@@ -168,6 +168,8 @@ final class BackendAPI {
       path: "/api/v3/push/unregister",
       body: PushTokenRequest(token: token)
     )
+  }
+
   // MARK: - Eetmeter endpoints
 
   func eetmeterLogin(email: String, password: String) async throws -> EetmeterLoginResponse {
