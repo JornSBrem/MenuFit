@@ -78,6 +78,7 @@ const extractRecipeSteps = (raw: unknown): GoldRecipeStepData[] => {
 
   return [];
 };
+import { EetmeterClient, EetmeterClientError, toEetmeterDatum } from "./integrations/eetmeter/eetmeter-client.ts";
 import { reprocessSilverTransforms } from "./application/silver/index.ts";
 import type { SilverTransformOutput } from "./application/silver/index.ts";
 import { createIngestPlan } from "./application/ingest/ingest-planner.ts";
@@ -204,6 +205,15 @@ export interface IngestJobStatus {
 }
 
 const activeIngestJobs = new Map<string, IngestJobStatus>();
+
+// ---- Eetmeter clients (één per gebruiker, houdt token in geheugen) ---------
+const eetmeterClients = new Map<string, EetmeterClient>();
+function getEetmeterClientForUser(userId: string): EetmeterClient {
+  if (!eetmeterClients.has(userId)) {
+    eetmeterClients.set(userId, new EetmeterClient());
+  }
+  return eetmeterClients.get(userId)!;
+}
 
 // ---- Real ingest pipeline --------------------------------------------------
 
@@ -1014,6 +1024,29 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         const code = err instanceof PushNotificationServiceError ? err.code : "REGISTER_FAILED";
         const message = err instanceof Error ? err.message : "Registratie mislukt.";
         json(res, 400, { ok: false, error: { code, message } });
+    // ---- Eetmeter routes (gebruikers én admins) ----
+
+    if (path === "/api/v3/eetmeter/credentials" && method === "POST") {
+      const anyAuth = getAnySession(req);
+      if (!anyAuth.ok || !anyAuth.data) {
+        json(res, 401, { ok: false, error: anyAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const { email, password } = body as { email?: string; password?: string };
+      if (!email?.trim() || !password) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "email en password zijn vereist." } });
+        return;
+      }
+      try {
+        const client = getEetmeterClientForUser(anyAuth.data.subjectId);
+        await client.login(email.trim(), password);
+        json(res, 200, { ok: true, data: { isIngelogd: true } });
+      } catch (err) {
+        if (err instanceof EetmeterClientError) {
+          json(res, 200, { ok: false, error: { code: err.code, message: err.message } });
+        } else {
+          json(res, 500, { ok: false, error: { code: "INTERNAL_ERROR", message: err instanceof Error ? err.message : "Onverwachte fout bij Eetmeter login." } });
+        }
       }
       return;
     }
@@ -1034,6 +1067,37 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       }
       pushService.unregisterToken(userAuth.data.subjectId, token);
       json(res, 200, { ok: true });
+    if (path === "/api/v3/eetmeter/dag" && method === "GET") {
+      const anyAuth = getAnySession(req);
+      if (!anyAuth.ok || !anyAuth.data) {
+        json(res, 401, { ok: false, error: anyAuth.error ?? { code: "UNAUTHORIZED", message: "Auth required." } });
+        return;
+      }
+      const datumParam = queryParam(req, "datum");
+      let eetmeterDatum: string;
+      if (datumParam && /^\d{4}-\d{2}-\d{2}$/.test(datumParam)) {
+        eetmeterDatum = datumParam.replace(/-/g, "");
+      } else {
+        eetmeterDatum = toEetmeterDatum(new Date());
+      }
+      const client = getEetmeterClientForUser(anyAuth.data.subjectId);
+      if (!client.isLoggedIn) {
+        json(res, 200, {
+          ok: true,
+          data: { isIngelogd: false, datum: `${eetmeterDatum.slice(0, 4)}-${eetmeterDatum.slice(4, 6)}-${eetmeterDatum.slice(6, 8)}` },
+        });
+        return;
+      }
+      try {
+        const dag = await client.fetchDag(eetmeterDatum);
+        json(res, 200, { ok: true, data: { isIngelogd: true, datum: dag.datum, dag } });
+      } catch (err) {
+        if (err instanceof EetmeterClientError) {
+          json(res, 200, { ok: false, error: { code: err.code, message: err.message } });
+        } else {
+          json(res, 500, { ok: false, error: { code: "INTERNAL_ERROR", message: err instanceof Error ? err.message : "Onverwachte fout bij ophalen Eetmeter dag." } });
+        }
+      }
       return;
     }
 
@@ -1654,6 +1718,56 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           lastValidatedAt: new Date().toISOString(),
         },
       });
+      return;
+    }
+
+    // ---- Eetmeter admin routes (werken via per-gebruiker client, ook via admin sessie) ----
+    if (path === "/api/v3/admin/eetmeter/credentials" && method === "POST") {
+      const { email, password } = body as { email?: string; password?: string };
+      if (!email?.trim() || !password) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "email en password zijn vereist." } });
+        return;
+      }
+      try {
+        const client = getEetmeterClientForUser(session.subjectId);
+        await client.login(email.trim(), password);
+        json(res, 200, { ok: true, data: { isIngelogd: true } });
+      } catch (err) {
+        if (err instanceof EetmeterClientError) {
+          json(res, 200, { ok: false, error: { code: err.code, message: err.message } });
+        } else {
+          json(res, 500, { ok: false, error: { code: "INTERNAL_ERROR", message: err instanceof Error ? err.message : "Onverwachte fout bij Eetmeter login." } });
+        }
+      }
+      return;
+    }
+
+    if (path === "/api/v3/admin/eetmeter/dag" && method === "GET") {
+      const datumParam = queryParam(req, "datum");
+      let eetmeterDatum: string;
+      if (datumParam && /^\d{4}-\d{2}-\d{2}$/.test(datumParam)) {
+        eetmeterDatum = datumParam.replace(/-/g, "");
+      } else {
+        eetmeterDatum = toEetmeterDatum(new Date());
+      }
+      const client = getEetmeterClientForUser(session.subjectId);
+      if (!client.isLoggedIn) {
+        json(res, 200, {
+          ok: true,
+          data: { isIngelogd: false, datum: `${eetmeterDatum.slice(0, 4)}-${eetmeterDatum.slice(4, 6)}-${eetmeterDatum.slice(6, 8)}` },
+        });
+        return;
+      }
+      try {
+        const dag = await client.fetchDag(eetmeterDatum);
+        json(res, 200, { ok: true, data: { isIngelogd: true, datum: dag.datum, dag } });
+      } catch (err) {
+        if (err instanceof EetmeterClientError) {
+          json(res, 200, { ok: false, error: { code: err.code, message: err.message } });
+        } else {
+          json(res, 500, { ok: false, error: { code: "INTERNAL_ERROR", message: err instanceof Error ? err.message : "Onverwachte fout bij ophalen Eetmeter dag." } });
+        }
+      }
       return;
     }
 

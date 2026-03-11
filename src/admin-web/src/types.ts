@@ -1,4 +1,4 @@
-export type AdminTab = "data" | "settings" | "extract" | "operations";
+export type AdminTab = "data" | "settings" | "extract" | "operations" | "eetmeter";
 export type AdminViewStatus = "loading" | "empty" | "error" | "success";
 
 export interface AdminSession {
@@ -160,6 +160,53 @@ export interface AdminDashboardViewsState {
   settings: AdminAsyncViewState<AdminSettingsViewData>;
   extract: AdminAsyncViewState<AdminExtractViewData>;
   operations: AdminAsyncViewState<AdminOperationsViewData>;
+  eetmeter: AdminAsyncViewState<EetmeterViewData>;
+}
+
+// ---- Eetmeter types --------------------------------------------------------
+
+export interface EetmeterConsumptieRecord {
+  id: string;
+  productNaam: string;
+  merkNaam: string;
+  hoeveelheid: number;
+  eenheid: string;
+  periode: number;
+  energie: number;
+  eiwit: number;
+  vet: number;
+  koolhydraten: number;
+  vezels: number;
+}
+
+export interface EetmeterMaaltijdRecord {
+  naam: string;
+  periode: number;
+  energie: number;
+  eiwit: number;
+  vet: number;
+  koolhydraten: number;
+  items: EetmeterConsumptieRecord[];
+}
+
+export interface EetmeterDagRecord {
+  datum: string;
+  maaltijden: EetmeterMaaltijdRecord[];
+  totaalEnergie: number;
+  totaalEiwit: number;
+  totaalVet: number;
+  totaalKoolhydraten: number;
+}
+
+export interface EetmeterViewData {
+  isIngelogd: boolean;
+  datum: string;
+  dag?: EetmeterDagRecord;
+}
+
+export interface EetmeterCredentialsRequest {
+  email: string;
+  password: string;
 }
 
 export interface AdminDashboardUiState {
