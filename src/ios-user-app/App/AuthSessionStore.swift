@@ -81,7 +81,8 @@ final class AuthSessionStore: AccessTokenProvider {
           subjectId: response.user.id,
           email: response.user.email,
           expiresAtEpochSeconds: nowEpochSeconds() + response.expires_in,
-          username: session.username
+          username: session.username,
+          adminRole: session.adminRole
         )
         save(session: newSession)
         return newSession.accessToken

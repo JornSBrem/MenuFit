@@ -1,4 +1,5 @@
 import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
+import type { SupabaseGoldWriter } from "./supabase-gold-writer.ts";
 import type {
   GoldMealIngredient,
   GoldMealView,
@@ -23,8 +24,11 @@ export class GoldWeekReadService {
 
   private readonly stateStore?: PersistentStateStore;
 
-  constructor(options?: { stateStore?: PersistentStateStore }) {
+  private readonly supabaseGoldWriter?: SupabaseGoldWriter;
+
+  constructor(options?: { stateStore?: PersistentStateStore; supabaseGoldWriter?: SupabaseGoldWriter }) {
     this.stateStore = options?.stateStore;
+    this.supabaseGoldWriter = options?.supabaseGoldWriter;
     if (this.stateStore) {
       const persistedState = this.stateStore.read();
       for (const [key, model] of Object.entries(persistedState.goldReadModels)) {
@@ -47,6 +51,7 @@ export class GoldWeekReadService {
     this.stateStore?.update((draft) => {
       draft.goldReadModels[key] = structuredClone(model);
     });
+    this.syncSupabaseGold();
   }
 
   /**
@@ -75,6 +80,7 @@ export class GoldWeekReadService {
         draft.goldReadModels[key] = structuredClone(model);
       }
     });
+    this.syncSupabaseGold();
   }
 
   getSummary(year: number, week: number, kcal: number, basePersons: number): WeekSummaryResponse | null {
@@ -172,6 +178,7 @@ export class GoldWeekReadService {
 
     this.rehydrateMealsFromRecipes();
     this.persistRecipes();
+    this.syncSupabaseGold();
   }
 
   /** Geeft alle gold-modellen terug (voor bulk-operaties zoals step-verrijking). */
@@ -310,6 +317,13 @@ export class GoldWeekReadService {
         draft.goldReadModels[key] = structuredClone(model);
       }
     });
+  }
+
+  private syncSupabaseGold(): void {
+    if (!this.supabaseGoldWriter) {
+      return;
+    }
+    this.supabaseGoldWriter.syncAll(this.listAllModels(), this.listRecipes());
   }
 
   private findClosestBaseline(

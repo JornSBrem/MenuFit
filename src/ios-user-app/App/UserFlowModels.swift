@@ -13,6 +13,14 @@ struct UserAuthSession: Codable {
   let email: String?
   let expiresAtEpochSeconds: Int?
   var username: String? = nil
+  /// Admin role derived from Supabase JWT claims (nil for regular users).
+  var adminRole: String? = nil
+
+  /// True when the session carries an operator or owner role.
+  var isAdmin: Bool {
+    guard let role = adminRole?.lowercased() else { return false }
+    return role == "operator" || role == "owner"
+  }
 }
 
 struct ApiErrorPayload: Decodable {

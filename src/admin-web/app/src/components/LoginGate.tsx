@@ -12,6 +12,7 @@ type SupabaseLoginEnvelope = {
     accessToken: string;
     userId: string;
     email?: string;
+    adminRole?: string | null;
   };
   error?: { code: string; message: string; hint?: string };
 };

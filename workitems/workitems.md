@@ -66,13 +66,55 @@
     - MenuFit kan geselecteerde statische/inspiratiecontent lokaal serveren zonder afhankelijkheid van de PG webapp.
     - Scope maakt onderscheid tussen must-have hulpcontent en nice-to-have inspiratiecontent.
 
-- [ ] WI-279 | type:feature | priority:P1 | status:IN-PROGRESS | title:Admin web login via Supabase email en wachtwoord op app.menufit.uk
+- [x] WI-279 | type:feature | priority:P1 | status:DONE | title:Admin web login via Supabase email en wachtwoord op app.menufit.uk
   - context: De admin web login op `app.menufit.uk` stuurt gebruikersnaam/wachtwoord nog naar de lokale MenuFit `/api/v3/auth/login` route. Daardoor kunnen geregistreerde Supabase gebruikers niet direct inloggen met hun bestaande email en wachtwoord, terwijl de backend Supabase JWT's al wel accepteert op admin-routes.
   - acceptance:
     - Admin web kan met Supabase email en wachtwoord een geldige access token ophalen en daarmee inloggen op `app.menufit.uk`.
     - De hosted login-flow vereist geen handmatige tokencopy/paste voor normale Supabase accounts.
     - Bestaande token-login fallback voor development blijft beschikbaar.
     - Backend en admin settings ondersteunen de benodigde publieke Supabase login-config zonder secrets in sourcecode te hardcoden.
+
+- [x] WI-280 | type:spike | priority:P1 | status:DONE | title:Doelarchitectuur voor Supabase gold storage en iOS admin mode uitwerken
+  - context: De huidige combinatie van lokale backend-state, aparte admin-web UI en gedeeltelijke Supabase-auth maakt beheer onnodig gefragmenteerd. Er is een expliciete doelarchitectuur nodig die vastlegt welke lagen naar Supabase verhuizen, hoe admin-rollen uit Supabase claims komen en hoe admin-functionaliteit in de iOS app als afgeschermde admin mode landt.
+  - acceptance:
+    - Er ligt een repo-document met aanbevolen doelarchitectuur voor Supabase Auth, rollen, gold-data opslag en iOS admin mode.
+    - Het document maakt expliciet onderscheid tussen wat wel en niet naar Supabase moet verhuizen (`bronze`, `silver`, `gold`).
+    - Het document bevat een gefaseerd migratiepad met concrete vervolgworkitems die uitvoerbaar zijn zonder big-bang refactor.
+
+- [x] WI-281 | type:feature | priority:P1 | status:DONE | title:Supabase rolmodel en backend autorisatie centraliseren
+  - context: WI-280 kiest Supabase als primaire bron voor identity en admin-rollen. De backend moet daarna admin-authorisatie volledig op Supabase claims en profielmetadata kunnen baseren in plaats van op een lokale accountmapping als primaire route.
+  - acceptance:
+    - Backend autorisatie accepteert `user`, `operator` en `owner` vanuit Supabase claims/metadata als canonieke rolbron.
+    - iOS sessiemodel kan de admin-rol consumeren voor UI-gating zonder lokale dev-token afhankelijkheid.
+    - Bestaande lokale admin-loginpaden zijn gedegradeerd tot expliciete dev/fallback flows.
+
+- [x] WI-282 | type:feature | priority:P1 | status:DONE | title:Gold serving model naar Supabase Postgres migreren met dual-write pad
+  - context: WI-280 kiest Supabase Postgres als primaire opslag voor gold-data, maar de huidige backend leest en schrijft nog naar lokale persistente state. Een gecontroleerde migratiefase moet gold-gegevens parallel naar Supabase schrijven en read-parity bewaken.
+  - acceptance:
+    - Er is een relationeel Supabase schema voor gold weekplannen, recepten, shopping data en relevante user-facing records.
+    - Backend ondersteunt tijdelijk dual-write of gecontroleerde backfill van lokale gold-state naar Supabase.
+    - Read-parity checks tonen aan dat Supabase gold dezelfde functionele data levert als de huidige lokale serving layer.
+
+- [ ] WI-283 | type:feature | priority:P1 | status:TODO | title:iOS admin mode met rolgebaseerde toegang in instellingen
+  - context: WI-280 kiest voor een afgeschermde admin mode in de iOS app als vervanger van de aparte admin-webapp. De eerste versie moet alleen zichtbaar zijn voor `operator`/`owner` en de bestaande beheerflows mobiel bruikbaar maken.
+  - acceptance:
+    - Instellingen-tab toont een `Admin mode` entry alleen voor gebruikers met Supabase admin-rol.
+    - Admin mode opent in een aparte sheet of navigation stack en lekt niet in de normale user tabflow.
+    - Minimaal importstatus, datasetstatus en kernbeheeracties zijn mobiel uitvoerbaar.
+
+- [ ] WI-284 | type:chore | priority:P2 | status:TODO | title:Admin-webapp uitfaseringspad en fallbackstrategie definiëren
+  - context: WI-280 adviseert de admin-webapp niet direct te verwijderen maar gefaseerd uit te faseren na iOS parity. Daarvoor is een expliciet deprecation-pad nodig zodat operations niet breken tijdens de overgang.
+  - acceptance:
+    - Er is een parity-checklist tussen admin-web en iOS admin mode.
+    - Bekend is welke webfunctionaliteit tijdelijk fallback blijft en wanneer die read-only of verwijderd kan worden.
+    - Rollback/fallbackpad voor beheer bij iOS regressies is vastgelegd.
+
+- [ ] WI-285 | type:spike | priority:P2 | status:TODO | title:Bronze en silver opslagstrategie rationaliseren voor Supabase migratie
+  - context: WI-280 maakt expliciet dat bronze en silver geen automatische runtime-tabellen in Supabase moeten worden. Voor latere migratie is nog een concrete keuze nodig tussen filesystem, Supabase Storage en relationele metadata per artefacttype.
+  - acceptance:
+    - Per bronze/silver artefacttype is vastgelegd of het in object storage, relationele metadata of beide terechtkomt.
+    - Retentie-, replay- en audit-eisen zijn uitgewerkt voor importartefacten.
+    - De gekozen opslagstrategie voorkomt dat de eindgebruikers-querylaag vervuild raakt met tussenartefacten.
 
 - [x] WI-276 | type:spike | priority:P1 | status:DONE | title:Volledige ProjectGezond webapp data-inventaris en endpoint discovery
   - context: Naast recepten en weekmenu's gebruikt de actuele ProjectGezond webapp meer pagina's en onderliggende API-data. Om MenuFit echt los te trekken van ProjectGezond is een volledige inventaris van toegankelijke routes, datasets en endpointfamilies nodig vanuit een ingelogde sessie.
@@ -255,6 +297,28 @@
     - Supportacties (resend/reset/diagnose) zijn via zichtbare UI interacties uitvoerbaar.
 
 ## Done (recent additions)
+
+- [x] WI-282 | type:feature | priority:P1 | status:DONE | title:Gold serving model naar Supabase Postgres migreren met dual-write pad
+  - context: WI-280 kiest Supabase Postgres als primaire opslag voor gold-data, maar de huidige backend leest en schrijft nog naar lokale persistente state. Een gecontroleerde migratiefase moet gold-gegevens parallel naar Supabase schrijven en read-parity bewaken.
+  - acceptance:
+    - Er is een relationeel Supabase schema voor gold weekplannen, recepten, shopping data en relevante user-facing records.
+    - Backend ondersteunt tijdelijk dual-write of gecontroleerde backfill van lokale gold-state naar Supabase.
+    - Read-parity checks tonen aan dat Supabase gold dezelfde functionele data levert als de huidige lokale serving layer.
+
+- [x] WI-280 | type:spike | priority:P1 | status:DONE | title:Doelarchitectuur voor Supabase gold storage en iOS admin mode uitwerken
+  - context: De huidige combinatie van lokale backend-state, aparte admin-web UI en gedeeltelijke Supabase-auth maakt beheer onnodig gefragmenteerd. Er is een expliciete doelarchitectuur nodig die vastlegt welke lagen naar Supabase verhuizen, hoe admin-rollen uit Supabase claims komen en hoe admin-functionaliteit in de iOS app als afgeschermde admin mode landt.
+  - acceptance:
+    - Er ligt een repo-document met aanbevolen doelarchitectuur voor Supabase Auth, rollen, gold-data opslag en iOS admin mode.
+    - Het document maakt expliciet onderscheid tussen wat wel en niet naar Supabase moet verhuizen (`bronze`, `silver`, `gold`).
+    - Het document bevat een gefaseerd migratiepad met concrete vervolgworkitems die uitvoerbaar zijn zonder big-bang refactor.
+
+- [x] WI-279 | type:feature | priority:P1 | status:DONE | title:Admin web login via Supabase email en wachtwoord op app.menufit.uk
+  - context: De admin web login op `app.menufit.uk` stuurt gebruikersnaam/wachtwoord nog naar de lokale MenuFit `/api/v3/auth/login` route. Daardoor kunnen geregistreerde Supabase gebruikers niet direct inloggen met hun bestaande email en wachtwoord, terwijl de backend Supabase JWT's al wel accepteert op admin-routes.
+  - acceptance:
+    - Admin web kan met Supabase email en wachtwoord een geldige access token ophalen en daarmee inloggen op `app.menufit.uk`.
+    - De hosted login-flow vereist geen handmatige tokencopy/paste voor normale Supabase accounts.
+    - Bestaande token-login fallback voor development blijft beschikbaar.
+    - Backend en admin settings ondersteunen de benodigde publieke Supabase login-config zonder secrets in sourcecode te hardcoden.
 
 - [x] WI-276 | type:spike | priority:P1 | status:DONE | title:Volledige ProjectGezond webapp data-inventaris en endpoint discovery
   - context: Naast recepten en weekmenu's gebruikt de actuele ProjectGezond webapp meer pagina's en onderliggende API-data. Om MenuFit echt los te trekken van ProjectGezond is een volledige inventaris van toegankelijke routes, datasets en endpointfamilies nodig vanuit een ingelogde sessie.

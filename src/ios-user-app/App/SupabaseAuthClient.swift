@@ -30,9 +30,14 @@ struct SupabaseAuthResponse: Decodable {
   let user: SupabaseUser
 }
 
+struct SupabaseAppMetadata: Decodable {
+  let role: String?
+}
+
 struct SupabaseUser: Decodable {
   let id: String
   let email: String?
+  let app_metadata: SupabaseAppMetadata?
 }
 
 struct SupabaseErrorResponse: Decodable {

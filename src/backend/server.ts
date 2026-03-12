@@ -21,10 +21,12 @@ import { AdminDataService } from "./application/admin/admin-data-service.ts";
 import { SystemOperationsService } from "./application/system/system-operations-service.ts";
 import { SessionLifecycleService } from "./application/auth/session-lifecycle-service.ts";
 import { UserAccountService, UserAccountServiceError } from "./application/auth/user-account-service.ts";
+import { resolveAdminRoleFromClaims } from "./application/auth/role-resolver.ts";
 import { HouseholdService, HouseholdServiceError } from "./application/household/household-service.ts";
 import { PushNotificationService, PushNotificationServiceError } from "./application/push/push-notification-service.ts";
 import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
 import type { GoldReadModel } from "./application/gold/index.ts";
+import { PsqlSupabaseGoldWriter } from "./application/gold/supabase-gold-writer.ts";
 import { JwksClient } from "./integrations/oidc/jwks-client.ts";
 import { JwtVerifier, JwtVerificationError } from "./integrations/oidc/jwt-verifier.ts";
 import { EetmeterClient, EetmeterClientError, toEetmeterDatum } from "./integrations/eetmeter/eetmeter-client.ts";
@@ -95,8 +97,14 @@ const config = createDefaultRuntimeConfig(
     Object.entries(process.env).filter(([, v]) => v !== undefined),
   ) as Record<string, string>,
 );
-const configuredSupabaseProjectUrl = (config.get<string>("SUPABASE_PROJECT_URL") || "").replace(/\/+$/, "");
-const configuredSupabaseAnonKey = (config.get<string>("SUPABASE_ANON_KEY") || "").trim();
+
+function getConfiguredSupabaseProjectUrl(): string {
+  return (config.get<string>("SUPABASE_PROJECT_URL") || "").replace(/\/+$/, "");
+}
+
+function getConfiguredSupabaseAnonKey(): string {
+  return (config.get<string>("SUPABASE_ANON_KEY") || "").trim();
+}
 
 // ---- Services --------------------------------------------------------------
 
@@ -110,19 +118,36 @@ const adminData = new AdminDataService({ auditTrail });
 const systemOps = new SystemOperationsService({ auditTrail });
 const householdService = new HouseholdService({ stateStore });
 const pushService = new PushNotificationService({ stateStore });
-const goldReadService = new GoldWeekReadService({ stateStore });
+const supabaseGoldDatabaseUrl = (config.get<string>("SUPABASE_GOLD_DATABASE_URL") || "").trim();
+const supabaseGoldSyncEnabled = Boolean(config.get<boolean>("SUPABASE_GOLD_SYNC_ENABLED") ?? false);
+const goldReadService = new GoldWeekReadService({
+  stateStore,
+  supabaseGoldWriter:
+    supabaseGoldSyncEnabled && supabaseGoldDatabaseUrl
+      ? new PsqlSupabaseGoldWriter({
+          connectionString: supabaseGoldDatabaseUrl,
+        })
+      : undefined,
+});
+if (supabaseGoldSyncEnabled && supabaseGoldDatabaseUrl) {
+  console.log("[boot] Supabase gold dual-write enabled");
+} else {
+  console.log("[boot] Supabase gold dual-write disabled");
+}
 
 // ---- Supabase JWT validation (optional, enabled when SUPABASE_PROJECT_URL is set) ---
 
 let supabaseJwtVerifier: JwtVerifier | null = null;
 
-if (configuredSupabaseProjectUrl) {
+const supabaseProjectUrl = getConfiguredSupabaseProjectUrl();
+
+if (supabaseProjectUrl) {
   const jwksClient = new JwksClient({
-    jwksUri: `${configuredSupabaseProjectUrl}/auth/v1/.well-known/jwks.json`,
+    jwksUri: `${supabaseProjectUrl}/auth/v1/.well-known/jwks.json`,
     cacheMaxAgeMs: 60 * 60 * 1000, // 1 uur cache (keys roteren zelden)
   });
   supabaseJwtVerifier = new JwtVerifier({ jwksClient });
-  console.log(`[boot] Supabase JWT validation enabled for ${configuredSupabaseProjectUrl}`);
+  console.log(`[boot] Supabase JWT validation enabled for ${supabaseProjectUrl}`);
 } else {
   console.log("[boot] Supabase JWT validation disabled (SUPABASE_PROJECT_URL not set)");
 }
@@ -489,27 +514,17 @@ function getAuthHeader(req: IncomingMessage): string {
   return typeof h === "string" ? h : "";
 }
 
-function deriveAdminRoleFromClaims(claims: Record<string, unknown>): "owner" | "operator" | null {
-  const directRole = typeof claims.role === "string" ? claims.role : undefined;
-  const namespacedRole = typeof claims["menufit:role"] === "string" ? claims["menufit:role"] : undefined;
-  const appMetadata = claims.app_metadata as Record<string, unknown> | undefined;
-  const appMetadataRole = appMetadata && typeof appMetadata.role === "string" ? appMetadata.role : undefined;
-
-  const rawRole = (directRole ?? namespacedRole ?? appMetadataRole ?? "").toLowerCase();
-  if (rawRole === "owner" || rawRole === "operator") {
-    return rawRole;
-  }
-  return null;
-}
+/** @see resolveAdminRoleFromClaims — imported from application/auth/role-resolver */
 
 function isSupabasePasswordLoginConfigured(): boolean {
-  return Boolean(configuredSupabaseProjectUrl && configuredSupabaseAnonKey);
+  return Boolean(getConfiguredSupabaseProjectUrl() && getConfiguredSupabaseAnonKey());
 }
 
 type SupabasePasswordLoginResult = {
   accessToken: string;
   userId: string;
   email?: string;
+  adminRole?: "owner" | "operator";
 };
 
 async function loginWithSupabasePassword(email: string, password: string): Promise<SupabasePasswordLoginResult> {
@@ -520,11 +535,13 @@ async function loginWithSupabasePassword(email: string, password: string): Promi
     );
   }
 
-  const response = await fetch(`${configuredSupabaseProjectUrl}/auth/v1/token?grant_type=password`, {
+  const supabaseProjectUrl = getConfiguredSupabaseProjectUrl();
+  const supabaseAnonKey = getConfiguredSupabaseAnonKey();
+  const response = await fetch(`${supabaseProjectUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      apikey: configuredSupabaseAnonKey,
+      apikey: supabaseAnonKey,
     },
     body: JSON.stringify({ email, password }),
   });
@@ -546,10 +563,23 @@ async function loginWithSupabasePassword(email: string, password: string): Promi
     throw new UserAccountServiceError("SUPABASE_LOGIN_FAILED", message);
   }
 
+  // Derive admin role from the JWT claims in the access token
+  let adminRole: "owner" | "operator" | undefined;
+  try {
+    const jwtParts = payload.access_token.split(".");
+    if (jwtParts.length === 3) {
+      const claims = JSON.parse(Buffer.from(jwtParts[1]!, "base64url").toString()) as Record<string, unknown>;
+      adminRole = resolveAdminRoleFromClaims(claims) ?? undefined;
+    }
+  } catch {
+    // Non-critical: role derivation from JWT is best-effort at login time
+  }
+
   return {
     accessToken: payload.access_token,
     userId: payload.user?.id ?? "",
     email: payload.user?.email,
+    adminRole,
   };
 }
 
@@ -567,7 +597,7 @@ async function getAdminSession(req: IncomingMessage): Promise<import("./interfac
 
   try {
     const { claims } = await supabaseJwtVerifier.verify(token, {
-      issuer: `${configuredSupabaseProjectUrl}/auth/v1`,
+      issuer: `${supabaseProjectUrl}/auth/v1`,
       audience: "authenticated",
     });
     const subjectId = String(claims.sub ?? "");
@@ -576,7 +606,7 @@ async function getAdminSession(req: IncomingMessage): Promise<import("./interfac
     }
 
     // First trust explicit admin role claims; fallback to backend-admin role mapping.
-    let adminRole = deriveAdminRoleFromClaims(claims as Record<string, unknown>);
+    let adminRole = resolveAdminRoleFromClaims(claims as Record<string, unknown>);
     if (!adminRole) {
       const account = userAccountService.ensureAccount(subjectId);
       adminRole = account.adminRole ?? null;
@@ -614,7 +644,7 @@ async function validateSupabaseJwt(token: string): Promise<import("./interfaces/
   }
   try {
     const { claims } = await supabaseJwtVerifier.verify(token, {
-      issuer: `${configuredSupabaseProjectUrl}/auth/v1`,
+      issuer: `${supabaseProjectUrl}/auth/v1`,
       audience: "authenticated",
     });
     return {
@@ -810,7 +840,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         ok: true,
         data: {
           enabled: isSupabasePasswordLoginConfigured(),
-          projectUrl: configuredSupabaseProjectUrl || undefined,
+          projectUrl: getConfiguredSupabaseProjectUrl() || undefined,
         },
       });
       return;
@@ -830,6 +860,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             accessToken: result.accessToken,
             userId: result.userId,
             email: result.email ?? email.trim(),
+            adminRole: result.adminRole ?? null,
           },
         });
       } catch (err) {

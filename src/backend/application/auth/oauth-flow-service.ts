@@ -4,7 +4,8 @@ import type { JwtVerifier } from "../../integrations/oidc/jwt-verifier.ts";
 import { JwtVerificationError } from "../../integrations/oidc/jwt-verifier.ts";
 import type { JwtClaims } from "../../integrations/oidc/types.ts";
 import type { SessionLifecycleService } from "./session-lifecycle-service.ts";
-import type { AdminRole, AppSessionRecord } from "./types.ts";
+import type { AppSessionRecord } from "./types.ts";
+import { resolveAdminRoleFromClaims } from "./role-resolver.ts";
 
 export interface OAuthProviderConfig {
   /** Authorization endpoint URL */
@@ -82,24 +83,9 @@ const DEFAULT_SCOPES = ["openid", "profile", "email"];
 const generateStateDefault = (): string =>
   randomBytes(16).toString("base64url");
 
-/** Derive admin role from OIDC claims, returns null for regular users */
-const extractAdminRole = (claims: JwtClaims): AdminRole | null => {
-  // Convention: claims.roles or claims["menufit:role"] carries admin role
-  const roles: unknown =
-    claims["menufit:role"] ??
-    claims["roles"] ??
-    null;
-
-  if (roles === "owner") return "owner";
-  if (roles === "operator") return "operator";
-
-  if (Array.isArray(roles)) {
-    if (roles.includes("owner")) return "owner";
-    if (roles.includes("operator")) return "operator";
-  }
-
-  return null;
-};
+/** @deprecated Use resolveAdminRoleFromClaims directly — kept as alias for backward compat */
+const extractAdminRole = (claims: JwtClaims) =>
+  resolveAdminRoleFromClaims(claims as Record<string, unknown>);
 
 export class OAuthFlowService {
   private readonly config: OAuthProviderConfig;

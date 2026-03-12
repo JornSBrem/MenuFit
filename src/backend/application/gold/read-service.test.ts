@@ -6,6 +6,7 @@ import test from "node:test";
 
 import { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
 import { GoldWeekReadService } from "./read-service.ts";
+import type { SupabaseGoldWriter } from "./supabase-gold-writer.ts";
 
 test("gold read service persists and reloads week models", () => {
   const dir = mkdtempSync(join(tmpdir(), "menufit-gold-"));
@@ -249,4 +250,54 @@ test("gold read service persists normalized recipe catalog and enriches meals", 
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("gold read service mirrors writes to supabase writer when configured", () => {
+  const calls: Array<{ models: number; recipes: number }> = [];
+  const writer: SupabaseGoldWriter = {
+    syncAll(models, recipes) {
+      calls.push({ models: models.length, recipes: recipes.length });
+    },
+  };
+
+  const service = new GoldWeekReadService({ supabaseGoldWriter: writer });
+  service.upsert({
+    weekPlan: {
+      weekPlanId: "weekplan-12",
+      year: 2026,
+      week: 12,
+      kcal: 1800,
+      basePersons: 2,
+      mealCount: 1,
+      sourceObjectId: "bronze-week-12",
+      transformVersion: "gold-v1",
+      generatedAt: "2026-03-12T00:00:00.000Z",
+    },
+    meals: [],
+    groceries: [],
+    groceryReconcile: [],
+    matchStatus: {
+      totalItems: 0,
+      resolvedItems: 0,
+      unresolvedItems: 0,
+      coverageScore: 1,
+    },
+    cartPlan: {
+      cartPlanId: "cartplan-12",
+      weekPlanId: "weekplan-12",
+      itemCount: 0,
+      unresolvedCount: 0,
+      generatedAt: "2026-03-12T00:00:00.000Z",
+    },
+  });
+  service.upsertRecipes([
+    {
+      recipeId: "recipe-12",
+      name: "Recept 12",
+    },
+  ]);
+
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0], { models: 1, recipes: 0 });
+  assert.deepEqual(calls[1], { models: 1, recipes: 1 });
 });

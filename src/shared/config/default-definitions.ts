@@ -219,6 +219,20 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     meta: { hotReload: false, sensitive: true, restartRequired: true },
   },
   {
+    key: "SUPABASE_GOLD_DATABASE_URL",
+    description: "Postgres connection string for Supabase gold schema sync/backfill.",
+    kind: "string",
+    defaultValue: "",
+    meta: { hotReload: false, sensitive: true, restartRequired: false },
+  },
+  {
+    key: "SUPABASE_GOLD_SYNC_ENABLED",
+    description: "When true, gold serving writes are mirrored to Supabase Postgres.",
+    kind: "boolean",
+    defaultValue: false,
+    meta: { hotReload: true, sensitive: false, restartRequired: false },
+  },
+  {
     key: "FEATURE_FLAGS_JSON",
     description: "Feature flags as JSON object.",
     kind: "json",

@@ -671,7 +671,8 @@ final class UserFlowViewModel: ObservableObject {
         refreshToken: authResponse.refresh_token,
         subjectId: authResponse.user.id,
         email: authResponse.user.email,
-        expiresAtEpochSeconds: now + authResponse.expires_in
+        expiresAtEpochSeconds: now + authResponse.expires_in,
+        adminRole: authResponse.user.app_metadata?.role
       )
       authStore.save(session: session)
       clearLoadedData()
@@ -702,7 +703,8 @@ final class UserFlowViewModel: ObservableObject {
         refreshToken: authResponse.refresh_token,
         subjectId: authResponse.user.id,
         email: authResponse.user.email,
-        expiresAtEpochSeconds: now + authResponse.expires_in
+        expiresAtEpochSeconds: now + authResponse.expires_in,
+        adminRole: authResponse.user.app_metadata?.role
       )
       authStore.save(session: session)
       clearLoadedData()
