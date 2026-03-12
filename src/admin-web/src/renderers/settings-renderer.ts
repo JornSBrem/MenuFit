@@ -23,6 +23,11 @@ export const SETTINGS_SCHEMA: ConfigKeySchema[] = [
   { key: "matching.autoAcceptMin", type: "number", label: "Matching: auto-accept drempel" },
   { key: "llm.model", type: "string", label: "LLM: model" },
   { key: "llm.provider", type: "string", label: "LLM: provider" },
+  { key: "PG_LOGIN_URL", type: "string", label: "ProjectGezond: login endpoint" },
+  { key: "PG_WEEK_URL_TEMPLATE", type: "string", label: "ProjectGezond: week endpoint template" },
+  { key: "PG_DAY_URL_TEMPLATE", type: "string", label: "ProjectGezond: day endpoint template" },
+  { key: "PG_RECIPE_URL_TEMPLATE", type: "string", label: "ProjectGezond: recipe endpoint template" },
+  { key: "PG_SHOPPINGLIST_URL_TEMPLATE", type: "string", label: "ProjectGezond: shoppinglist endpoint template" },
 ];
 
 export interface SettingsFormState {

@@ -14,7 +14,12 @@ type ConfigKey =
   | "matching.highConfidenceMin"
   | "matching.autoAcceptMin"
   | "llm.model"
-  | "llm.provider";
+  | "llm.provider"
+  | "PG_LOGIN_URL"
+  | "PG_WEEK_URL_TEMPLATE"
+  | "PG_DAY_URL_TEMPLATE"
+  | "PG_RECIPE_URL_TEMPLATE"
+  | "PG_SHOPPINGLIST_URL_TEMPLATE";
 
 const CONFIG_KEYS: { key: ConfigKey; type: "boolean" | "number" | "string"; description: string }[] = [
   { key: "feature.toggle", type: "boolean", description: "Feature toggle aan/uit" },
@@ -22,6 +27,11 @@ const CONFIG_KEYS: { key: ConfigKey; type: "boolean" | "number" | "string"; desc
   { key: "matching.autoAcceptMin", type: "number", description: "Min. score voor automatisch accepteren" },
   { key: "llm.model", type: "string", description: "LLM model naam" },
   { key: "llm.provider", type: "string", description: "LLM provider (openai/azure)" },
+  { key: "PG_LOGIN_URL", type: "string", description: "ProjectGezond login endpoint URL" },
+  { key: "PG_WEEK_URL_TEMPLATE", type: "string", description: "ProjectGezond week endpoint template" },
+  { key: "PG_DAY_URL_TEMPLATE", type: "string", description: "ProjectGezond day endpoint template" },
+  { key: "PG_RECIPE_URL_TEMPLATE", type: "string", description: "ProjectGezond recipe endpoint template" },
+  { key: "PG_SHOPPINGLIST_URL_TEMPLATE", type: "string", description: "ProjectGezond shoppinglist endpoint template" },
 ];
 
 function genId(): string {

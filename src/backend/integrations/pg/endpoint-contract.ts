@@ -14,10 +14,10 @@ export type PgEndpointKey = (typeof PG_ENDPOINT_KEYS)[PgEndpointName];
 
 export const PG_ENDPOINT_DEFAULTS = {
   PG_LOGIN_URL: "https://backend.projectgezond.nl/api/login",
-  PG_WEEK_URL_TEMPLATE: "https://backend.projectgezond.nl/api/v3/week-menus/{week}",
+  PG_WEEK_URL_TEMPLATE: "https://backend.projectgezond.nl/api/week-menu/{week}",
   PG_DAY_URL_TEMPLATE: "https://backend.projectgezond.nl/api/v3/daymenus/{dayId}",
-  PG_RECIPE_URL_TEMPLATE: "https://backend.projectgezond.nl/api/v3/recipes/{recipeId}",
-  PG_SHOPPINGLIST_URL_TEMPLATE: "https://backend.projectgezond.nl/api/v3/week-menus/{week}",
+  PG_RECIPE_URL_TEMPLATE: "https://backend.projectgezond.nl/api/recipe/{recipeId}",
+  PG_SHOPPINGLIST_URL_TEMPLATE: "https://backend.projectgezond.nl/api/week-menu/{week}",
 } as const satisfies Record<PgEndpointKey, string>;
 
 export type PgEndpointTemplateVariable = "week" | "dayId" | "recipeId";
@@ -176,8 +176,8 @@ export const assertPgResponseShape = (
     case "week":
     case "shoppingList": {
       const data = assertDataObject(endpoint, payload);
-      if (!Array.isArray(data.groceries)) {
-        throw new Error(`Invalid PG ${endpoint} response: expected data.groceries array`);
+      if (!isRecord(data.groceries) && !Array.isArray(data.groceries)) {
+        throw new Error(`Invalid PG ${endpoint} response: expected data.groceries object or array`);
       }
       return;
     }

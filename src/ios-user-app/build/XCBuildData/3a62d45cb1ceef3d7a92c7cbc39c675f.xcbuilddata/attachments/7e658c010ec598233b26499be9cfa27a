@@ -1,0 +1,49 @@
+{
+  "" : {
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetExtension-primary.dia",
+    "emit-module-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetExtension-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetExtension-primary-emit-module.dia",
+    "pch" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetExtension-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetExtension-primary.swiftdeps"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/MealSchedule.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MealSchedule.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MealSchedule.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MealSchedule.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MealSchedule.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MealSchedule.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MealSchedule.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MealSchedule.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MealSchedule~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/SharedWidgetData.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/SharedWidgetData.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/SharedWidgetData.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/SharedWidgetData.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/SharedWidgetData.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/SharedWidgetData.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/SharedWidgetData.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/SharedWidgetData.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/SharedWidgetData~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/MenuFitWatchWidget/MenuFitWatchWidgetBundle.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetBundle.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetBundle.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetBundle.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetBundle.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetBundle.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetBundle.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetBundle.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/MenuFitWatchWidgetBundle~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/MenuFitWatchWidget/NextMealWatchWidget.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/NextMealWatchWidget.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/NextMealWatchWidget.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/NextMealWatchWidget.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/NextMealWatchWidget.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/NextMealWatchWidget.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/NextMealWatchWidget.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/NextMealWatchWidget.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitWatchWidgetExtension.build/Objects-normal/arm64/NextMealWatchWidget~partial.swiftmodule"
+  }
+}

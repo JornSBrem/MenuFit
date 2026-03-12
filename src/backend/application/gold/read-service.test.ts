@@ -175,3 +175,78 @@ test("gold read service uses deterministic tie-break and keeps not-found boundar
   const differentWeek = service.getSummary(2026, 10, 1650, 2);
   assert.equal(differentWeek, null);
 });
+
+test("gold read service persists normalized recipe catalog and enriches meals", () => {
+  const dir = mkdtempSync(join(tmpdir(), "menufit-gold-recipes-"));
+  try {
+    const stateStore = new PersistentStateStore(join(dir, "state.json"));
+    const service = new GoldWeekReadService({ stateStore });
+    service.upsert({
+      weekPlan: {
+        weekPlanId: "weekplan-11",
+        year: 2026,
+        week: 11,
+        kcal: 1800,
+        basePersons: 2,
+        mealCount: 1,
+        sourceObjectId: "bronze-week-11",
+        transformVersion: "gold-v1",
+        generatedAt: "2026-03-11T00:00:00.000Z",
+      },
+      meals: [
+        {
+          mealId: "meal-1",
+          dayLabel: "maandag",
+          mealLabel: "Diner",
+          recipeId: "butterchicken-met-rijst",
+          recipeName: "Butter chicken",
+          imageUrl: "https://example.invalid/meal.jpg",
+          kcal: 650,
+        },
+      ],
+      groceries: [],
+      groceryReconcile: [],
+      matchStatus: {
+        totalItems: 0,
+        resolvedItems: 0,
+        unresolvedItems: 0,
+        coverageScore: 1,
+      },
+      cartPlan: {
+        cartPlanId: "cartplan-11",
+        weekPlanId: "weekplan-11",
+        itemCount: 0,
+        unresolvedCount: 0,
+        generatedAt: "2026-03-11T00:00:00.000Z",
+      },
+    });
+
+    service.upsertRecipes([
+      {
+        recipeId: "butterchicken-met-rijst",
+        slug: "butterchicken-met-rijst",
+        name: "Butter chicken met rijst",
+        imageUrl: "https://example.invalid/recipe.jpg",
+        kcal: 644,
+        ingredients: [{ text: "300 gr kip" }],
+        steps: [{ step: 1, text: "Bak de kip." }],
+        tips: [{ text: "Voeg koriander toe." }],
+        nutrition: [{ code: "Eiwit", label: "Eiwit", amount: 38, unit: "gr" }],
+        linkedDayMenus: [{ dayMenuId: "dm-1", slug: "menu-ma", title: "Maandag menu", kcalVariants: [1800] }],
+        importedAt: "2026-03-11T21:00:00.000Z",
+      },
+    ]);
+
+    const reloaded = new GoldWeekReadService({ stateStore });
+    const recipes = reloaded.listRecipes();
+    assert.equal(recipes.length, 1);
+    assert.equal(recipes[0]?.tips?.[0]?.text, "Voeg koriander toe.");
+    assert.equal(recipes[0]?.nutrition?.[0]?.amount, 38);
+
+    const summary = reloaded.getSummary(2026, 11, 1800, 2);
+    assert.equal(summary?.meals[0]?.tips?.[0]?.text, "Voeg koriander toe.");
+    assert.equal(summary?.meals[0]?.linkedDayMenus?.[0]?.title, "Maandag menu");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -2,12 +2,76 @@
 
 ## Backlog
 
-- [ ] WI-269 | type:bug | priority:P1 | status:IN-PROGRESS | title:iOS Supabase configuratie wordt niet herkend bij login/registratie
+- [ ] WI-269 | type:bug | priority:P1 | status:TODO | title:iOS Supabase configuratie wordt niet herkend bij login/registratie
   - context: In de iOS app verschijnt "Supabase is niet geconfigureerd." tijdens registratie/login terwijl URL en anon key zijn ingesteld. De app leest momenteel alleen exact `SupabaseProjectURL` en `SupabaseAnonKey` uit `Info.plist`, waardoor kleine variaties in key-naam of lege/whitespace waarden leiden tot een stille misconfiguratie.
   - acceptance:
     - iOS app accepteert naast de huidige keys ook gangbare alternatieve Supabase key-namen uit `Info.plist`.
     - Lege/whitespace waarden worden defensief behandeld (trim + validatie) voordat `SupabaseAuthClient` wordt aangemaakt.
     - Bij ontbrekende configuratie toont de app een diagnostische melding met welke sleutel(s) ontbreken.
+
+- [ ] WI-270 | type:bug | priority:P1 | status:TODO | title:Admin web blokkeert ProjectGezond endpoint config keys in Settings
+  - context: Backend accepteert runtime updates voor `PG_*` endpoint keys via `/api/v3/admin/config`, maar de admin-web UI valideert alleen een beperkte keylijst en weigert daardoor endpointmigraties wanneer de ProjectGezond API verandert.
+  - acceptance:
+    - Settings-tab accepteert `PG_LOGIN_URL`, `PG_WEEK_URL_TEMPLATE`, `PG_DAY_URL_TEMPLATE`, `PG_RECIPE_URL_TEMPLATE`, `PG_SHOPPINGLIST_URL_TEMPLATE`.
+    - Client-side validatie in admin-web laat bovenstaande keys door met string type.
+    - Renderer-schema voor settings bevat dezelfde keys zodat UI en validatie consistent zijn.
+
+- [x] WI-271 | type:feature | priority:P0 | status:DONE | title:ProjectGezond bulk-import normaliseren zodat MenuFit zelfstandig recepten en weekmenu's serveert
+  - context: De actuele ProjectGezond frontend gebruikt andere API-routes en levert rijkere receptdata dan het bestaande MenuFit ingest-pad opslaat. MenuFit moet recepten, weekmenu's en boodschappen eenmalig kunnen binnenhalen, inclusief ingredienten, bereiding, tips, nutrition en recipe-to-daymenu koppelingen, en daarna volledig uit eigen backend/database kunnen serveren zonder continue afhankelijkheid van de ProjectGezond backend.
+  - acceptance:
+    - Backend gebruikt de actuele ProjectGezond endpointfamilie voor ingest (`/api/login`, `/api/week-menu/{week}`, `/api/recipe/{slug}`, ondersteunende filter/search bronnen).
+    - Bulk-import slaat genormaliseerde receptdata op met minimaal ingredienten, bereidingsstappen, tips/extra instructies, nutrition (eiwit/koolhydraten/vet/vezels), image en gekoppelde dagmenu's.
+    - Geimporteerde weekmenu's en recepten blijven persistent beschikbaar in MenuFit zonder opnieuw inloggen op ProjectGezond voor reads.
+    - iOS/backend read-routes gebruiken de eigen opgeslagen data en niet de ProjectGezond backend.
+
+- [ ] WI-272 | type:feature | priority:P2 | status:TODO | title:Incrementele delta-sync voor ProjectGezond import zonder volledige herimport
+  - context: WI-271 levert een volledige bulk-import waarmee MenuFit onafhankelijk kan lezen, maar updates vereisen nu nog een complete import-run. Voor operationeel onderhoud is een incrementeel delta-pad nodig dat alleen gewijzigde weken/recepten ophaalt.
+  - acceptance:
+    - Backend kan gewijzigde weekmenu's en recepten detecteren en gericht herimporteren zonder complete dataset refresh.
+    - Delta-sync bewaart bestaande lokale records deterministisch en overschrijft alleen importeerbare velden.
+    - Admin/operator krijgt duidelijke status over welke weken/recepten in een delta-run zijn bijgewerkt.
+
+- [ ] WI-273 | type:feature | priority:P2 | status:TODO | title:Admin UI voor bulk-import en lokale receptcatalogusdiagnostiek
+  - context: WI-271 verplaatst de brondata naar een lokale receptcatalogus, maar de admin UI toont nog geen specifieke importstatus, datasetgrootte of verschillen tussen bron en lokale opslag.
+  - acceptance:
+    - Admin UI toont importstatus, aantallen geimporteerde weken/recepten en recente fouten uit de bulk-import.
+    - Operators kunnen vanuit de UI een bulk-import of recipe-refresh starten zonder losse curl-calls.
+    - De UI maakt zichtbaar dat reads uit lokale MenuFit-data komen en niet live uit ProjectGezond.
+
+- [x] WI-274 | type:feature | priority:P1 | status:DONE | title:ProjectGezond webapp parity-audit en ontbrekende kernfunctionaliteit in MenuFit inbouwen
+  - context: Nu de data lokaal in MenuFit staat moet de productervaring niet achterblijven op de actuele ProjectGezond webapp. Er is een gerichte parity-audit nodig van de live webapp, gevolgd door implementatie van ontbrekende kernfunctionaliteit die direct op de bestaande lokale dataset kan draaien.
+  - acceptance:
+    - De actuele ProjectGezond webapp is functioneel geïnventariseerd op live routes/views met inlogde sessie.
+    - Voor ontbrekende kernfunctionaliteit die relevant is voor de MenuFit user flow wordt backlog bijgewerkt of direct geïmplementeerd.
+    - Minstens één concreet parity-gat dat direct op lokale MenuFit data kan draaien is geïmplementeerd en gevalideerd.
+
+- [ ] WI-275 | type:feature | priority:P2 | status:TODO | title:Persoonlijke voortgang en weegmomenten in MenuFit uitwerken
+  - context: De parity-audit van de live ProjectGezond webapp laat zien dat `Mijn PG` en `Mijn weegmomenten` nog een duidelijke functionele kloof vormen ten opzichte van MenuFit. Er ontbreekt nog een echte voortgangsflow met gewichtshistorie, KPI-kaarten en toevoegen/bewerken van weegmomenten.
+  - acceptance:
+    - MenuFit heeft een dedicated voortgangsweergave met minimaal actueel gewicht, BMI en geschiedenis van weegmomenten.
+    - Gebruiker kan weegmomenten toevoegen en de data blijft persistent in de eigen MenuFit backend.
+    - Config/profielschermen verwijzen niet langer alleen naar statische profielvelden maar naar de echte voortgangsdata.
+
+- [ ] WI-277 | type:feature | priority:P2 | status:TODO | title:PG receptfavorieten en dagmenu-favorieten migreren naar lokale MenuFit state
+  - context: De volledige PG webapp data-audit laat zien dat de live app aparte endpoints gebruikt voor `recipe/favorite` en `day-menu/favorite`. MenuFit heeft nu alleen lokale recipe-favorieten en mist migratie van bestaande persoonlijke PG favorieten.
+  - acceptance:
+    - Importpad kan bestaande PG receptfavorieten ophalen en lokaal in MenuFit opslaan.
+    - Relevante dagmenu-favorieten worden lokaal gemodelleerd of bewust vertaald naar MenuFit-equivalent.
+    - UI maakt geen live call naar PG nodig om persoonlijke favorietstatus te tonen na migratie.
+
+- [ ] WI-278 | type:feature | priority:P3 | status:TODO | title:PG CMS en inspiratiecontent lokaal inventariseren en serveren
+  - context: De live PG webapp bevat extra contentpagina's zoals FAQ, bonusmenu's, kruidenmixen en variatielijst. Deze content staat nog volledig buiten MenuFit terwijl ze wel gebruikerswaarde kan hebben als inspiratie- of hulppagina.
+  - acceptance:
+    - CMS/inspiratie-routes en payloadbron zijn in kaart gebracht voor import.
+    - MenuFit kan geselecteerde statische/inspiratiecontent lokaal serveren zonder afhankelijkheid van de PG webapp.
+    - Scope maakt onderscheid tussen must-have hulpcontent en nice-to-have inspiratiecontent.
+
+- [x] WI-276 | type:spike | priority:P1 | status:DONE | title:Volledige ProjectGezond webapp data-inventaris en endpoint discovery
+  - context: Naast recepten en weekmenu's gebruikt de actuele ProjectGezond webapp meer pagina's en onderliggende API-data. Om MenuFit echt los te trekken van ProjectGezond is een volledige inventaris van toegankelijke routes, datasets en endpointfamilies nodig vanuit een ingelogde sessie.
+  - acceptance:
+    - De ingelogde ProjectGezond webapp is systematisch geïnventariseerd op bereikbare pagina's en onderliggende network/API-calls.
+    - Alle relevante gevonden datasets/endpoints zijn vastgelegd in repo-documentatie of scripts, inclusief welke data al door MenuFit wordt ingelezen en welke nog ontbreekt.
+    - Voor nieuwe relevante databronnen zijn vervolgworkitems aangemaakt of directe importkandidaten benoemd.
 
 - [x] WI-266 | type:feature | priority:P0 | status:DONE | title:Backend HTTP server entry point met dev admin token bootstrap
   - context: Er is geen server.ts — de backend heeft alleen route handlers maar geen draaiende HTTP server. WI-265 bouwde een admin web app die naar :3000 proxyt maar de backend draait niet. Voor lokale ontwikkeling moet de operator een token kunnen krijgen zonder OAuth-flow.
@@ -183,6 +247,28 @@
     - Supportacties (resend/reset/diagnose) zijn via zichtbare UI interacties uitvoerbaar.
 
 ## Done (recent additions)
+
+- [x] WI-276 | type:spike | priority:P1 | status:DONE | title:Volledige ProjectGezond webapp data-inventaris en endpoint discovery
+  - context: Naast recepten en weekmenu's gebruikt de actuele ProjectGezond webapp meer pagina's en onderliggende API-data. Om MenuFit echt los te trekken van ProjectGezond is een volledige inventaris van toegankelijke routes, datasets en endpointfamilies nodig vanuit een ingelogde sessie.
+  - acceptance:
+    - De ingelogde ProjectGezond webapp is systematisch geïnventariseerd op bereikbare pagina's en onderliggende network/API-calls.
+    - Alle relevante gevonden datasets/endpoints zijn vastgelegd in repo-documentatie of scripts, inclusief welke data al door MenuFit wordt ingelezen en welke nog ontbreekt.
+    - Voor nieuwe relevante databronnen zijn vervolgworkitems aangemaakt of directe importkandidaten benoemd.
+
+- [x] WI-274 | type:feature | priority:P1 | status:DONE | title:ProjectGezond webapp parity-audit en ontbrekende kernfunctionaliteit in MenuFit inbouwen
+  - context: Nu de data lokaal in MenuFit staat moet de productervaring niet achterblijven op de actuele ProjectGezond webapp. Er is een gerichte parity-audit nodig van de live webapp, gevolgd door implementatie van ontbrekende kernfunctionaliteit die direct op de bestaande lokale dataset kan draaien.
+  - acceptance:
+    - De actuele ProjectGezond webapp is functioneel geïnventariseerd op live routes/views met inlogde sessie.
+    - Voor ontbrekende kernfunctionaliteit die relevant is voor de MenuFit user flow wordt backlog bijgewerkt of direct geïmplementeerd.
+    - Minstens één concreet parity-gat dat direct op lokale MenuFit data kan draaien is geïmplementeerd en gevalideerd.
+
+- [x] WI-271 | type:feature | priority:P0 | status:DONE | title:ProjectGezond bulk-import normaliseren zodat MenuFit zelfstandig recepten en weekmenu's serveert
+  - context: De actuele ProjectGezond frontend gebruikt andere API-routes en levert rijkere receptdata dan het bestaande MenuFit ingest-pad opslaat. MenuFit moet recepten, weekmenu's en boodschappen eenmalig kunnen binnenhalen, inclusief ingredienten, bereiding, tips, nutrition en recipe-to-daymenu koppelingen, en daarna volledig uit eigen backend/database kunnen serveren zonder continue afhankelijkheid van de ProjectGezond backend.
+  - acceptance:
+    - Backend gebruikt de actuele ProjectGezond endpointfamilie voor ingest (`/api/login`, `/api/week-menu/{week}`, `/api/recipe/{slug}`, ondersteunende filter/search bronnen).
+    - Bulk-import slaat genormaliseerde receptdata op met minimaal ingredienten, bereidingsstappen, tips/extra instructies, nutrition (eiwit/koolhydraten/vet/vezels), image en gekoppelde dagmenu's.
+    - Geimporteerde weekmenu's en recepten blijven persistent beschikbaar in MenuFit zonder opnieuw inloggen op ProjectGezond voor reads.
+    - iOS/backend read-routes gebruiken de eigen opgeslagen data en niet de ProjectGezond backend.
 
 - [x] WI-268 | type:feature | priority:P1 | status:DONE | title:iOS push notificaties met backend device token registratie
   - context: Gebruikers willen genotificeerd worden over nieuw weekmenu, bestellingstatus en herinneringen.

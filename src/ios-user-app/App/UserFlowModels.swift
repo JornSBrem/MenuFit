@@ -62,6 +62,36 @@ struct GoldRecipeStep: Codable {
   let text: String
 }
 
+struct GoldRecipeTip: Codable, Identifiable {
+  let text: String
+  var id: String { text }
+}
+
+struct GoldRecipeNutrition: Codable, Identifiable {
+  let code: String
+  let label: String
+  let amount: Double?
+  let unit: String?
+  var id: String { code }
+}
+
+struct GoldRecipePreparationTime: Codable, Identifiable {
+  let amount: Double?
+  let unit: String?
+  let label: String
+  var id: String { label }
+}
+
+struct GoldLinkedDayMenuView: Codable, Identifiable {
+  let dayMenuId: String
+  let slug: String
+  let title: String
+  let imageUrl: String?
+  let kcalVariants: [Int]
+
+  var id: String { dayMenuId }
+}
+
 struct GoldWeekMealView: Codable, Identifiable {
   let mealId: String
   let dayLabel: String
@@ -72,6 +102,14 @@ struct GoldWeekMealView: Codable, Identifiable {
   let kcal: Int?
   let ingredients: [GoldMealIngredient]?
   let steps: [GoldRecipeStep]?
+  let intro: String?
+  let ingredientsRelatesTo: String?
+  let nutrientsRelatesTo: String?
+  let prepTimes: [GoldRecipePreparationTime]?
+  let tips: [GoldRecipeTip]?
+  let nutrition: [GoldRecipeNutrition]?
+  let linkedDayMenus: [GoldLinkedDayMenuView]?
+  let tags: [String]?
 
   var id: String { mealId }
 }
@@ -290,10 +328,19 @@ struct DayCard: Identifiable {
 struct UserRecipeRecord: Codable, Identifiable {
   let recipeId: String
   let name: String
+  let slug: String?
   let imageUrl: String?
   let kcal: Int?
   let ingredients: [GoldMealIngredient]?
   let steps: [GoldRecipeStep]?
+  let intro: String?
+  let ingredientsRelatesTo: String?
+  let nutrientsRelatesTo: String?
+  let prepTimes: [GoldRecipePreparationTime]?
+  let tips: [GoldRecipeTip]?
+  let nutrition: [GoldRecipeNutrition]?
+  let linkedDayMenus: [GoldLinkedDayMenuView]?
+  let tags: [String]?
   var id: String { recipeId }
 
   /// Zet dit record om naar een GoldWeekMealView zodat RecipeDetailSheet gebruikt kan worden.
@@ -307,7 +354,15 @@ struct UserRecipeRecord: Codable, Identifiable {
       imageUrl: imageUrl,
       kcal: kcal,
       ingredients: ingredients,
-      steps: steps
+      steps: steps,
+      intro: intro,
+      ingredientsRelatesTo: ingredientsRelatesTo,
+      nutrientsRelatesTo: nutrientsRelatesTo,
+      prepTimes: prepTimes,
+      tips: tips,
+      nutrition: nutrition,
+      linkedDayMenus: linkedDayMenus,
+      tags: tags
     )
   }
 }

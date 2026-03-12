@@ -52,6 +52,7 @@ test("persistent state store creates default state when file does not exist", ()
     const state = store.read();
     assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
     assert.deepEqual(state.goldReadModels, {});
+    assert.deepEqual(state.recipeCatalog, {});
     assert.deepEqual(state.silverTransforms, {});
     assert.deepEqual(state.systemJobs, []);
     assert.deepEqual(state.households, []);
@@ -259,6 +260,45 @@ test("persistent state store update writes to disk", () => {
 
     const raw = JSON.parse(readFileSync(stateFile, "utf8")) as { cartReportsByIdempotencyKey?: Record<string, unknown> };
     assert.equal(Boolean(raw.cartReportsByIdempotencyKey?.["idem-1"]), true);
+  });
+});
+
+test("persistent state store migrates v6 schema to recipe catalog field", () => {
+  withTempStateFile((stateFile) => {
+    writeFileSync(
+      stateFile,
+      JSON.stringify(
+        {
+          schemaVersion: 6,
+          silverTransforms: {},
+          goldReadModels: {},
+          cartReportsByIdempotencyKey: {},
+          systemJobs: [],
+          systemReports: [],
+          matchingQueue: [],
+          matchingAuditTrail: [],
+          matchingOverrides: [],
+          auditTrail: [],
+          households: [],
+          householdInvitations: [],
+          authSessions: [],
+          providerSessions: [],
+          schedulerRuns: [],
+          retryQueueEntries: [],
+          userAccounts: [],
+          pushDeviceTokens: [],
+          updatedAt: "2026-03-11T00:00:00.000Z",
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const store = new PersistentStateStore(stateFile);
+    const state = store.read();
+    assert.equal(state.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
+    assert.deepEqual(state.recipeCatalog, {});
   });
 });
 

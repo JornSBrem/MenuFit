@@ -16,7 +16,7 @@ import type {
   UserAccountRecord,
 } from "../../application/auth/types.ts";
 import type { CartSyncReport } from "../../application/cart/types.ts";
-import type { GoldReadModel } from "../../application/gold/types.ts";
+import type { GoldReadModel, RecipeView } from "../../application/gold/types.ts";
 import type {
   HouseholdInvitation,
   HouseholdRecord,
@@ -31,7 +31,7 @@ import type { SystemJobRecord, SystemOperationReport } from "../../application/s
 import type { RetryQueueEntryRecord, SchedulerRunRecord } from "../../jobs/types.ts";
 import type { PushDeviceToken } from "../../application/push/types.ts";
 
-export const CURRENT_STATE_SCHEMA_VERSION = 6;
+export const CURRENT_STATE_SCHEMA_VERSION = 7;
 
 export type PersistentStateStoreDriver = "file" | "sqlite" | "postgres";
 
@@ -44,6 +44,29 @@ export interface PersistentStateStoreOptions {
 
 export interface PersistentAppState {
   schemaVersion: number;
+  silverTransforms: Record<string, SilverTransformOutput>;
+  goldReadModels: Record<string, GoldReadModel>;
+  recipeCatalog: Record<string, RecipeView>;
+  cartReportsByIdempotencyKey: Record<string, CartSyncReport>;
+  systemJobs: SystemJobRecord[];
+  systemReports: SystemOperationReport[];
+  matchingQueue: MatchReviewQueueItem[];
+  matchingAuditTrail: MatchAuditEvent[];
+  matchingOverrides: MatchOverrideRecord[];
+  auditTrail: AuditEvent[];
+  households: HouseholdRecord[];
+  householdInvitations: HouseholdInvitation[];
+  authSessions: AppSessionRecord[];
+  providerSessions: ProviderSessionRecord[];
+  schedulerRuns: SchedulerRunRecord[];
+  retryQueueEntries: RetryQueueEntryRecord[];
+  userAccounts: UserAccountRecord[];
+  pushDeviceTokens: PushDeviceToken[];
+  updatedAt: string;
+}
+
+interface PersistentAppStateV6 {
+  schemaVersion: 6;
   silverTransforms: Record<string, SilverTransformOutput>;
   goldReadModels: Record<string, GoldReadModel>;
   cartReportsByIdempotencyKey: Record<string, CartSyncReport>;
@@ -158,6 +181,7 @@ type UnknownRecord = Record<string, unknown>;
 const MAP_COLLECTIONS = [
   "silverTransforms",
   "goldReadModels",
+  "recipeCatalog",
   "cartReportsByIdempotencyKey",
 ] as const;
 
@@ -207,6 +231,7 @@ const defaultState = (): PersistentAppState => ({
   schemaVersion: CURRENT_STATE_SCHEMA_VERSION,
   silverTransforms: {},
   goldReadModels: {},
+  recipeCatalog: {},
   cartReportsByIdempotencyKey: {},
   systemJobs: [],
   systemReports: [],
@@ -393,6 +418,41 @@ const migrateV5ToV6 = (raw: unknown): PersistentAppState => {
     schemaVersion: 6,
     silverTransforms: asObjectRecord<SilverTransformOutput>(source.silverTransforms),
     goldReadModels: asObjectRecord<GoldReadModel>(source.goldReadModels),
+    recipeCatalog: {},
+    cartReportsByIdempotencyKey: asObjectRecord<CartSyncReport>(source.cartReportsByIdempotencyKey),
+    systemJobs: asArray<SystemJobRecord>(source.systemJobs),
+    systemReports: asArray<SystemOperationReport>(source.systemReports),
+    matchingQueue: asArray<MatchReviewQueueItem>(source.matchingQueue),
+    matchingAuditTrail: asArray<MatchAuditEvent>(source.matchingAuditTrail),
+    matchingOverrides: asArray<MatchOverrideRecord>(source.matchingOverrides),
+    auditTrail: asArray<AuditEvent>(source.auditTrail),
+    households: asArray<HouseholdRecord>(source.households),
+    householdInvitations: asArray<HouseholdInvitation>(source.householdInvitations),
+    authSessions: asArray<AppSessionRecord>(source.authSessions),
+    providerSessions: asArray<ProviderSessionRecord>(source.providerSessions),
+    schedulerRuns: asArray<SchedulerRunRecord>(source.schedulerRuns),
+    retryQueueEntries: asArray<RetryQueueEntryRecord>(source.retryQueueEntries),
+    userAccounts: asArray<UserAccountRecord>(source.userAccounts),
+    pushDeviceTokens: asArray<PushDeviceToken>(source.pushDeviceTokens),
+    updatedAt:
+      typeof source.updatedAt === "string" && source.updatedAt.trim().length > 0
+        ? source.updatedAt
+        : new Date().toISOString(),
+  };
+};
+
+const migrateV6ToV7 = (raw: unknown): PersistentAppState => {
+  if (!isRecord(raw)) {
+    return defaultState();
+  }
+
+  const source = raw as UnknownRecord;
+
+  return {
+    schemaVersion: 7,
+    silverTransforms: asObjectRecord<SilverTransformOutput>(source.silverTransforms),
+    goldReadModels: asObjectRecord<GoldReadModel>(source.goldReadModels),
+    recipeCatalog: asObjectRecord<RecipeView>(source.recipeCatalog),
     cartReportsByIdempotencyKey: asObjectRecord<CartSyncReport>(source.cartReportsByIdempotencyKey),
     systemJobs: asArray<SystemJobRecord>(source.systemJobs),
     systemReports: asArray<SystemOperationReport>(source.systemReports),
@@ -418,25 +478,30 @@ const migrateV5ToV6 = (raw: unknown): PersistentAppState => {
 const migrateState = (raw: unknown): PersistentAppState => {
   const version = isRecord(raw) && typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
   if (version <= 0) {
-    return migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(migrateV0ToV1(raw))))));
+    return migrateV6ToV7(
+      migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(migrateV0ToV1(raw)))))),
+    );
   }
   if (version === 1) {
-    return migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(raw)))));
+    return migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(raw))))));
   }
   if (version === 2) {
-    return migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(raw))));
+    return migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(raw)))));
   }
   if (version === 3) {
-    return migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(raw)));
+    return migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(raw))));
   }
   if (version === 4) {
-    return migrateV5ToV6(migrateV4ToV5(raw));
+    return migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(raw)));
   }
   if (version === 5) {
-    return migrateV5ToV6(raw);
+    return migrateV6ToV7(migrateV5ToV6(raw));
   }
   if (version === 6) {
-    return migrateV5ToV6(raw);
+    return migrateV6ToV7(raw);
+  }
+  if (version === 7) {
+    return migrateV6ToV7(raw);
   }
   return defaultState();
 };

@@ -56,7 +56,7 @@ test("buildPgEndpointUrl resolves all supported endpoint URLs", () => {
   );
   assert.equal(
     buildPgEndpointUrl(config as never, "week", { week: 9 }),
-    "https://backend.projectgezond.nl/api/v3/week-menus/9",
+    "https://backend.projectgezond.nl/api/week-menu/9",
   );
   assert.equal(
     buildPgEndpointUrl(config as never, "day", { dayId: 42 }),
@@ -64,11 +64,11 @@ test("buildPgEndpointUrl resolves all supported endpoint URLs", () => {
   );
   assert.equal(
     buildPgEndpointUrl(config as never, "recipe", { recipeId: "kipsate-bowl" }),
-    "https://backend.projectgezond.nl/api/v3/recipes/kipsate-bowl",
+    "https://backend.projectgezond.nl/api/recipe/kipsate-bowl",
   );
   assert.equal(
     buildPgEndpointUrl(config as never, "shoppingList", { week: 9 }),
-    "https://backend.projectgezond.nl/api/v3/week-menus/9",
+    "https://backend.projectgezond.nl/api/week-menu/9",
   );
 });
 
@@ -81,7 +81,7 @@ test("renderPgEndpointTemplate throws for missing required variable", () => {
 
 test("renderPgEndpointTemplate throws when template leaves unresolved placeholders", () => {
   const config = createConfigStub({
-    PG_WEEK_URL_TEMPLATE: "https://backend.projectgezond.nl/api/v3/week-menus/{week}/{locale}",
+    PG_WEEK_URL_TEMPLATE: "https://backend.projectgezond.nl/api/week-menu/{week}/{locale}",
   });
 
   assert.throws(
@@ -116,7 +116,15 @@ test("assertPgResponseShape validates login/week/day/recipe/shoppingList", () =>
       },
     }),
   );
-  assert.throws(() => assertPgResponseShape("week", { data: {} }), /data.groceries array/);
+  assert.throws(() => assertPgResponseShape("week", { data: {} }), /data.groceries object or array/);
+
+  assert.doesNotThrow(() =>
+    assertPgResponseShape("week", {
+      data: {
+        groceries: { vegetables: "<p>tomaat</p>" },
+      },
+    }),
+  );
 
   assert.doesNotThrow(() => assertPgResponseShape("day", { data: { meals: [] } }));
   assert.throws(() => assertPgResponseShape("day", { meals: [] }), /expected data object/);

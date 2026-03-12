@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct WeekScreen: View {
@@ -303,6 +304,62 @@ struct RecipeDetailSheet: View {
     return []
   }
 
+  private var resolvedIntro: String? {
+    if let intro = meal.intro, !intro.isEmpty { return intro }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.intro
+    }
+    return nil
+  }
+
+  private var resolvedTips: [GoldRecipeTip] {
+    if let tips = meal.tips, !tips.isEmpty { return tips }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.tips ?? []
+    }
+    return []
+  }
+
+  private var resolvedNutrition: [GoldRecipeNutrition] {
+    if let nutrition = meal.nutrition, !nutrition.isEmpty { return nutrition }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.nutrition ?? []
+    }
+    return []
+  }
+
+  private var resolvedLinkedDayMenus: [GoldLinkedDayMenuView] {
+    if let linked = meal.linkedDayMenus, !linked.isEmpty { return linked }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.linkedDayMenus ?? []
+    }
+    return []
+  }
+
+  private var resolvedPrepTimes: [GoldRecipePreparationTime] {
+    if let prepTimes = meal.prepTimes, !prepTimes.isEmpty { return prepTimes }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.prepTimes ?? []
+    }
+    return []
+  }
+
+  private var resolvedIngredientsRelatesTo: String? {
+    if let value = meal.ingredientsRelatesTo, !value.isEmpty { return value }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.ingredientsRelatesTo
+    }
+    return nil
+  }
+
+  private var resolvedNutrientsRelatesTo: String? {
+    if let value = meal.nutrientsRelatesTo, !value.isEmpty { return value }
+    if let rid = meal.recipeId, let recipe = viewModel.findRecipe(byId: rid) {
+      return recipe.nutrientsRelatesTo
+    }
+    return nil
+  }
+
   var body: some View {
     NavigationView {
       ScrollView {
@@ -334,11 +391,69 @@ struct RecipeDetailSheet: View {
             }
 
           VStack(alignment: .leading, spacing: 20) {
+            if let intro = resolvedIntro, !intro.isEmpty {
+              VStack(alignment: .leading, spacing: 10) {
+                MFSectionHeader(title: "Over dit recept", icon: "text.alignleft")
+                Text(intro)
+                  .font(.subheadline)
+                  .fixedSize(horizontal: false, vertical: true)
+                  .mfCard()
+              }
+            }
+
+            if !resolvedNutrition.isEmpty {
+              VStack(alignment: .leading, spacing: 10) {
+                MFSectionHeader(title: "Voedingswaarden", icon: "chart.bar")
+
+                if let nutrientsRelatesTo = resolvedNutrientsRelatesTo, !nutrientsRelatesTo.isEmpty {
+                  Text(nutrientsRelatesTo.capitalized)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 10)], spacing: 10) {
+                  ForEach(resolvedNutrition) { nutrient in
+                    VStack(alignment: .leading, spacing: 4) {
+                      Text(nutrient.label)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                      Text(nutrientValue(nutrient))
+                        .font(.headline.weight(.semibold))
+                        .foregroundColor(.primary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .mfCard(padding: 12, cornerRadius: 12)
+                  }
+                }
+              }
+            }
+
+            if !resolvedPrepTimes.isEmpty {
+              VStack(alignment: .leading, spacing: 10) {
+                MFSectionHeader(title: "Bereidingstijd", icon: "timer")
+                HStack(spacing: 8) {
+                  ForEach(resolvedPrepTimes) { prep in
+                    Text(prep.label)
+                      .font(.subheadline.weight(.medium))
+                      .padding(.horizontal, 10)
+                      .padding(.vertical, 8)
+                      .background(Capsule().fill(Color(.secondarySystemBackground)))
+                  }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+              }
+            }
 
             // ── Ingrediënten ─────────────────────────────────
             if !resolvedIngredients.isEmpty {
               VStack(alignment: .leading, spacing: 10) {
                 MFSectionHeader(title: "Ingrediënten", icon: "list.bullet")
+
+                if let ingredientsRelatesTo = resolvedIngredientsRelatesTo, !ingredientsRelatesTo.isEmpty {
+                  Text(ingredientsRelatesTo.capitalized)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
 
                 VStack(alignment: .leading, spacing: 6) {
                   ForEach(resolvedIngredients, id: \.text) { ing in
@@ -390,7 +505,49 @@ struct RecipeDetailSheet: View {
                 MFSectionHeader(title: "Bereiding", icon: "flame")
                 Text("Niet beschikbaar")
                   .font(.subheadline).foregroundColor(.secondary).italic()
-                  .mfCard()
+                .mfCard()
+              }
+            }
+
+            if !resolvedTips.isEmpty {
+              VStack(alignment: .leading, spacing: 10) {
+                MFSectionHeader(title: "Tips", icon: "lightbulb")
+
+                VStack(alignment: .leading, spacing: 10) {
+                  ForEach(resolvedTips) { tip in
+                    HStack(alignment: .top, spacing: 10) {
+                      Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(MFColors.accent)
+                        .padding(.top, 1)
+                      Text(tip.text)
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                  }
+                }
+                .mfCard()
+              }
+            }
+
+            if !resolvedLinkedDayMenus.isEmpty {
+              VStack(alignment: .leading, spacing: 10) {
+                MFSectionHeader(title: "Dagmenu's bij dit recept", icon: "calendar")
+
+                VStack(alignment: .leading, spacing: 10) {
+                  ForEach(resolvedLinkedDayMenus) { dayMenu in
+                    VStack(alignment: .leading, spacing: 4) {
+                      Text(dayMenu.title)
+                        .font(.subheadline.weight(.semibold))
+                      if !dayMenu.kcalVariants.isEmpty {
+                        Text(dayMenu.kcalVariants.map { "\($0) kcal" }.joined(separator: " · "))
+                          .font(.caption)
+                          .foregroundColor(.secondary)
+                      }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .mfCard(padding: 12, cornerRadius: 12)
+                  }
+                }
               }
             }
           }
@@ -421,6 +578,21 @@ struct RecipeDetailSheet: View {
         }
       }
     }
+  }
+
+  private func nutrientValue(_ nutrient: GoldRecipeNutrition) -> String {
+    guard let amount = nutrient.amount else {
+      return nutrient.unit ?? "-"
+    }
+    let whole = amount.rounded(.towardZero)
+    let display =
+      abs(amount - whole) < 0.001
+      ? String(Int(whole))
+      : String(format: "%.1f", amount)
+    if let unit = nutrient.unit, !unit.isEmpty {
+      return "\(display) \(unit)"
+    }
+    return display
   }
 }
 

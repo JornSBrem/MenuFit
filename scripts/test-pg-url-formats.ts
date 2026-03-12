@@ -4,8 +4,9 @@
  * Of met env vars: PG_EMAIL=x PG_PASSWORD=y node --experimental-strip-types scripts/test-pg-url-formats.ts
  */
 
-const PG_BASE = "https://backend.projectgezond.nl";
-const LOGIN_URL = `${PG_BASE}/api/login`;
+const PG_BASE = process.env.PG_BASE ?? "https://backend.projectgezond.nl";
+const LOGIN_PATH = process.env.PG_LOGIN_PATH ?? "/api/login";
+const LOGIN_URL = `${PG_BASE}${LOGIN_PATH}`;
 
 const email = process.env.PG_EMAIL ?? "";
 const password = process.env.PG_PASSWORD ?? "";
@@ -37,28 +38,18 @@ const headers: Record<string, string> = {
 };
 
 // Week-varianten om te testen
-const WEEK_YYYYWW = 202609;      // week 9 van 2026 (huidige week)
-const WEEK_ONLY = 9;             // enkel weeknummer
-const YEAR = 2026;
+const WEEK_YYYYWW = Number(process.env.PG_WEEK_YYYYWW ?? "202609");
+const WEEK_ONLY = Number(process.env.PG_WEEK_ONLY ?? "9");
 
 const urlsToTest: Array<{ label: string; url: string }> = [
-  // Huidige formaat
-  { label: "YYYYWW pad",                     url: `${PG_BASE}/api/v3/week-menus/${WEEK_YYYYWW}` },
-  // Alleen weeknummer
-  { label: "Alleen weeknr pad",              url: `${PG_BASE}/api/v3/week-menus/${WEEK_ONLY}` },
-  // Met jaar/week split
-  { label: "jaar/week pad",                  url: `${PG_BASE}/api/v3/week-menus/${YEAR}/${WEEK_ONLY}` },
-  // Query param varianten
-  { label: "?week=YYYYWW query",             url: `${PG_BASE}/api/v3/week-menus?week=${WEEK_YYYYWW}` },
-  { label: "?week=weeknr query",             url: `${PG_BASE}/api/v3/week-menus?week=${WEEK_ONLY}` },
-  // Met kcal
-  { label: "YYYYWW + ?kcal=2000",            url: `${PG_BASE}/api/v3/week-menus/${WEEK_YYYYWW}?kcal=2000` },
-  { label: "YYYYWW + ?kcal=2000&persons=2",  url: `${PG_BASE}/api/v3/week-menus/${WEEK_YYYYWW}?kcal=2000&base_persons=2` },
-  // v2 API
-  { label: "v2 YYYYWW",                      url: `${PG_BASE}/api/v2/week-menus/${WEEK_YYYYWW}` },
-  { label: "v2 weeknr",                      url: `${PG_BASE}/api/v2/week-menus/${WEEK_ONLY}` },
-  // Basis endpoint zonder week
-  { label: "Basis week-menus lijst",         url: `${PG_BASE}/api/v3/week-menus` },
+  { label: "Nieuw week-menu weeknr",         url: `${PG_BASE}/api/week-menu/${WEEK_ONLY}` },
+  { label: "Nieuw week-menu YYYYWW",         url: `${PG_BASE}/api/week-menu/${WEEK_YYYYWW}` },
+  { label: "Nieuw week-menu lijst",          url: `${PG_BASE}/api/week-menu` },
+  { label: "Legacy v3 week weeknr",          url: `${PG_BASE}/api/v3/week-menus/${WEEK_ONLY}` },
+  { label: "Legacy v3 week YYYYWW",          url: `${PG_BASE}/api/v3/week-menus/${WEEK_YYYYWW}` },
+  { label: "Nieuw recipe slug",              url: `${PG_BASE}/api/recipe/butterchicken-met-rijst` },
+  { label: "Legacy recipe slug",             url: `${PG_BASE}/api/v3/recipes/butterchicken-met-rijst` },
+  { label: "Dashboard",                      url: `${PG_BASE}/api/dashboard` },
 ];
 
 console.log("\nURL-formaten testen...\n");

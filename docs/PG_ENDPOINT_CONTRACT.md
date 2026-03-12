@@ -17,7 +17,7 @@ Bron van waarheid:
 
 1. Week menu
 - Key: `PG_WEEK_URL_TEMPLATE`
-- Default: `https://backend.projectgezond.nl/api/v3/week-menus/{week}`
+- Default: `https://backend.projectgezond.nl/api/week-menu/{week}`
 - Parameters:
 - `{week}` (1-53)
 - Verwacht: weekmenu payload + groceries data.
@@ -27,18 +27,18 @@ Bron van waarheid:
 - Default: `https://backend.projectgezond.nl/api/v3/daymenus/{dayId}`
 - Parameters:
 - `{dayId}`
-- Verwacht: details per dag/maaltijd.
+- Verwacht: legacy endpoint; huidige bulk-import gebruikt dit pad niet meer omdat gekoppelde dagmenu's al in recipe payloads zitten.
 
 3. Recipe detail
 - Key: `PG_RECIPE_URL_TEMPLATE`
-- Default: `https://backend.projectgezond.nl/api/v3/recipes/{recipeId}`
+- Default: `https://backend.projectgezond.nl/api/recipe/{recipeId}`
 - Parameters:
 - `{recipeId}`
-- Verwacht: receptdetail inclusief ingredienten/stappen/media.
+- Verwacht: receptdetail inclusief ingredienten, stappen, tips, nutrition, linked day menus en media.
 
 4. Shopping list source
 - Key: `PG_SHOPPINGLIST_URL_TEMPLATE`
-- Default: `https://backend.projectgezond.nl/api/v3/week-menus/{week}`
+- Default: `https://backend.projectgezond.nl/api/week-menu/{week}`
 - Parameters:
 - `{week}` (1-53)
 - Opmerking: huidige bron levert groceries via weekmenu payload (`data.groceries`).
@@ -59,8 +59,7 @@ Bron van waarheid:
 
 ## 4. Contractregels
 
-1. V3 gebruikt dezelfde endpointfamilie als V1/V2.
+1. MenuFit gebruikt voor bulk-import de actuele `/api/login`, `/api/week-menu/{week}` en `/api/recipe/{slug}` endpoints.
 2. Endpoint wijzigingen moeten eerst hier worden bijgewerkt.
 3. Adapter contract tests moeten op deze lijst gebaseerd zijn.
 4. Breaking changes in response shape verhogen `schemaVersion` in bronze metadata.
-

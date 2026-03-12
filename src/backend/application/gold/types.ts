@@ -21,7 +21,45 @@ export interface GoldRecipeStep {
   text: string;
 }
 
-export interface GoldMealView {
+export interface GoldRecipeTip {
+  text: string;
+}
+
+export interface GoldRecipeNutrition {
+  code: string;
+  label: string;
+  amount?: number;
+  unit?: string;
+}
+
+export interface GoldRecipePreparationTime {
+  amount?: number;
+  unit?: string;
+  label: string;
+}
+
+export interface GoldLinkedDayMenuView {
+  dayMenuId: string;
+  slug: string;
+  title: string;
+  imageUrl?: string;
+  kcalVariants: number[];
+}
+
+export interface GoldRecipeDetailFields {
+  intro?: string;
+  ingredientsRelatesTo?: string;
+  nutrientsRelatesTo?: string;
+  prepTimes?: GoldRecipePreparationTime[];
+  tips?: GoldRecipeTip[];
+  nutrition?: GoldRecipeNutrition[];
+  linkedDayMenus?: GoldLinkedDayMenuView[];
+  tags?: string[];
+  importedAt?: string;
+  sourceUrl?: string;
+}
+
+export interface GoldMealView extends GoldRecipeDetailFields {
   mealId: string;
   dayLabel: string;
   mealLabel: string;
@@ -91,8 +129,19 @@ export interface WeekGroceriesResponse {
 export interface RecipeView {
   recipeId: string;
   name: string;
+  slug?: string;
   imageUrl?: string;
   kcal?: number;
   ingredients?: GoldMealIngredient[];
   steps?: GoldRecipeStep[];
+  intro?: string;
+  ingredientsRelatesTo?: string;
+  nutrientsRelatesTo?: string;
+  prepTimes?: GoldRecipePreparationTime[];
+  tips?: GoldRecipeTip[];
+  nutrition?: GoldRecipeNutrition[];
+  linkedDayMenus?: GoldLinkedDayMenuView[];
+  tags?: string[];
+  importedAt?: string;
+  sourceUrl?: string;
 }

@@ -24,62 +24,9 @@ import { UserAccountService, UserAccountServiceError } from "./application/auth/
 import { HouseholdService, HouseholdServiceError } from "./application/household/household-service.ts";
 import { PushNotificationService, PushNotificationServiceError } from "./application/push/push-notification-service.ts";
 import { GoldWeekReadService, projectSilverToGold } from "./application/gold/index.ts";
-import type { GoldMealIngredient, GoldReadModel, GoldRecipeStep } from "./application/gold/index.ts";
+import type { GoldReadModel } from "./application/gold/index.ts";
 import { JwksClient } from "./integrations/oidc/jwks-client.ts";
 import { JwtVerifier, JwtVerificationError } from "./integrations/oidc/jwt-verifier.ts";
-
-/** Interne type alias voor stap-verrijking */
-type GoldRecipeStepData = GoldRecipeStep;
-
-/**
- * Extraheer bereidingsstappen uit een PG recipe API response.
- * Probeert meerdere veldnamen / HTML-formaten.
- */
-const extractRecipeSteps = (raw: unknown): GoldRecipeStepData[] => {
-  if (typeof raw !== "object" || raw === null) return [];
-  const data = (raw as Record<string, unknown>).data ?? raw;
-  if (typeof data !== "object" || data === null) return [];
-  const d = data as Record<string, unknown>;
-
-  // Strip HTML en lege regels
-  const stripHtml = (html: string): string =>
-    html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
-
-  // Hulp: zet HTML-blokken (<p>, <li>) om naar tekst-array
-  const htmlToLines = (html: string): string[] =>
-    html.split(/<\/(?:p|li)>/i)
-      .map((b) => stripHtml(b))
-      .filter((t) => t.length > 4);
-
-  const toSteps = (lines: string[]): GoldRecipeStepData[] =>
-    lines.map((text, i) => ({ step: i + 1, text }));
-
-  // 1. instructions als array van objecten
-  if (Array.isArray(d.instructions)) {
-    const lines = d.instructions
-      .map((s: unknown) => {
-        if (typeof s === "string") return stripHtml(s);
-        if (typeof s === "object" && s !== null) {
-          const obj = s as Record<string, unknown>;
-          return stripHtml(String(obj.description ?? obj.text ?? obj.step_text ?? ""));
-        }
-        return "";
-      })
-      .filter((t) => t.length > 4);
-    if (lines.length > 0) return toSteps(lines);
-  }
-
-  // 2. preparation / content / description / method als HTML-string
-  for (const field of ["preparation", "preparation_text", "content", "description", "method", "directions"]) {
-    const val = d[field];
-    if (typeof val === "string" && val.length > 20) {
-      const lines = htmlToLines(val);
-      if (lines.length > 0) return toSteps(lines);
-    }
-  }
-
-  return [];
-};
 import { EetmeterClient, EetmeterClientError, toEetmeterDatum } from "./integrations/eetmeter/eetmeter-client.ts";
 import { reprocessSilverTransforms } from "./application/silver/index.ts";
 import type { SilverTransformOutput } from "./application/silver/index.ts";
@@ -89,6 +36,7 @@ import { mapPgWeekDataToSilverPayload } from "./application/ingest/pg-payload-ma
 import { fetchPgJson, PgRateLimitError } from "./integrations/pg/pg-fetch.ts";
 import { buildPgEndpointUrl } from "./integrations/pg/endpoint-contract.ts";
 import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
+import { normalizePgRecipePayload } from "./integrations/pg/pg-recipe-normalizer.ts";
 import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
 import { createPersistentStateStore } from "./application/config/create-persistent-state-store.ts";
@@ -244,9 +192,72 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 
 /** Milliseconden wachten tussen opeenvolgende PG API requests (rate limit) */
 const PG_FETCH_DELAY_MS = 4000;
+const PG_RECIPE_FETCH_DELAY_MS = 250;
 
 /** Vaste kcal-varianten die de PG API altijd teruggeeft in één weekmenu-response */
 const PG_FIXED_KCALS = [1250, 1500, 1800, 2100];
+
+function buildRecipeImageMap(models: GoldReadModel[]): Map<string, string> {
+  const imageMap = new Map<string, string>();
+  for (const model of models) {
+    for (const meal of model.meals) {
+      if (meal.recipeId && meal.imageUrl && !imageMap.has(meal.recipeId)) {
+        imageMap.set(meal.recipeId, meal.imageUrl);
+      }
+    }
+  }
+  return imageMap;
+}
+
+async function importNormalizedRecipesForModels(models: GoldReadModel[]): Promise<{
+  totalRecipes: number;
+  fetched: number;
+  imported: number;
+  errors: string[];
+}> {
+  const imageMap = buildRecipeImageMap(models);
+  const recipeIds = Array.from(
+    new Set(
+      models.flatMap((model) => model.meals.map((meal) => meal.recipeId).filter((value): value is string => Boolean(value))),
+    ),
+  ).sort((a, b) => a.localeCompare(b, "nl"));
+
+  const recipes = [];
+  const errors: string[] = [];
+
+  for (let index = 0; index < recipeIds.length; index += 1) {
+    const recipeId = recipeIds[index];
+    try {
+      const requestUrl = buildPgEndpointUrl(config, "recipe", { recipeId });
+      const raw = await fetchPgJson({ requestUrl, entityType: "pg.recipe", variables: { recipeId } }, config);
+      const recipe = normalizePgRecipePayload(raw, {
+        fallbackImageUrl: imageMap.get(recipeId),
+        importedAt: new Date().toISOString(),
+        sourceUrl: requestUrl,
+      });
+      if (recipe.recipeId.trim().length > 0) {
+        recipes.push(recipe);
+      } else {
+        errors.push(`${recipeId}: recipe payload had no stable id/slug`);
+      }
+    } catch (error) {
+      errors.push(`${recipeId}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    if (index < recipeIds.length - 1) {
+      await sleep(PG_RECIPE_FETCH_DELAY_MS);
+    }
+  }
+
+  goldReadService.upsertRecipes(recipes);
+
+  return {
+    totalRecipes: recipeIds.length,
+    fetched: recipeIds.length - errors.length,
+    imported: recipes.length,
+    errors,
+  };
+}
 
 async function runRealIngest(
   weeks: number[],
@@ -415,6 +426,11 @@ async function runRealIngest(
     // Batch-update voor gold (in-memory + één persist-write)
     goldReadService.batchLoad(allGoldModels);
     goldReadService.batchPersist();
+
+    const recipeImport = await importNormalizedRecipesForModels(allGoldModels);
+    if (recipeImport.errors.length > 0) {
+      job.errors.push(...recipeImport.errors.slice(0, 50));
+    }
 
     job.tasksRan = tasks.length;
     job.goldProjected = goldProjected;
@@ -1399,46 +1415,19 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
-    // ---- Admin ingest recipe steps (haalt bereidingsstappen op via PG recipe API) ----
+    // ---- Admin ingest recipes (haalt volledige receptdetails op via actuele PG recipe API) ----
     if (path === "/api/v3/admin/ingest-recipe-steps" && method === "POST") {
       try {
-        // Verzamel alle unieke recipe-slugs uit de gold data
         const allModels = goldReadService.listAllModels();
-        const slugSet = new Set<string>();
-        for (const model of allModels) {
-          for (const meal of model.meals) {
-            if (meal.recipeId && meal.imageUrl) slugSet.add(meal.recipeId);
-          }
-        }
-        const slugs = Array.from(slugSet);
-
-        // Haal elke recipe op en extraheer stappen
-        const stepsMap = new Map<string, GoldRecipeStepData[]>();
-        const errors: string[] = [];
-        let fetched = 0;
-
-        for (const slug of slugs) {
-          try {
-            const recipeUrl = buildPgEndpointUrl(config, "recipe", { recipeId: slug });
-            const raw = await fetchPgJson({ requestUrl: recipeUrl, entityType: "pg.recipe", variables: { recipeId: slug } }, config);
-            const steps = extractRecipeSteps(raw);
-            if (steps.length > 0) stepsMap.set(slug, steps);
-            fetched++;
-          } catch (err) {
-            errors.push(`${slug}: ${err instanceof Error ? err.message : String(err)}`);
-          }
-        }
-
-        // Verrijk alle gold modellen met de stappen
-        goldReadService.enrichWithSteps(stepsMap);
+        const result = await importNormalizedRecipesForModels(allModels);
 
         json(res, 200, {
           ok: true,
           data: {
-            totalRecipes: slugs.length,
-            fetched,
-            withSteps: stepsMap.size,
-            errors: errors.slice(0, 20),
+            totalRecipes: result.totalRecipes,
+            fetched: result.fetched,
+            imported: result.imported,
+            errors: result.errors.slice(0, 20),
           },
         });
       } catch (err) {
@@ -1447,130 +1436,19 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
-    // ---- Admin ingest recipe data from public website (scrapes www.projectgezond.nl) ----
+    // ---- Admin ingest recipe data from PG API (backwards-compatible route name) ----
     if (path === "/api/v3/admin/ingest-recipe-web" && method === "POST") {
       try {
-        // Verzamel alle unieke recipe-slugs uit de gold data
         const allModels = goldReadService.listAllModels();
-        const slugSet = new Set<string>();
-        for (const model of allModels) {
-          for (const meal of model.meals) {
-            if (meal.recipeId && meal.imageUrl) slugSet.add(meal.recipeId);
-          }
-        }
-        const slugs = Array.from(slugSet);
-
-        const stripHtml = (html: string): string =>
-          html
-            .replace(/<[^>]+>/g, " ")
-            .replace(/&amp;/g, "&")
-            .replace(/&lt;/g, "<")
-            .replace(/&gt;/g, ">")
-            .replace(/&nbsp;/g, " ")
-            .replace(/&apos;/g, "'")
-            .replace(/&quot;/g, '"')
-            .replace(/&euml;/g, "ë")
-            .replace(/&eacute;/g, "é")
-            .replace(/&egrave;/g, "è")
-            .replace(/&agrave;/g, "à")
-            .replace(/&auml;/g, "ä")
-            .replace(/&ouml;/g, "ö")
-            .replace(/&uuml;/g, "ü")
-            .replace(/\s+/g, " ")
-            .trim();
-
-        /**
-         * Parseer ingrediënten uit de recipe-pagina HTML.
-         * Structuur: <div class="ingredient" itemprop="recipeIngredient">
-         *              <dt>300 gr</dt><dd>kruimige aardappels</dd>
-         *            </div>
-         */
-        const parseIngredients = (html: string): GoldMealIngredient[] => {
-          const ingredients: GoldMealIngredient[] = [];
-          const blockPattern = /<div[^>]*class="[^"]*ingredient[^"]*"[^>]*itemprop="recipeIngredient"[^>]*>([\s\S]*?)<\/div>/gi;
-          let blockMatch: RegExpExecArray | null;
-          while ((blockMatch = blockPattern.exec(html)) !== null) {
-            const block = blockMatch[1] ?? "";
-            const dtMatch = /<dt[^>]*>([\s\S]*?)<\/dt>/i.exec(block);
-            const ddMatch = /<dd[^>]*>([\s\S]*?)<\/dd>/i.exec(block);
-            const amount = dtMatch ? stripHtml(dtMatch[1]) : "";
-            const name = ddMatch ? stripHtml(ddMatch[1]) : "";
-            const text = [amount, name].filter(Boolean).join(" ").trim();
-            if (text) ingredients.push({ text });
-          }
-          return ingredients;
-        };
-
-        /**
-         * Parseer bereidingsstappen uit de recipe-pagina HTML.
-         * Structuur: <ol class="wp-block-list"><li>Stap 1</li><li>Stap 2</li></ol>
-         * binnen een block dat "Instructions" of "bereiding" bevat.
-         */
-        const parseSteps = (html: string): GoldRecipeStep[] => {
-          const steps: GoldRecipeStep[] = [];
-          // Zoek de instructie-sectie
-          const instrPattern = /Instructions[\s\S]{0,200}?<ol[^>]*class="[^"]*wp-block-list[^"]*"[^>]*>([\s\S]*?)<\/ol>/i;
-          const instrMatch = instrPattern.exec(html);
-          if (!instrMatch?.[1]) return steps;
-          const listHtml = instrMatch[1];
-          const liPattern = /<li[^>]*>([\s\S]*?)<\/li>/gi;
-          let liMatch: RegExpExecArray | null;
-          let stepNum = 1;
-          while ((liMatch = liPattern.exec(listHtml)) !== null) {
-            const text = stripHtml(liMatch[1]).trim();
-            if (text) steps.push({ step: stepNum++, text });
-          }
-          return steps;
-        };
-
-        const dataMap = new Map<string, { ingredients?: GoldMealIngredient[]; steps?: GoldRecipeStep[] }>();
-        const errors: string[] = [];
-        let fetched = 0;
-        let withData = 0;
-
-        for (const slug of slugs) {
-          try {
-            const url = `https://www.projectgezond.nl/recepten/${encodeURIComponent(slug)}`;
-            const response = await fetch(url, {
-              headers: {
-                "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)",
-                Accept: "text/html",
-              },
-              redirect: "follow",
-            });
-
-            if (!response.ok) {
-              errors.push(`${slug}: HTTP ${response.status}`);
-              continue;
-            }
-
-            const html = await response.text();
-            const ingredients = parseIngredients(html);
-            const steps = parseSteps(html);
-
-            if (ingredients.length > 0 || steps.length > 0) {
-              dataMap.set(slug, { ingredients, steps });
-              withData++;
-            }
-            fetched++;
-
-            // Kleine pauze om de server niet te overbelasten
-            await new Promise<void>((resolve) => setTimeout(resolve, 150));
-          } catch (err) {
-            errors.push(`${slug}: ${err instanceof Error ? err.message : String(err)}`);
-          }
-        }
-
-        // Verrijk alle gold modellen
-        goldReadService.enrichWithRecipeData(dataMap);
+        const result = await importNormalizedRecipesForModels(allModels);
 
         json(res, 200, {
           ok: true,
           data: {
-            totalRecipes: slugs.length,
-            fetched,
-            withData,
-            errors: errors.slice(0, 20),
+            totalRecipes: result.totalRecipes,
+            fetched: result.fetched,
+            imported: result.imported,
+            errors: result.errors.slice(0, 20),
           },
         });
       } catch (err) {

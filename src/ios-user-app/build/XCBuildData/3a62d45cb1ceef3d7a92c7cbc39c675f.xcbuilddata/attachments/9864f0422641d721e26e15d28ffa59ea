@@ -1,0 +1,269 @@
+{
+  "" : {
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp-primary.dia",
+    "emit-module-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp-primary-emit-module.dia",
+    "pch" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp-primary.swiftdeps"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/AppDelegate.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppDelegate.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppDelegate.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppDelegate.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppDelegate.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppDelegate.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppDelegate.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppDelegate.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppDelegate~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/AppEnvironment.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppEnvironment.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppEnvironment.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppEnvironment.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppEnvironment.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppEnvironment.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppEnvironment.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppEnvironment.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AppEnvironment~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/AuthSessionSetupView.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionSetupView.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionSetupView.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionSetupView.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionSetupView.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionSetupView.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionSetupView.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionSetupView.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionSetupView~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/AuthSessionStore.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionStore.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionStore.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionStore.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionStore.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionStore.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionStore.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionStore.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/AuthSessionStore~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/BackendAPI.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/BackendAPI.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/BackendAPI.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/BackendAPI.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/BackendAPI.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/BackendAPI.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/BackendAPI.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/BackendAPI.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/BackendAPI~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/ConfigScreen.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ConfigScreen.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ConfigScreen.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ConfigScreen.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ConfigScreen.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ConfigScreen.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ConfigScreen.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ConfigScreen.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ConfigScreen~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/EetmeterDagSheet.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/EetmeterDagSheet.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/EetmeterDagSheet.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/EetmeterDagSheet.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/EetmeterDagSheet.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/EetmeterDagSheet.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/EetmeterDagSheet.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/EetmeterDagSheet.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/EetmeterDagSheet~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/Localization.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/Localization.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/Localization.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/Localization.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/Localization.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/Localization.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/Localization.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/Localization.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/Localization~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/MatchScreen.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MatchScreen.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MatchScreen.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MatchScreen.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MatchScreen.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MatchScreen.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MatchScreen.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MatchScreen.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MatchScreen~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/MealNotificationManager.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealNotificationManager.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealNotificationManager.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealNotificationManager.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealNotificationManager.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealNotificationManager.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealNotificationManager.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealNotificationManager.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealNotificationManager~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/MealSchedule.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealSchedule.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealSchedule.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealSchedule.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealSchedule.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealSchedule.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealSchedule.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealSchedule.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MealSchedule~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/MenuFitTheme.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitTheme.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitTheme.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitTheme.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitTheme.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitTheme.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitTheme.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitTheme.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitTheme~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/MenuFitUserApp.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/MenuFitUserApp~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/OfflineCacheStore.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OfflineCacheStore.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OfflineCacheStore.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OfflineCacheStore.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OfflineCacheStore.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OfflineCacheStore.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OfflineCacheStore.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OfflineCacheStore.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OfflineCacheStore~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/OrderScreen.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OrderScreen.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OrderScreen.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OrderScreen.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OrderScreen.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OrderScreen.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OrderScreen.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OrderScreen.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/OrderScreen~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/ProfileEditSheet.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ProfileEditSheet.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ProfileEditSheet.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ProfileEditSheet.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ProfileEditSheet.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ProfileEditSheet.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ProfileEditSheet.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ProfileEditSheet.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/ProfileEditSheet~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/PushRegistrationManager.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/PushRegistrationManager.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/PushRegistrationManager.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/PushRegistrationManager.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/PushRegistrationManager.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/PushRegistrationManager.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/PushRegistrationManager.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/PushRegistrationManager.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/PushRegistrationManager~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/RecipesScreen.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RecipesScreen.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RecipesScreen.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RecipesScreen.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RecipesScreen.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RecipesScreen.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RecipesScreen.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RecipesScreen.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RecipesScreen~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/RootTabView.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RootTabView.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RootTabView.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RootTabView.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RootTabView.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RootTabView.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RootTabView.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RootTabView.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/RootTabView~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/SharedWidgetData.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SharedWidgetData.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SharedWidgetData.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SharedWidgetData.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SharedWidgetData.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SharedWidgetData.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SharedWidgetData.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SharedWidgetData.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SharedWidgetData~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/SupabaseAuthClient.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SupabaseAuthClient.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SupabaseAuthClient.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SupabaseAuthClient.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SupabaseAuthClient.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SupabaseAuthClient.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SupabaseAuthClient.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SupabaseAuthClient.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/SupabaseAuthClient~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/UserFlowModels.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowModels.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowModels.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowModels.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowModels.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowModels.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowModels.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowModels.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowModels~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/UserFlowViewModel.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowViewModel.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowViewModel.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowViewModel.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowViewModel.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowViewModel.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowViewModel.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowViewModel.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/UserFlowViewModel~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/WeekNavBar.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekNavBar.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekNavBar.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekNavBar.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekNavBar.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekNavBar.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekNavBar.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekNavBar.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekNavBar~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/App/WeekScreen.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekScreen.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekScreen.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekScreen.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekScreen.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekScreen.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekScreen.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekScreen.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/WeekScreen~partial.swiftmodule"
+  },
+  "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/jornbrem/Library/Mobile Documents/com~apple~CloudDocs/Repos/MenuFit/src/ios-user-app/build/MenuFitUserApp.build/Debug-iphonesimulator/MenuFitUserApp.build/Objects-normal/x86_64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

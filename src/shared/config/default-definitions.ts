@@ -131,7 +131,7 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     key: "PG_WEEK_URL_TEMPLATE",
     description: "Project Gezond week endpoint template.",
     kind: "url",
-    defaultValue: "https://backend.projectgezond.nl/api/v3/week-menus/{week}",
+    defaultValue: "https://backend.projectgezond.nl/api/week-menu/{week}",
     meta: { hotReload: true, sensitive: false, restartRequired: false },
   },
   {
@@ -145,14 +145,14 @@ export const DEFAULT_CONFIG_DEFINITIONS = [
     key: "PG_RECIPE_URL_TEMPLATE",
     description: "Project Gezond recipe endpoint template.",
     kind: "url",
-    defaultValue: "https://backend.projectgezond.nl/api/v3/recipes/{recipeId}",
+    defaultValue: "https://backend.projectgezond.nl/api/recipe/{recipeId}",
     meta: { hotReload: true, sensitive: false, restartRequired: false },
   },
   {
     key: "PG_SHOPPINGLIST_URL_TEMPLATE",
     description: "Project Gezond shopping list endpoint template.",
     kind: "url",
-    defaultValue: "https://backend.projectgezond.nl/api/v3/week-menus/{week}",
+    defaultValue: "https://backend.projectgezond.nl/api/week-menu/{week}",
     meta: { hotReload: true, sensitive: false, restartRequired: false },
   },
   {

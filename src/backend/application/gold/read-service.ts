@@ -1,5 +1,14 @@
 import type { PersistentStateStore } from "../../integrations/storage/persistent-state-store.ts";
-import type { GoldReadModel, GoldRecipeStep, GoldWeekPlanView, RecipeView, WeekGroceriesResponse, WeekSummaryResponse } from "./types";
+import type {
+  GoldMealIngredient,
+  GoldMealView,
+  GoldReadModel,
+  GoldRecipeStep,
+  GoldWeekPlanView,
+  RecipeView,
+  WeekGroceriesResponse,
+  WeekSummaryResponse,
+} from "./types";
 
 const keyFromWeek = (year: number, week: number, kcal: number, basePersons: number): string =>
   `${year}:${week}:${kcal}:${basePersons}`;
@@ -10,14 +19,19 @@ const roundScaledQuantity = (value: number): number =>
 export class GoldWeekReadService {
   private readonly store = new Map<string, GoldReadModel>();
 
+  private readonly recipeCatalog = new Map<string, RecipeView>();
+
   private readonly stateStore?: PersistentStateStore;
 
   constructor(options?: { stateStore?: PersistentStateStore }) {
     this.stateStore = options?.stateStore;
     if (this.stateStore) {
-      const persisted = this.stateStore.read().goldReadModels;
-      for (const [key, model] of Object.entries(persisted)) {
+      const persistedState = this.stateStore.read();
+      for (const [key, model] of Object.entries(persistedState.goldReadModels)) {
         this.store.set(key, model);
+      }
+      for (const [recipeId, recipe] of Object.entries(persistedState.recipeCatalog)) {
+        this.recipeCatalog.set(recipeId, recipe);
       }
     }
   }
@@ -90,14 +104,22 @@ export class GoldWeekReadService {
 
   /** Geeft alle unieke recepten terug vanuit de gold data (alleen met recept + afbeelding), gesorteerd op naam. */
   listRecipes(): RecipeView[] {
-    const seen = new Map<string, RecipeView>();
+    const seen = new Map<string, RecipeView>(this.recipeCatalog.entries());
     for (const model of this.store.values()) {
       for (const meal of model.meals) {
-        if (!meal.recipeId || !meal.imageUrl) continue;
+        if (!meal.recipeId) continue;
+        const existing = seen.get(meal.recipeId);
+        if (existing) {
+          if (!existing.imageUrl && meal.imageUrl) {
+            seen.set(meal.recipeId, { ...existing, imageUrl: meal.imageUrl });
+          }
+          continue;
+        }
         if (!seen.has(meal.recipeId)) {
           seen.set(meal.recipeId, {
             recipeId: meal.recipeId,
             name: meal.recipeName ?? meal.mealLabel,
+            slug: meal.recipeId,
             imageUrl: meal.imageUrl,
             kcal: meal.kcal,
             ingredients: meal.ingredients,
@@ -107,6 +129,49 @@ export class GoldWeekReadService {
       }
     }
     return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name, "nl"));
+  }
+
+  getRecipe(recipeId: string): RecipeView | null {
+    if (!recipeId.trim()) {
+      return null;
+    }
+    const direct = this.recipeCatalog.get(recipeId);
+    if (direct) {
+      return structuredClone(direct);
+    }
+
+    for (const model of this.store.values()) {
+      for (const meal of model.meals) {
+        if (meal.recipeId === recipeId) {
+          return {
+            recipeId,
+            slug: recipeId,
+            name: meal.recipeName ?? meal.mealLabel,
+            imageUrl: meal.imageUrl,
+            kcal: meal.kcal,
+            ingredients: meal.ingredients,
+            steps: meal.steps,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  upsertRecipes(recipes: RecipeView[]): void {
+    if (recipes.length === 0) return;
+
+    for (const recipe of recipes) {
+      if (!recipe.recipeId.trim()) continue;
+      const existing = this.recipeCatalog.get(recipe.recipeId);
+      this.recipeCatalog.set(recipe.recipeId, {
+        ...existing,
+        ...structuredClone(recipe),
+      });
+    }
+
+    this.rehydrateMealsFromRecipes();
+    this.persistRecipes();
   }
 
   /** Geeft alle gold-modellen terug (voor bulk-operaties zoals step-verrijking). */
@@ -189,6 +254,62 @@ export class GoldWeekReadService {
     }
 
     return this.deriveKcalProfile(baseline, kcal);
+  }
+
+  private rehydrateMealsFromRecipes(): void {
+    for (const [key, model] of this.store.entries()) {
+      const meals = model.meals.map((meal) => this.applyRecipeToMeal(meal));
+      this.store.set(key, { ...model, meals });
+    }
+  }
+
+  private applyRecipeToMeal(meal: GoldMealView): GoldMealView {
+    if (!meal.recipeId) {
+      return meal;
+    }
+
+    const recipe = this.recipeCatalog.get(meal.recipeId);
+    if (!recipe) {
+      return meal;
+    }
+
+    return {
+      ...meal,
+      recipeName: meal.recipeName ?? recipe.name,
+      imageUrl: meal.imageUrl ?? recipe.imageUrl,
+      kcal: meal.kcal ?? recipe.kcal,
+      ingredients:
+        meal.ingredients && meal.ingredients.length > 0
+          ? meal.ingredients
+          : recipe.ingredients,
+      steps:
+        meal.steps && meal.steps.length > 0
+          ? meal.steps
+          : recipe.steps,
+      intro: recipe.intro,
+      ingredientsRelatesTo: recipe.ingredientsRelatesTo,
+      nutrientsRelatesTo: recipe.nutrientsRelatesTo,
+      prepTimes: recipe.prepTimes,
+      tips: recipe.tips,
+      nutrition: recipe.nutrition,
+      linkedDayMenus: recipe.linkedDayMenus,
+      tags: recipe.tags,
+      importedAt: recipe.importedAt,
+      sourceUrl: recipe.sourceUrl,
+    };
+  }
+
+  private persistRecipes(): void {
+    if (!this.stateStore) return;
+    const recipeEntries = Array.from(this.recipeCatalog.entries());
+    this.stateStore.update((draft) => {
+      for (const [recipeId, recipe] of recipeEntries) {
+        draft.recipeCatalog[recipeId] = structuredClone(recipe);
+      }
+      for (const [key, model] of this.store.entries()) {
+        draft.goldReadModels[key] = structuredClone(model);
+      }
+    });
   }
 
   private findClosestBaseline(

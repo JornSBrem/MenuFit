@@ -723,6 +723,11 @@ export class AdminDashboardController {
       "matching.autoAcceptMin": "number",
       "llm.model": "string",
       "llm.provider": "string",
+      "PG_LOGIN_URL": "string",
+      "PG_WEEK_URL_TEMPLATE": "string",
+      "PG_DAY_URL_TEMPLATE": "string",
+      "PG_RECIPE_URL_TEMPLATE": "string",
+      "PG_SHOPPINGLIST_URL_TEMPLATE": "string",
     };
 
     const expectedType = rules[body.key];

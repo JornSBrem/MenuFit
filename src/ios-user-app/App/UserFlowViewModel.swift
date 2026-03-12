@@ -12,6 +12,41 @@ enum OrderSyncOutcome {
   case failed
 }
 
+enum RecipeDisplayMode: String {
+  case list
+  case grid
+}
+
+enum RecipeQuickFilter: String, CaseIterable, Identifiable {
+  case all
+  case ontbijt
+  case lunch
+  case diner
+  case tussendoor
+
+  var id: String { rawValue }
+
+  var title: String {
+    switch self {
+    case .all: return "Alles"
+    case .ontbijt: return "Ontbijt"
+    case .lunch: return "Lunch"
+    case .diner: return "Diner"
+    case .tussendoor: return "Tussendoor"
+    }
+  }
+
+  fileprivate var matches: [String] {
+    switch self {
+    case .all: return []
+    case .ontbijt: return ["ontbijt"]
+    case .lunch: return ["lunch"]
+    case .diner: return ["diner"]
+    case .tussendoor: return ["tussendoor", "snack"]
+    }
+  }
+}
+
 @MainActor
 final class UserFlowViewModel: ObservableObject {
   let fixedKcals: [Int] = [1250, 1500, 1800, 2100]
@@ -26,6 +61,9 @@ final class UserFlowViewModel: ObservableObject {
   @Published var recipes: [UserRecipeRecord] = []
   @Published var isRecipesLoading = false
   @Published var recipesSearchText = ""
+  @Published var selectedRecipeQuickFilter: RecipeQuickFilter = .all
+  @Published var selectedRecipeTags = Set<String>()
+  @Published var recipeDisplayMode: RecipeDisplayMode = .list
   @Published var lastSyncReport: CartSyncReport?
   @Published var authSession: UserAuthSession?
   @Published var matchQueue: [MatchReviewQueueItem] = []
@@ -355,8 +393,24 @@ final class UserFlowViewModel: ObservableObject {
   }
 
   var filteredRecipes: [UserRecipeRecord] {
-    if recipesSearchText.isEmpty { return recipes }
-    return recipes.filter { $0.name.localizedCaseInsensitiveContains(recipesSearchText) }
+    let query = recipesSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    return recipes.filter { recipe in
+      matchesSearch(recipe, query: query)
+        && matchesQuickFilter(recipe)
+        && matchesSelectedTags(recipe)
+    }
+    .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+  }
+
+  var availableRecipeTags: [String] {
+    Array(
+      Set(
+        recipes.flatMap { $0.tags ?? [] }
+          .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+      )
+    )
+    .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
   }
 
   func loadRecipes() async {
@@ -368,6 +422,55 @@ final class UserFlowViewModel: ObservableObject {
     } catch {
       lastError = "Recepten laden mislukt: \(error.localizedDescription)"
     }
+  }
+
+  func toggleRecipeTag(_ tag: String) {
+    if selectedRecipeTags.contains(tag) {
+      selectedRecipeTags.remove(tag)
+    } else {
+      selectedRecipeTags.insert(tag)
+    }
+  }
+
+  func clearRecipeFilters() {
+    selectedRecipeQuickFilter = .all
+    selectedRecipeTags.removeAll()
+    recipesSearchText = ""
+  }
+
+  private func matchesSearch(_ recipe: UserRecipeRecord, query: String) -> Bool {
+    if query.isEmpty {
+      return true
+    }
+
+    let haystacks = [
+      recipe.name,
+      recipe.intro ?? "",
+      recipe.tags?.joined(separator: " ") ?? "",
+      recipe.ingredients?.map(\.text).joined(separator: " ") ?? ""
+    ]
+
+    return haystacks.contains { $0.localizedCaseInsensitiveContains(query) }
+  }
+
+  private func matchesQuickFilter(_ recipe: UserRecipeRecord) -> Bool {
+    if selectedRecipeQuickFilter == .all {
+      return true
+    }
+
+    let tags = recipe.tags?.map { $0.lowercased() } ?? []
+    return selectedRecipeQuickFilter.matches.contains { needle in
+      tags.contains { $0.localizedCaseInsensitiveContains(needle) }
+    }
+  }
+
+  private func matchesSelectedTags(_ recipe: UserRecipeRecord) -> Bool {
+    if selectedRecipeTags.isEmpty {
+      return true
+    }
+
+    let tags = Set(recipe.tags ?? [])
+    return !selectedRecipeTags.isDisjoint(with: tags)
   }
 
   func toggleGroceryChecked(_ groceryName: String) {
