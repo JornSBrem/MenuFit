@@ -101,6 +101,8 @@ export interface PgDiscoverResult {
   errors: Array<{ week: number; error: string }>;
   defaultKcals: number[];
   defaultBasePersons: number[];
+  hasAuth?: boolean;
+  firstProbe?: { week: number; status: number; bodySnippet: string };
 }
 
 export interface ReprocessFromBronzeResult {

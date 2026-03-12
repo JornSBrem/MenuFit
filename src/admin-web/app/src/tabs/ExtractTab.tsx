@@ -371,6 +371,21 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
                 ))}
               </div>
             )}
+            {/* Diagnostiek bij lege resultaten */}
+            {data.pgDiscoverResult.availableWeeks.length === 0 && (
+              <div style={{ marginTop: 8, padding: 8, background: "#f8f0e0", borderRadius: 6, fontSize: 12, color: "#6e6e73" }}>
+                <div><strong>Diagnostiek:</strong></div>
+                <div>Auth headers aanwezig: {data.pgDiscoverResult.hasAuth ? "Ja" : "Nee — log eerst in bij PG"}</div>
+                {data.pgDiscoverResult.firstProbe && (
+                  <div style={{ marginTop: 4 }}>
+                    <div>Eerste probe (week {data.pgDiscoverResult.firstProbe.week}): HTTP {data.pgDiscoverResult.firstProbe.status}</div>
+                    <pre style={{ margin: "4px 0 0", padding: 6, background: "#f5f5f5", borderRadius: 4, fontSize: 11, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                      {data.pgDiscoverResult.firstProbe.bodySnippet || "(lege body)"}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
