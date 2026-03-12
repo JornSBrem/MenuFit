@@ -127,7 +127,8 @@ test("assertPgResponseShape validates login/week/day/recipe/shoppingList", () =>
   );
 
   assert.doesNotThrow(() => assertPgResponseShape("day", { data: { meals: [] } }));
-  assert.throws(() => assertPgResponseShape("day", { meals: [] }), /expected data object/);
+  // Nieuw PG API formaat: data direct op root (geen wrapper) — ook geldig
+  assert.doesNotThrow(() => assertPgResponseShape("day", { meals: [] }));
 
   assert.doesNotThrow(() =>
     assertPgResponseShape("recipe", {
@@ -146,7 +147,7 @@ test("assertPgResponseShape validates login/week/day/recipe/shoppingList", () =>
       },
     }),
   );
-  assert.throws(() => assertPgResponseShape("shoppingList", { data: [] }), /expected data object/);
+  assert.throws(() => assertPgResponseShape("shoppingList", { data: [] }), /data.groceries object or array/);
 });
 
 test("isPgResponseShape returns boolean contract checks", () => {

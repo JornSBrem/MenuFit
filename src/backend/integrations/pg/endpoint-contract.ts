@@ -85,10 +85,10 @@ const assertDataObject = (
     throw new Error(`Invalid PG ${endpoint} response: expected object`);
   }
 
-  const data = payload.data;
-  if (!isRecord(data)) {
-    throw new Error(`Invalid PG ${endpoint} response: expected data object`);
-  }
+  // PG API kan twee formaten teruggeven:
+  //   Oud: { data: { ... } }    → unwrap data
+  //   Nieuw (2026): { id, week_number, ... }  → data direct op root
+  const data = isRecord(payload.data) ? payload.data : payload;
 
   return data;
 };

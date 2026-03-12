@@ -47,8 +47,12 @@ export const buildProbeWeeks = (options: PgDiscoverOptions = {}): number[] => {
 const isValidWeekResponse = (payload: unknown): boolean => {
   if (!payload || typeof payload !== "object") return false;
   const p = payload as Record<string, unknown>;
-  // PG API geeft { data: { ... } } terug voor een bestaande week
-  return p.data !== undefined && p.data !== null;
+  // PG API kan twee formaten teruggeven:
+  //   Oud: { data: { id, week_number, ... } }
+  //   Nieuw (2026): { id, week_number, groceries, ... } (data direct op root)
+  if (p.data !== undefined && p.data !== null) return true;
+  if (typeof p.week_number === "number" || typeof p.id === "number") return true;
+  return false;
 };
 
 /**

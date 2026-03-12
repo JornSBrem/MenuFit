@@ -1680,7 +1680,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           filePath;
         const weekNum = weekRaw % 100;
         const weekYear = Math.floor(weekRaw / 100);
-        const pgData = filePayload["data"] as Record<string, unknown>;
+        const pgData = (filePayload["data"] ?? filePayload) as Record<string, unknown>;
 
         for (const kcal of PG_FIXED_KCALS) {
           try {
