@@ -3,6 +3,7 @@ import type {
   AdminOperationReport,
   AdminRecipeRecord,
   AdminSession,
+  DiscoverAndImportRecipesResult,
   IngestRecipeWebResult,
   ReprocessFromBronzeResult,
   AdminWeekMenuRecord,
@@ -74,6 +75,10 @@ export class AdminApiClient {
 
   ingestRecipeWeb(): Promise<ApiEnvelope<IngestRecipeWebResult>> {
     return this.post("/api/v3/admin/ingest-recipe-web", {});
+  }
+
+  discoverAndImportRecipes(): Promise<ApiEnvelope<DiscoverAndImportRecipesResult>> {
+    return this.post("/api/v3/admin/discover-and-import-recipes", {});
   }
 
   getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>> {

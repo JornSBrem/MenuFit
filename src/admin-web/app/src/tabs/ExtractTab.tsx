@@ -54,6 +54,7 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
   const [cleanupBusy, setCleanupBusy] = useState(false);
   const [reprocessBusy, setReprocessBusy] = useState(false);
   const [ingestWebBusy, setIngestWebBusy] = useState(false);
+  const [discoverRecipesBusy, setDiscoverRecipesBusy] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -290,6 +291,26 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     }
   };
 
+  const handleDiscoverAndImportRecipes = async () => {
+    setDiscoverRecipesBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      const nextState = await controller.discoverAndImportRecipes();
+      onStateChange();
+      const result = nextState.views.extract.data?.discoverRecipesResult;
+      if (result) {
+        setSuccessMsg(
+          `Recepten: ${result.discovered} ontdekt via sitemap, ${result.imported} nieuw geïmporteerd, ${result.skipped} overgeslagen (${result.errors.length} fouten).`,
+        );
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Recepten ontdekken/importeren mislukt.");
+    } finally {
+      setDiscoverRecipesBusy(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {successMsg && <div style={successBanner}>{successMsg}</div>}
@@ -471,6 +492,9 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
           <button style={btn} onClick={() => void handleIngestRecipeWeb()} disabled={ingestWebBusy}>
             {ingestWebBusy ? "Bezig (~40s)…" : "Inladen recepten (web)"}
           </button>
+          <button style={btn} onClick={() => void handleDiscoverAndImportRecipes()} disabled={discoverRecipesBusy}>
+            {discoverRecipesBusy ? "Bezig (ontdekken + importeren)…" : "Nieuwe recepten ophalen"}
+          </button>
         </div>
         {data?.reprocessResult && (
           <p style={{ margin: "8px 0 0", fontSize: 12, color: "#0a6d3a" }}>
@@ -480,6 +504,11 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
         {data?.ingestRecipeWebResult && (
           <p style={{ margin: "4px 0 0", fontSize: 12, color: "#0a6d3a" }}>
             Laatste receptingest: {data.ingestRecipeWebResult.withData}/{data.ingestRecipeWebResult.fetched} recepten met data
+          </p>
+        )}
+        {data?.discoverRecipesResult && (
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#0a6d3a" }}>
+            Laatste discovery: {data.discoverRecipesResult.discovered} in sitemap, {data.discoverRecipesResult.imported} nieuw, {data.discoverRecipesResult.skipped} al aanwezig
           </p>
         )}
       </div>

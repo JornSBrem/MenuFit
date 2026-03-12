@@ -119,6 +119,16 @@ export interface IngestRecipeWebResult {
   errors: string[];
 }
 
+export interface DiscoverAndImportRecipesResult {
+  discovered: number;
+  source: string;
+  totalSlugs: number;
+  skipped: number;
+  fetched: number;
+  imported: number;
+  errors: string[];
+}
+
 export interface IngestJobStatus {
   jobId: string;
   status: "running" | "completed" | "failed";
@@ -141,6 +151,7 @@ export interface AdminExtractViewData {
   activeIngestJob?: IngestJobStatus;
   reprocessResult?: ReprocessFromBronzeResult;
   ingestRecipeWebResult?: IngestRecipeWebResult;
+  discoverRecipesResult?: DiscoverAndImportRecipesResult;
 }
 
 export interface AdminOperationsViewData {

@@ -15,6 +15,7 @@ import type {
   DeleteMappingOverrideRequest,
   EetmeterCredentialsRequest,
   EetmeterViewData,
+  DiscoverAndImportRecipesResult,
   IngestRecipeWebResult,
   ReprocessFromBronzeResult,
   DeleteRecipeRequest,
@@ -76,6 +77,7 @@ export interface AdminDashboardApi {
   getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>>;
   reprocessFromBronze(): Promise<ApiEnvelope<ReprocessFromBronzeResult>>;
   ingestRecipeWeb(): Promise<ApiEnvelope<IngestRecipeWebResult>>;
+  discoverAndImportRecipes(): Promise<ApiEnvelope<DiscoverAndImportRecipesResult>>;
   getEetmeterDag(datum?: string): Promise<ApiEnvelope<EetmeterViewData>>;
   eetmeterLogin(body: EetmeterCredentialsRequest): Promise<ApiEnvelope<{ isIngelogd: boolean }>>;
 }
@@ -624,6 +626,24 @@ export class AdminDashboardController {
         pgLoginStatus: previous?.pgLoginStatus,
         pgDiscoverResult: previous?.pgDiscoverResult,
         ingestRecipeWebResult: result,
+      });
+    } catch (error) {
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async discoverAndImportRecipes(): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.extract.data;
+    this.state.views.extract = createLoadingView(previous);
+    try {
+      const result = this.unwrapEnvelope(await this.api.discoverAndImportRecipes());
+      this.state.views.extract = createSuccessView({
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: previous?.pgDiscoverResult,
+        ingestRecipeWebResult: previous?.ingestRecipeWebResult,
+        discoverRecipesResult: result,
       });
     } catch (error) {
       this.state.views.extract = createErrorView(toAdminApiError(error), previous);

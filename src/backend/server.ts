@@ -40,6 +40,7 @@ import { buildPgEndpointUrl } from "./integrations/pg/endpoint-contract.ts";
 import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
 import { normalizePgRecipePayload } from "./integrations/pg/pg-recipe-normalizer.ts";
 import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
+import { discoverPgRecipeSlugs } from "./integrations/pg/pg-recipe-discover.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
 import { createPersistentStateStore } from "./application/config/create-persistent-state-store.ts";
 import {
@@ -1682,6 +1683,35 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           ok: false,
           error: { code: "INGEST_WEB_ERROR", message: err instanceof Error ? err.message : String(err) },
         });
+      }
+      return;
+    }
+
+    // ---- Admin: discover + import all PG recipes (sitemap → fetch → persist) ----
+    if (path === "/api/v3/admin/discover-and-import-recipes" && method === "POST") {
+      try {
+        const { skipExisting } = (body ?? {}) as { skipExisting?: boolean };
+
+        // Stap 1: Ontdek alle slugs via sitemap
+        const discovery = await discoverPgRecipeSlugs();
+
+        // Stap 2: Importeer nieuwe recepten
+        const result = await importRecipesBySlugs(discovery.slugs, { skipExisting: skipExisting !== false });
+
+        json(res, 200, {
+          ok: true,
+          data: {
+            discovered: discovery.slugs.length,
+            source: discovery.source,
+            totalSlugs: result.totalSlugs,
+            skipped: result.skipped,
+            fetched: result.fetched,
+            imported: result.imported,
+            errors: result.errors.slice(0, 50),
+          },
+        });
+      } catch (err) {
+        json(res, 500, { ok: false, error: { code: "DISCOVER_IMPORT_ERROR", message: err instanceof Error ? err.message : String(err) } });
       }
       return;
     }
