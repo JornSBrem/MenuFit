@@ -66,6 +66,14 @@
     - MenuFit kan geselecteerde statische/inspiratiecontent lokaal serveren zonder afhankelijkheid van de PG webapp.
     - Scope maakt onderscheid tussen must-have hulpcontent en nice-to-have inspiratiecontent.
 
+- [ ] WI-279 | type:feature | priority:P1 | status:IN-PROGRESS | title:Admin web login via Supabase email en wachtwoord op app.menufit.uk
+  - context: De admin web login op `app.menufit.uk` stuurt gebruikersnaam/wachtwoord nog naar de lokale MenuFit `/api/v3/auth/login` route. Daardoor kunnen geregistreerde Supabase gebruikers niet direct inloggen met hun bestaande email en wachtwoord, terwijl de backend Supabase JWT's al wel accepteert op admin-routes.
+  - acceptance:
+    - Admin web kan met Supabase email en wachtwoord een geldige access token ophalen en daarmee inloggen op `app.menufit.uk`.
+    - De hosted login-flow vereist geen handmatige tokencopy/paste voor normale Supabase accounts.
+    - Bestaande token-login fallback voor development blijft beschikbaar.
+    - Backend en admin settings ondersteunen de benodigde publieke Supabase login-config zonder secrets in sourcecode te hardcoden.
+
 - [x] WI-276 | type:spike | priority:P1 | status:DONE | title:Volledige ProjectGezond webapp data-inventaris en endpoint discovery
   - context: Naast recepten en weekmenu's gebruikt de actuele ProjectGezond webapp meer pagina's en onderliggende API-data. Om MenuFit echt los te trekken van ProjectGezond is een volledige inventaris van toegankelijke routes, datasets en endpointfamilies nodig vanuit een ingelogde sessie.
   - acceptance:

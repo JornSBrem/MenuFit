@@ -728,6 +728,8 @@ export class AdminDashboardController {
       "PG_DAY_URL_TEMPLATE": "string",
       "PG_RECIPE_URL_TEMPLATE": "string",
       "PG_SHOPPINGLIST_URL_TEMPLATE": "string",
+      "SUPABASE_PROJECT_URL": "string",
+      "SUPABASE_ANON_KEY": "string",
     };
 
     const expectedType = rules[body.key];

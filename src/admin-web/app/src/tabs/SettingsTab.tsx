@@ -19,7 +19,9 @@ type ConfigKey =
   | "PG_WEEK_URL_TEMPLATE"
   | "PG_DAY_URL_TEMPLATE"
   | "PG_RECIPE_URL_TEMPLATE"
-  | "PG_SHOPPINGLIST_URL_TEMPLATE";
+  | "PG_SHOPPINGLIST_URL_TEMPLATE"
+  | "SUPABASE_PROJECT_URL"
+  | "SUPABASE_ANON_KEY";
 
 const CONFIG_KEYS: { key: ConfigKey; type: "boolean" | "number" | "string"; description: string }[] = [
   { key: "feature.toggle", type: "boolean", description: "Feature toggle aan/uit" },
@@ -32,6 +34,8 @@ const CONFIG_KEYS: { key: ConfigKey; type: "boolean" | "number" | "string"; desc
   { key: "PG_DAY_URL_TEMPLATE", type: "string", description: "ProjectGezond day endpoint template" },
   { key: "PG_RECIPE_URL_TEMPLATE", type: "string", description: "ProjectGezond recipe endpoint template" },
   { key: "PG_SHOPPINGLIST_URL_TEMPLATE", type: "string", description: "ProjectGezond shoppinglist endpoint template" },
+  { key: "SUPABASE_PROJECT_URL", type: "string", description: "Supabase project URL" },
+  { key: "SUPABASE_ANON_KEY", type: "string", description: "Supabase anon key" },
 ];
 
 function genId(): string {

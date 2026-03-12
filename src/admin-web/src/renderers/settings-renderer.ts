@@ -28,6 +28,8 @@ export const SETTINGS_SCHEMA: ConfigKeySchema[] = [
   { key: "PG_DAY_URL_TEMPLATE", type: "string", label: "ProjectGezond: day endpoint template" },
   { key: "PG_RECIPE_URL_TEMPLATE", type: "string", label: "ProjectGezond: recipe endpoint template" },
   { key: "PG_SHOPPINGLIST_URL_TEMPLATE", type: "string", label: "ProjectGezond: shoppinglist endpoint template" },
+  { key: "SUPABASE_PROJECT_URL", type: "string", label: "Supabase: project URL" },
+  { key: "SUPABASE_ANON_KEY", type: "string", label: "Supabase: anon key" },
 ];
 
 export interface SettingsFormState {

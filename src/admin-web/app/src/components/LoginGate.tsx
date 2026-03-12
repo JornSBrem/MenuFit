@@ -6,40 +6,61 @@ interface LoginGateProps {
   onLogin: (baseUrl: string, accessToken: string, operatorId: string) => Promise<void>;
 }
 
+type SupabaseLoginEnvelope = {
+  ok: boolean;
+  data?: {
+    accessToken: string;
+    userId: string;
+    email?: string;
+  };
+  error?: { code: string; message: string; hint?: string };
+};
+
+function toDisplayMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+}
+
 export function LoginGate({ defaultBaseUrl, defaultOperatorId, onLogin }: LoginGateProps) {
   const [baseUrl, setBaseUrl] = useState(defaultBaseUrl);
-  const [username, setUsername] = useState(defaultOperatorId);
+  const [email, setEmail] = useState(defaultOperatorId);
   const [password, setPassword] = useState("");
   const [showTokenLogin, setShowTokenLogin] = useState(false);
   const [rawToken, setRawToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleUsernameLogin = async (e: FormEvent) => {
+  const handleSupabaseLogin = async (e: FormEvent) => {
     e.preventDefault();
-    if (!baseUrl.trim() || !username.trim() || !password) {
+    if (!baseUrl.trim() || !email.trim() || !password) {
       setError("Vul alle velden in.");
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${baseUrl.replace(/\/$/, "")}/api/v3/auth/login`, {
+      const res = await fetch(`${baseUrl.replace(/\/$/, "")}/api/v3/auth/supabase/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
-      const data = await res.json() as {
-        ok: boolean;
-        data?: { token: string; username: string };
-        error?: { code: string; message: string };
-      };
-      if (!data.ok || !data.data?.token) {
-        throw new Error(data.error?.message ?? "Inloggen mislukt. Controleer je gegevens.");
+      const data = await res.json() as SupabaseLoginEnvelope;
+      if (!data.ok || !data.data?.accessToken) {
+        throw new Error(data.error?.message ?? "Inloggen via Supabase mislukt. Controleer je gegevens.");
       }
-      await onLogin(baseUrl.trim(), data.data.token, data.data.username);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Inloggen mislukt. Controleer de gegevens.");
+      await onLogin(baseUrl.trim(), data.data.accessToken, data.data.email ?? email.trim());
+    } catch (error) {
+      setError(toDisplayMessage(error, "Inloggen mislukt. Controleer de gegevens."));
     } finally {
       setLoading(false);
     }
@@ -55,8 +76,8 @@ export function LoginGate({ defaultBaseUrl, defaultOperatorId, onLogin }: LoginG
     setError(null);
     try {
       await onLogin(baseUrl.trim(), rawToken.trim(), "dev-admin");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Token ongeldig. Controleer de waarde.");
+    } catch (error) {
+      setError(toDisplayMessage(error, "Token ongeldig. Controleer de waarde."));
     } finally {
       setLoading(false);
     }
@@ -69,8 +90,8 @@ export function LoginGate({ defaultBaseUrl, defaultOperatorId, onLogin }: LoginG
 
         {!showTokenLogin ? (
           <>
-            <p style={styles.subtitle}>Log in met je gebruikersnaam en wachtwoord</p>
-            <form onSubmit={(e) => void handleUsernameLogin(e)} style={styles.form}>
+            <p style={styles.subtitle}>Log in met je Supabase e-mailadres en wachtwoord</p>
+            <form onSubmit={(e) => void handleSupabaseLogin(e)} style={styles.form}>
               <label style={styles.label}>
                 Backend URL
                 <input
@@ -83,13 +104,13 @@ export function LoginGate({ defaultBaseUrl, defaultOperatorId, onLogin }: LoginG
                 />
               </label>
               <label style={styles.label}>
-                Gebruikersnaam
+                E-mailadres
                 <input
                   style={styles.input}
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="jorn"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jij@voorbeeld.nl"
                   autoComplete="username"
                   required
                 />
@@ -108,7 +129,7 @@ export function LoginGate({ defaultBaseUrl, defaultOperatorId, onLogin }: LoginG
               </label>
               {error && <p style={styles.error}>{error}</p>}
               <button style={styles.button} type="submit" disabled={loading}>
-                {loading ? "Inloggen…" : "Inloggen"}
+                {loading ? "Inloggen…" : "Inloggen met Supabase"}
               </button>
             </form>
             <button

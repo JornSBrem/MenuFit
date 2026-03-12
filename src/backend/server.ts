@@ -95,6 +95,8 @@ const config = createDefaultRuntimeConfig(
     Object.entries(process.env).filter(([, v]) => v !== undefined),
   ) as Record<string, string>,
 );
+const configuredSupabaseProjectUrl = (config.get<string>("SUPABASE_PROJECT_URL") || "").replace(/\/+$/, "");
+const configuredSupabaseAnonKey = (config.get<string>("SUPABASE_ANON_KEY") || "").trim();
 
 // ---- Services --------------------------------------------------------------
 
@@ -112,16 +114,15 @@ const goldReadService = new GoldWeekReadService({ stateStore });
 
 // ---- Supabase JWT validation (optional, enabled when SUPABASE_PROJECT_URL is set) ---
 
-const supabaseProjectUrl = (config.get<string>("SUPABASE_PROJECT_URL") || "").replace(/\/+$/, "");
 let supabaseJwtVerifier: JwtVerifier | null = null;
 
-if (supabaseProjectUrl) {
+if (configuredSupabaseProjectUrl) {
   const jwksClient = new JwksClient({
-    jwksUri: `${supabaseProjectUrl}/auth/v1/.well-known/jwks.json`,
+    jwksUri: `${configuredSupabaseProjectUrl}/auth/v1/.well-known/jwks.json`,
     cacheMaxAgeMs: 60 * 60 * 1000, // 1 uur cache (keys roteren zelden)
   });
   supabaseJwtVerifier = new JwtVerifier({ jwksClient });
-  console.log(`[boot] Supabase JWT validation enabled for ${supabaseProjectUrl}`);
+  console.log(`[boot] Supabase JWT validation enabled for ${configuredSupabaseProjectUrl}`);
 } else {
   console.log("[boot] Supabase JWT validation disabled (SUPABASE_PROJECT_URL not set)");
 }
@@ -501,6 +502,57 @@ function deriveAdminRoleFromClaims(claims: Record<string, unknown>): "owner" | "
   return null;
 }
 
+function isSupabasePasswordLoginConfigured(): boolean {
+  return Boolean(configuredSupabaseProjectUrl && configuredSupabaseAnonKey);
+}
+
+type SupabasePasswordLoginResult = {
+  accessToken: string;
+  userId: string;
+  email?: string;
+};
+
+async function loginWithSupabasePassword(email: string, password: string): Promise<SupabasePasswordLoginResult> {
+  if (!isSupabasePasswordLoginConfigured()) {
+    throw new UserAccountServiceError(
+      "SUPABASE_LOGIN_NOT_CONFIGURED",
+      "Supabase email/wachtwoord login is niet geconfigureerd op de backend.",
+    );
+  }
+
+  const response = await fetch(`${configuredSupabaseProjectUrl}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: configuredSupabaseAnonKey,
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const payload = await response.json() as {
+    access_token?: string;
+    user?: { id?: string; email?: string };
+    error?: string;
+    error_description?: string;
+    msg?: string;
+  };
+
+  if (!response.ok || !payload.access_token) {
+    const message =
+      payload.error_description ??
+      payload.msg ??
+      payload.error ??
+      "Inloggen bij Supabase mislukt.";
+    throw new UserAccountServiceError("SUPABASE_LOGIN_FAILED", message);
+  }
+
+  return {
+    accessToken: payload.access_token,
+    userId: payload.user?.id ?? "",
+    email: payload.user?.email,
+  };
+}
+
 async function getAdminSession(req: IncomingMessage): Promise<import("./interfaces/http/auth/session-middleware.ts").MiddlewareEnvelope<import("./interfaces/http/auth/session-context.ts").AdminSessionContext>> {
   const internalAdmin = authorizeAdminFromBearerHeader(lifecycle, getAuthHeader(req));
   if (internalAdmin.ok) {
@@ -515,7 +567,7 @@ async function getAdminSession(req: IncomingMessage): Promise<import("./interfac
 
   try {
     const { claims } = await supabaseJwtVerifier.verify(token, {
-      issuer: `${supabaseProjectUrl}/auth/v1`,
+      issuer: `${configuredSupabaseProjectUrl}/auth/v1`,
       audience: "authenticated",
     });
     const subjectId = String(claims.sub ?? "");
@@ -562,7 +614,7 @@ async function validateSupabaseJwt(token: string): Promise<import("./interfaces/
   }
   try {
     const { claims } = await supabaseJwtVerifier.verify(token, {
-      issuer: `${supabaseProjectUrl}/auth/v1`,
+      issuer: `${configuredSupabaseProjectUrl}/auth/v1`,
       audience: "authenticated",
     });
     return {
@@ -748,6 +800,41 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       } catch (err) {
         const code = err instanceof UserAccountServiceError ? err.code : "LOGIN_FAILED";
         const message = err instanceof Error ? err.message : "Inloggen mislukt.";
+        json(res, 401, { ok: false, error: { code, message } });
+      }
+      return;
+    }
+
+    if (path === "/api/v3/auth/supabase/config" && method === "GET") {
+      json(res, 200, {
+        ok: true,
+        data: {
+          enabled: isSupabasePasswordLoginConfigured(),
+          projectUrl: configuredSupabaseProjectUrl || undefined,
+        },
+      });
+      return;
+    }
+
+    if (path === "/api/v3/auth/supabase/login" && method === "POST") {
+      const { email, password } = body as { email?: string; password?: string };
+      if (!email?.trim() || !password) {
+        json(res, 400, { ok: false, error: { code: "INVALID_BODY", message: "email en password zijn verplicht." } });
+        return;
+      }
+      try {
+        const result = await loginWithSupabasePassword(email.trim(), password);
+        json(res, 200, {
+          ok: true,
+          data: {
+            accessToken: result.accessToken,
+            userId: result.userId,
+            email: result.email ?? email.trim(),
+          },
+        });
+      } catch (err) {
+        const code = err instanceof UserAccountServiceError ? err.code : "SUPABASE_LOGIN_FAILED";
+        const message = err instanceof Error ? err.message : "Supabase login mislukt.";
         json(res, 401, { ok: false, error: { code, message } });
       }
       return;

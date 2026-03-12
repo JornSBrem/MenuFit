@@ -29,6 +29,21 @@ function saveSession(baseUrl: string, session: AdminSession): void {
   );
 }
 
+function toDisplayMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+  return "Inloggen mislukt.";
+}
+
 export function App() {
   const [session, setSession] = useState<AdminSession | null>(null);
   const [baseUrl, setBaseUrl] = useState<string>("");
@@ -45,12 +60,17 @@ export function App() {
       };
       const api = new AdminApiClient(url, adminSession);
       const controller = new AdminDashboardController(api);
-      controllerRef.current = controller;
-      saveSession(url, adminSession);
-      setBaseUrl(url);
-      setSession(adminSession);
-      const state = await controller.loadDataView();
-      setUiState(state);
+      try {
+        const state = await controller.loadDataView();
+        controllerRef.current = controller;
+        saveSession(url, adminSession);
+        setBaseUrl(url);
+        setSession(adminSession);
+        setUiState(state);
+      } catch (error) {
+        controllerRef.current = null;
+        throw new Error(toDisplayMessage(error));
+      }
     },
     [],
   );
