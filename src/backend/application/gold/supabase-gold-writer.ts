@@ -81,11 +81,12 @@ export class PsqlSupabaseGoldWriter implements SupabaseGoldWriter {
       stdio: ["pipe", "pipe", "pipe"],
       encoding: "utf8",
     });
+    const stderr = (result.stderr ?? "").trim();
     if (result.error) {
-      throw new Error(`Supabase gold sync: psql niet gevonden of kon niet starten: ${result.error.message}`);
+      const detail = stderr.length > 0 ? `: ${stderr.slice(0, 500)}` : "";
+      throw new Error(`Supabase gold sync: psql niet gevonden of kon niet starten: ${result.error.message}${detail}`);
     }
     if (result.status !== 0) {
-      const stderr = (result.stderr ?? "").trim();
       const detail = stderr.length > 0 ? stderr.slice(0, 500) : "(geen details)";
       throw new Error(`Supabase gold sync failed (exit ${result.status ?? "?"}): ${detail}`);
     }
