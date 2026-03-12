@@ -306,6 +306,74 @@ async function importNormalizedRecipesForModels(models: GoldReadModel[]): Promis
   };
 }
 
+/**
+ * Importeert recepten op basis van een lijst slugs (los van weekmenu's).
+ * Skipt slugs die al in de recipeCatalog staan.
+ */
+async function importRecipesBySlugs(slugs: string[], options?: {
+  skipExisting?: boolean;
+  onProgress?: (done: number, total: number, current: string) => void;
+}): Promise<{
+  totalSlugs: number;
+  skipped: number;
+  fetched: number;
+  imported: number;
+  errors: string[];
+}> {
+  const skipExisting = options?.skipExisting ?? true;
+  const existingRecipes = new Set(goldReadService.listRecipes().map((r) => r.recipeId));
+
+  const toFetch = skipExisting
+    ? slugs.filter((slug) => !existingRecipes.has(slug))
+    : slugs;
+
+  const skipped = slugs.length - toFetch.length;
+  const recipes = [];
+  const errors: string[] = [];
+
+  for (let index = 0; index < toFetch.length; index += 1) {
+    const slug = toFetch[index];
+    options?.onProgress?.(index + 1, toFetch.length, slug);
+    try {
+      const requestUrl = buildPgEndpointUrl(config, "recipe", { recipeId: slug });
+      const raw = await fetchPgJson({ requestUrl, entityType: "pg.recipe", variables: { recipeId: slug } }, config);
+      const recipe = normalizePgRecipePayload(raw, {
+        importedAt: new Date().toISOString(),
+        sourceUrl: requestUrl,
+      });
+      if (recipe.recipeId.trim().length > 0) {
+        recipes.push(recipe);
+      } else {
+        errors.push(`${slug}: geen recipeId in response`);
+      }
+    } catch (error) {
+      errors.push(`${slug}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    // Batch-persist elke 50 recepten (voorkomt verlies bij crash)
+    if (recipes.length > 0 && recipes.length % 50 === 0) {
+      goldReadService.upsertRecipes(recipes.splice(0));
+    }
+
+    if (index < toFetch.length - 1) {
+      await sleep(PG_RECIPE_FETCH_DELAY_MS);
+    }
+  }
+
+  // Persist resterende recepten
+  if (recipes.length > 0) {
+    goldReadService.upsertRecipes(recipes);
+  }
+
+  return {
+    totalSlugs: slugs.length,
+    skipped,
+    fetched: toFetch.length - errors.length,
+    imported: toFetch.length - errors.length,
+    errors,
+  };
+}
+
 async function runRealIngest(
   weeks: number[],
   basePersons: number[],
@@ -1614,6 +1682,33 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           ok: false,
           error: { code: "INGEST_WEB_ERROR", message: err instanceof Error ? err.message : String(err) },
         });
+      }
+      return;
+    }
+
+    // ---- Admin bulk recipe import by slugs ----
+    if (path === "/api/v3/admin/import-recipe-slugs" && method === "POST") {
+      try {
+        const { slugs, skipExisting } = body as { slugs?: string[]; skipExisting?: boolean };
+        if (!Array.isArray(slugs) || slugs.length === 0) {
+          json(res, 400, { ok: false, error: { code: "MISSING_PARAM", message: "slugs array required" } });
+          return;
+        }
+        const validSlugs = slugs.filter((s) => typeof s === "string" && s.trim().length > 0);
+        const result = await importRecipesBySlugs(validSlugs, { skipExisting: skipExisting !== false });
+
+        json(res, 200, {
+          ok: true,
+          data: {
+            totalSlugs: result.totalSlugs,
+            skipped: result.skipped,
+            fetched: result.fetched,
+            imported: result.imported,
+            errors: result.errors.slice(0, 50),
+          },
+        });
+      } catch (err) {
+        json(res, 500, { ok: false, error: { code: "IMPORT_SLUGS_ERROR", message: err instanceof Error ? err.message : String(err) } });
       }
       return;
     }
