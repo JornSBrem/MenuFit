@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { SilverIngredientCanonicalRow, SilverQuantityNormalizedRow } from "../silver";
+import type { SilverIngredientCanonicalRow, SilverPdfLineRow, SilverQuantityNormalizedRow } from "../silver";
 import type {
   GoldGroceryReconcileView,
   GoldGroceryTotalView,
@@ -17,16 +17,47 @@ type GroceryAccumulator = {
   totalAmount?: number;
   unit?: string;
   requiresReview: boolean;
+  category?: string;
 };
 
 const buildCanonicalMap = (canonicalRows: SilverIngredientCanonicalRow[]): Map<string, string> =>
   new Map(canonicalRows.map((row) => [row.rawId, row.canonicalName]));
 
+/**
+ * Bouwt een lookup van grocery-tekst → categorie op basis van de PG API grocery items.
+ * Gebruikt simpele substring-matching om een canonical ingredient aan een categorie te koppelen.
+ */
+const buildCategoryLookup = (pdfLines: SilverPdfLineRow[]): Map<string, string> => {
+  const categorized = pdfLines.filter((line) => line.category);
+  if (categorized.length === 0) return new Map();
+
+  const lookup = new Map<string, string>();
+  for (const line of categorized) {
+    const normalized = line.lineText.toLowerCase().trim();
+    lookup.set(normalized, line.category!);
+  }
+  return lookup;
+};
+
+const findCategory = (canonicalName: string, categoryLookup: Map<string, string>): string | undefined => {
+  if (categoryLookup.size === 0) return undefined;
+  const lower = canonicalName.toLowerCase();
+  // Exacte match
+  if (categoryLookup.has(lower)) return categoryLookup.get(lower);
+  // Substring match: zoek of de canonical naam voorkomt in een grocery-tekst
+  for (const [text, category] of categoryLookup) {
+    if (text.includes(lower) || lower.includes(text)) return category;
+  }
+  return undefined;
+};
+
 const aggregateGroceries = (
   canonicalRows: SilverIngredientCanonicalRow[],
   quantityRows: SilverQuantityNormalizedRow[],
+  pdfLines: SilverPdfLineRow[],
 ): GoldGroceryTotalView[] => {
   const canonicalByRaw = buildCanonicalMap(canonicalRows);
+  const categoryLookup = buildCategoryLookup(pdfLines);
   const map = new Map<string, GroceryAccumulator>();
 
   for (const quantity of quantityRows) {
@@ -36,6 +67,7 @@ const aggregateGroceries = (
       totalAmount: undefined,
       unit: quantity.normalizedUnit,
       requiresReview: false,
+      category: findCategory(canonicalName, categoryLookup),
     };
 
     const amount = quantity.normalizedAmount;
@@ -56,6 +88,7 @@ const aggregateGroceries = (
       totalAmount: row.totalAmount,
       unit: row.unit,
       requiresReview: row.requiresReview,
+      category: row.category,
     }));
 };
 
@@ -80,6 +113,7 @@ export const projectSilverToGold = (input: GoldProjectionInput): GoldReadModel =
   const groceries = aggregateGroceries(
     input.silver.ingredientsCanonical,
     input.silver.quantitiesNormalized,
+    input.silver.pdfLines,
   );
   const groceryReconcile = buildReconcile(input);
 

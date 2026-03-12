@@ -76,7 +76,7 @@ export class PsqlSupabaseGoldWriter implements SupabaseGoldWriter {
       return;
     }
 
-    const result = spawnSync("psql", [this.connectionString, "-v", "ON_ERROR_STOP=1"], {
+    const result = spawnSync("psql", [this.connectionString, "-q", "-v", "ON_ERROR_STOP=1"], {
       input: sql,
       stdio: ["pipe", "pipe", "pipe"],
       encoding: "utf8",

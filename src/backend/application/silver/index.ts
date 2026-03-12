@@ -3,6 +3,7 @@ export { reconcileComputedIngredientsWithPdf } from "./reconcile.ts";
 export { transformBronzeToSilver } from "./transformer.ts";
 export { reprocessSilverTransforms } from "./reprocess.ts";
 export type {
+  BronzeLikeGroceryItem,
   BronzeLikeMeal,
   BronzeLikeMealIngredient,
   BronzeLikeWeekPayload,

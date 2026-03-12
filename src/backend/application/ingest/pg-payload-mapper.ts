@@ -10,7 +10,7 @@
  * Deze module converteert het PG-formaat naar het interne formaat.
  * Alle 6 maaltijdmomenten per dag worden geëxtraheerd (ontbijt t/m snack).
  */
-import type { BronzeLikeMeal, BronzeLikeWeekPayload } from "../silver/types.ts";
+import type { BronzeLikeGroceryItem, BronzeLikeMeal, BronzeLikeWeekPayload } from "../silver/types.ts";
 
 // ---- PG API types (intern, voor type-safety in de mapper) ------------------
 
@@ -188,6 +188,24 @@ const extractGroceryLines = (groceries: Record<string, string> | undefined): str
 };
 
 /**
+ * Extraheert boodschappenlijstitems met categorie uit het `groceries`-object.
+ * PG API retourneert: { vegetables_fruit: "<p>aardbeien</p>", dairy: "<p>melk</p>", ... }
+ */
+const extractCategorizedGroceryItems = (groceries: Record<string, string> | undefined): BronzeLikeGroceryItem[] => {
+  if (!groceries) return [];
+  const items: BronzeLikeGroceryItem[] = [];
+  for (const [category, html] of Object.entries(groceries)) {
+    if (typeof html !== "string") continue;
+    const blocks = html.split(/<\/p>/i);
+    for (const block of blocks) {
+      const text = stripHtml(block.replace(/<p[^>]*>/i, "")).trim();
+      if (text.length > 0) items.push({ category, text });
+    }
+  }
+  return items;
+};
+
+/**
  * Zet een kcal-waarde (string of number) om naar een geheel getal.
  */
 const parseKcal = (raw: string | number | undefined): number | undefined => {
@@ -266,6 +284,7 @@ export const mapPgWeekDataToSilverPayload = (
   }
 
   const pdfLines = extractGroceryLines(data.groceries);
+  const categorizedGroceries = extractCategorizedGroceryItems(data.groceries);
 
-  return { meals, pdfLines };
+  return { meals, pdfLines, categorizedGroceries };
 };

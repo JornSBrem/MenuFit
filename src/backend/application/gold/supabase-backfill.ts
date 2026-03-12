@@ -254,8 +254,8 @@ values (${sqlString(model.weekPlan.weekPlanId)}, ${model.weekPlan.year}, ${model
     lines.push(...renderMealInserts(model.meals, model.weekPlan.weekPlanId));
     for (const grocery of model.groceries) {
       lines.push(
-        `insert into public.menufit_gold_groceries (week_plan_id, canonical_name, total_amount, unit, requires_review)
-values (${sqlString(model.weekPlan.weekPlanId)}, ${sqlString(grocery.canonicalName)}, ${sqlNullable(grocery.totalAmount)}, ${sqlNullable(grocery.unit)}, ${grocery.requiresReview ? "true" : "false"});`,
+        `insert into public.menufit_gold_groceries (week_plan_id, canonical_name, total_amount, unit, requires_review, category)
+values (${sqlString(model.weekPlan.weekPlanId)}, ${sqlString(grocery.canonicalName)}, ${sqlNullable(grocery.totalAmount)}, ${sqlNullable(grocery.unit)}, ${grocery.requiresReview ? "true" : "false"}, ${sqlNullable(grocery.category)});`,
       );
     }
     for (const reconcile of model.groceryReconcile) {

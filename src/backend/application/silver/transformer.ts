@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { canonicalizeIngredient, normalizeQuantity } from "./normalization.ts";
 import { reconcileComputedIngredientsWithPdf } from "./reconcile.ts";
 import type {
+  BronzeLikeGroceryItem,
   BronzeLikeMeal,
   BronzeLikeMealIngredient,
   BronzeLikeWeekPayload,
@@ -140,15 +141,30 @@ export const transformBronzeToSilver = (
     }
   }
 
-  for (let i = 0; i < pdfLines.length; i += 1) {
-    const lineText = pdfLines[i];
-    pdfRows.push({
-      pdfLineId: hashId(`${weekRow.weekId}:pdf:${i}:${lineText}`),
-      weekId: weekRow.weekId,
-      lineText,
-      sourceObjectId: context.sourceObjectId,
-      transformVersion: context.transformVersion,
-    });
+  const categorized = payload.categorizedGroceries ?? [];
+  if (categorized.length > 0) {
+    for (let i = 0; i < categorized.length; i += 1) {
+      const item = categorized[i];
+      pdfRows.push({
+        pdfLineId: hashId(`${weekRow.weekId}:pdf:${i}:${item.text}`),
+        weekId: weekRow.weekId,
+        lineText: item.text,
+        category: item.category,
+        sourceObjectId: context.sourceObjectId,
+        transformVersion: context.transformVersion,
+      });
+    }
+  } else {
+    for (let i = 0; i < pdfLines.length; i += 1) {
+      const lineText = pdfLines[i];
+      pdfRows.push({
+        pdfLineId: hashId(`${weekRow.weekId}:pdf:${i}:${lineText}`),
+        weekId: weekRow.weekId,
+        lineText,
+        sourceObjectId: context.sourceObjectId,
+        transformVersion: context.transformVersion,
+      });
+    }
   }
 
   const reconcile = reconcileComputedIngredientsWithPdf(

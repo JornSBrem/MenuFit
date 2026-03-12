@@ -76,6 +76,7 @@ export interface GoldGroceryTotalView {
   totalAmount?: number;
   unit?: string;
   requiresReview: boolean;
+  category?: string;
 }
 
 export interface GoldGroceryReconcileView {

@@ -75,6 +75,7 @@ export interface SilverPdfLineRow {
   pdfLineId: string;
   weekId: string;
   lineText: string;
+  category?: string;
   sourceObjectId: string;
   transformVersion: string;
 }
@@ -126,8 +127,14 @@ export interface BronzeLikeMeal {
   ingredients?: BronzeLikeMealIngredient[];
 }
 
+export interface BronzeLikeGroceryItem {
+  category: string;
+  text: string;
+}
+
 export interface BronzeLikeWeekPayload {
   meals?: BronzeLikeMeal[];
   groceries?: string[];
   pdfLines?: string[];
+  categorizedGroceries?: BronzeLikeGroceryItem[];
 }
