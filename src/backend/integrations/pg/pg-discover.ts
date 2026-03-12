@@ -10,6 +10,10 @@ export interface PgDiscoverResult {
   availableWeeks: number[];
   probedWeeks: number[];
   errors: Array<{ week: number; error: string }>;
+  /** Diagnostisch: geeft aan of PG auth headers geconfigureerd zijn */
+  hasAuth: boolean;
+  /** Diagnostisch: resultaat van eerste probe (voor debugging) */
+  firstProbe?: { week: number; status: number; bodySnippet: string };
 }
 
 /**
@@ -67,9 +71,12 @@ export const discoverAvailableWeeks = async (
         ) as Record<string, string>)
       : {};
 
+  const hasAuth = "Cookie" in extraHeaders || "Authorization" in extraHeaders;
+
   const probedWeeks = buildProbeWeeks(options);
   const availableWeeks: number[] = [];
   const errors: Array<{ week: number; error: string }> = [];
+  let firstProbe: { week: number; status: number; bodySnippet: string } | undefined;
 
   // Verwerk in batches van 10 parallelle requests
   const BATCH_SIZE = 10;
@@ -85,11 +92,28 @@ export const discoverAvailableWeeks = async (
             headers: { Accept: "application/json", ...extraHeaders },
           });
 
+          // Bewaar diagnostiek van de allereerste probe
+          if (!firstProbe) {
+            let bodySnippet = "";
+            try {
+              const clone = response.clone();
+              const text = await clone.text();
+              bodySnippet = text.slice(0, 200);
+            } catch { /* ignore */ }
+            firstProbe = { week, status: response.status, bodySnippet };
+          }
+
           if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
               errors.push({ week, error: `Auth fout (${response.status}) — log eerst in bij PG` });
             }
-            // 404 / 400 → week bestaat gewoon niet, geen fout melden
+            // 404 → week bestaat niet (normaal). Andere statuscodes: meld eerste keer.
+            if (response.status !== 404 && response.status !== 401 && response.status !== 403) {
+              // Meld onverwachte statuscodes alleen voor de eerste batch (voorkom spam)
+              if (i === 0) {
+                errors.push({ week, error: `Onverwacht HTTP ${response.status}` });
+              }
+            }
             return;
           }
 
@@ -105,8 +129,13 @@ export const discoverAvailableWeeks = async (
         }
       }),
     );
+
+    // Als eerste batch al auth fouten geeft, stop meteen (geen 52 extra requests sturen)
+    if (i === 0 && errors.some((e) => e.error.includes("Auth fout"))) {
+      break;
+    }
   }
 
   availableWeeks.sort((a, b) => a - b);
-  return { availableWeeks, probedWeeks, errors };
+  return { availableWeeks, probedWeeks, errors, hasAuth, firstProbe };
 };

@@ -85,6 +85,7 @@ const STATE_PATH =
   process.env["STATE_STORE_PATH"] ?? join(ROOT, "out", "v3", "state", "server-state.json");
 const TOKEN_PATH = join(ROOT, "out", "dev-admin-token.txt");
 const USER_TOKEN_PATH = join(ROOT, "out", "dev-user-token.txt");
+const PG_SESSION_PATH = join(ROOT, "out", "pg-session.json");
 const DEV_OPERATOR_ID = process.env["DEV_OPERATOR_ID"] ?? "dev-admin";
 const DEV_USER_ID = process.env["DEV_USER_ID"] ?? "ios-user";
 const DEV_PICNIC_ACCOUNT_ID = process.env["DEV_PICNIC_ACCOUNT_ID"] ?? "picnic-default";
@@ -97,6 +98,26 @@ const config = createDefaultRuntimeConfig(
     Object.entries(process.env).filter(([, v]) => v !== undefined),
   ) as Record<string, string>,
 );
+
+// ---- Restore PG session from disk (survives server restarts) ----------------
+
+function loadPgSessionFromDisk(): void {
+  try {
+    const raw = readFileSync(PG_SESSION_PATH, "utf8");
+    const session = JSON.parse(raw) as { extraHeaders?: Record<string, string>; savedAt?: string };
+    if (session.extraHeaders && typeof session.extraHeaders === "object") {
+      const hasAuth = "Cookie" in session.extraHeaders || "Authorization" in session.extraHeaders;
+      if (hasAuth) {
+        config.set("PG_EXTRA_HEADERS_JSON", session.extraHeaders);
+        console.log(`[boot] PG session restored from ${PG_SESSION_PATH} (saved ${session.savedAt ?? "unknown"})`);
+      }
+    }
+  } catch {
+    // No saved session — that's fine, user will log in via admin UI
+  }
+}
+
+loadPgSessionFromDisk();
 
 function getConfiguredSupabaseProjectUrl(): string {
   return (config.get<string>("SUPABASE_PROJECT_URL") || "").replace(/\/+$/, "");
@@ -1455,6 +1476,23 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         // Sla de cookies op in de live runtime config
         config.set("PG_EXTRA_HEADERS_JSON", loginResult.extraHeaders);
 
+        // Persist naar disk zodat de sessie een server-herstart overleeft
+        void mkdir(join(ROOT, "out"), { recursive: true }).then(() =>
+          writeFile(
+            PG_SESSION_PATH,
+            JSON.stringify({
+              email: loginBody.email,
+              loginUrl: config.get<string>("PG_LOGIN_URL"),
+              extraHeaders: loginResult.extraHeaders,
+              cookieNames: loginResult.cookieNames,
+              savedAt: new Date().toISOString(),
+            }, null, 2),
+            "utf8",
+          ),
+        ).catch((err) => {
+          console.error(`[pg-login] Kon PG sessie niet opslaan: ${err instanceof Error ? err.message : String(err)}`);
+        });
+
         // Registreer ook als admin config voor audit trail
         adminOps.updateConfig({
           operationId: loginBody.operationId ?? `pg-login-${Date.now()}`,
@@ -1502,6 +1540,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             availableWeeks: result.availableWeeks,
             probedWeeks: result.probedWeeks,
             errors: result.errors,
+            hasAuth: result.hasAuth,
+            firstProbe: result.firstProbe,
             // Vaste kcal-varianten die de PG API altijd teruggeeft
             defaultKcals: PG_FIXED_KCALS,
             defaultBasePersons: [2],
