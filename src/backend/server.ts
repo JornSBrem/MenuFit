@@ -196,29 +196,62 @@ async function bootstrapDevTokens(): Promise<{ adminToken: string; userToken: st
   return { adminToken, userToken };
 }
 
-// ---- Ingest job tracking ---------------------------------------------------
+// ---- Background job tracking (generiek voor alle langdurende operaties) -----
 
-export interface IngestJobStatus {
+export interface BackgroundJob {
   jobId: string;
+  jobType: string;
   status: "running" | "completed" | "failed";
-  /** Fase: ophalen van unieke URLs bij PG API */
-  phase: "fetching" | "processing" | "done";
-  /** Aantal unieke URLs al opgehaald */
-  fetched: number;
-  /** Totaal unieke URLs te ophalen */
-  totalFetches: number;
-  /** Aantal week×kcal combinaties al verwerkt (silver/gold) */
+  /** Huidige fase-label (vrij tekstveld, bijv. "Ophalen", "Verwerken") */
+  phase: string;
+  /** Aantal items al verwerkt */
   processed: number;
-  /** Totaal week×kcal combinaties te verwerken */
-  totalProcessing: number;
+  /** Totaal items te verwerken (0 = nog onbekend) */
+  total: number;
+  /** Naam/slug van het item dat nu verwerkt wordt */
+  currentItem?: string;
   errors: string[];
   startedAt: string;
   finishedAt?: string;
-  tasksRan?: number;
-  goldProjected?: number;
+  /** Vrije metadata per jobtype */
+  meta?: Record<string, unknown>;
 }
 
-const activeIngestJobs = new Map<string, IngestJobStatus>();
+const activeJobs = new Map<string, BackgroundJob>();
+
+function createBackgroundJob(jobType: string, meta?: Record<string, unknown>): BackgroundJob {
+  const job: BackgroundJob = {
+    jobId: `${jobType}-${Date.now()}`,
+    jobType,
+    status: "running",
+    phase: "Starten",
+    processed: 0,
+    total: 0,
+    errors: [],
+    startedAt: new Date().toISOString(),
+    meta,
+  };
+  activeJobs.set(job.jobId, job);
+  return job;
+}
+
+function completeJob(job: BackgroundJob, meta?: Record<string, unknown>): void {
+  job.status = "completed";
+  job.phase = "Klaar";
+  job.finishedAt = new Date().toISOString();
+  if (meta) job.meta = { ...job.meta, ...meta };
+}
+
+function failJob(job: BackgroundJob, error: unknown): void {
+  job.status = "failed";
+  job.phase = "Mislukt";
+  job.errors.push(error instanceof Error ? error.message : String(error));
+  job.finishedAt = new Date().toISOString();
+}
+
+// Backwards-compat wrapper: bestaande code verwacht IngestJobStatus
+type IngestJobStatus = BackgroundJob;
+const activeIngestJobs = activeJobs;
 
 // ---- Eetmeter clients (één per gebruiker, houdt token in geheugen) ---------
 const eetmeterClients = new Map<string, EetmeterClient>();
@@ -395,8 +428,8 @@ async function runRealIngest(
       }
     }
     const uniqueUrls = Array.from(urlToSampleTask.keys());
-    job.totalFetches = uniqueUrls.length;
-    job.phase = "fetching";
+    job.total = uniqueUrls.length;
+    job.phase = "Ophalen";
 
     const urlToPayload = new Map<string, unknown>();
 
@@ -427,7 +460,8 @@ async function runRealIngest(
         }
       }
 
-      job.fetched = i + 1;
+      job.processed = i + 1;
+      job.currentItem = url;
 
       // Throttle: niet te snel hammeren op de PG API
       if (i < uniqueUrls.length - 1) {
@@ -450,9 +484,10 @@ async function runRealIngest(
     // De PG API geeft altijd data voor alle kcal-varianten in één response.
     // Hier itereren we zelf over de 4 vaste waarden per opgehaalde week.
     const weekMenuTasks = runnableTasks.filter((t) => t.entityType === "pg.week_menu");
-    job.phase = "processing";
-    job.totalProcessing = weekMenuTasks.length * PG_FIXED_KCALS.length;
+    job.phase = "Verwerken";
+    job.total = weekMenuTasks.length * PG_FIXED_KCALS.length;
     job.processed = 0;
+    job.currentItem = undefined;
 
     let goldProjected = 0;
     let silverIdx = 0;
@@ -548,16 +583,9 @@ async function runRealIngest(
       job.errors.push(...recipeImport.errors.slice(0, 50));
     }
 
-    job.tasksRan = tasks.length;
-    job.goldProjected = goldProjected;
-    job.status = "completed";
-    job.phase = "done";
-    job.finishedAt = new Date().toISOString();
+    completeJob(job, { tasksRan: tasks.length, goldProjected });
   } catch (err) {
-    job.status = "failed";
-    job.phase = "done";
-    job.errors.push(err instanceof Error ? err.message : String(err));
-    job.finishedAt = new Date().toISOString();
+    failJob(job, err);
   }
 }
 
@@ -1483,18 +1511,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       const ingestBasePersons = Array.isArray(ingestBody.basePersons) ? ingestBody.basePersons : [2];
 
       // Maak een job-tracking entry aan en start de ingest op de achtergrond
-      const jobId = `ingest-${Date.now()}`;
-      activeIngestJobs.set(jobId, {
-        jobId,
-        status: "running",
-        phase: "fetching",
-        fetched: 0,
-        totalFetches: 0,
-        processed: 0,
-        totalProcessing: 0,
-        errors: [],
-        startedAt: new Date().toISOString(),
-      });
+      const job = createBackgroundJob("ingest");
+      const jobId = job.jobId;
 
       // Start op achtergrond — niet awaiten zodat de HTTP-response direct terugkomt
       void runRealIngest(ingestWeeks, ingestBasePersons, jobId);
@@ -1506,10 +1524,21 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
-    // ---- Ingest job status (polling endpoint) ----
+    // ---- Job status (generiek polling endpoint voor alle background jobs) ----
+    if (path.startsWith("/api/v3/admin/job-status/") && method === "GET") {
+      const jobId = path.slice("/api/v3/admin/job-status/".length);
+      const job = activeJobs.get(jobId);
+      if (!job) {
+        json(res, 404, { ok: false, error: { code: "NOT_FOUND", message: "Job niet gevonden" } });
+        return;
+      }
+      json(res, 200, { ok: true, data: job });
+      return;
+    }
+    // Backwards-compat: oude ingest-status endpoint
     if (path.startsWith("/api/v3/admin/ingest-status/") && method === "GET") {
       const jobId = path.slice("/api/v3/admin/ingest-status/".length);
-      const job = activeIngestJobs.get(jobId);
+      const job = activeJobs.get(jobId);
       if (!job) {
         json(res, 404, { ok: false, error: { code: "NOT_FOUND", message: "Job niet gevonden" } });
         return;
@@ -1687,32 +1716,74 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       return;
     }
 
-    // ---- Admin: discover + import all PG recipes (sitemap → fetch → persist) ----
+    // ---- Admin: discover + import all PG recipes (background job) ----
     if (path === "/api/v3/admin/discover-and-import-recipes" && method === "POST") {
-      try {
-        const { skipExisting } = (body ?? {}) as { skipExisting?: boolean };
+      const job = createBackgroundJob("discover-recipes");
 
-        // Stap 1: Ontdek alle slugs via sitemap
-        const discovery = await discoverPgRecipeSlugs();
+      // Start op achtergrond
+      void (async () => {
+        try {
+          // Stap 1: Ontdek alle slugs via sitemap
+          job.phase = "Sitemap ophalen";
+          const discovery = await discoverPgRecipeSlugs();
+          job.meta = { discovered: discovery.slugs.length, source: discovery.source };
 
-        // Stap 2: Importeer nieuwe recepten
-        const result = await importRecipesBySlugs(discovery.slugs, { skipExisting: skipExisting !== false });
+          // Stap 2: Filter bestaande
+          const existingRecipes = new Set(goldReadService.listRecipes().map((r) => r.recipeId));
+          const toFetch = discovery.slugs.filter((slug) => !existingRecipes.has(slug));
+          const skipped = discovery.slugs.length - toFetch.length;
+          job.meta = { ...job.meta, skipped };
 
-        json(res, 200, {
-          ok: true,
-          data: {
-            discovered: discovery.slugs.length,
-            source: discovery.source,
-            totalSlugs: result.totalSlugs,
-            skipped: result.skipped,
-            fetched: result.fetched,
-            imported: result.imported,
-            errors: result.errors.slice(0, 50),
-          },
-        });
-      } catch (err) {
-        json(res, 500, { ok: false, error: { code: "DISCOVER_IMPORT_ERROR", message: err instanceof Error ? err.message : String(err) } });
-      }
+          job.phase = "Recepten ophalen";
+          job.total = toFetch.length;
+          job.processed = 0;
+
+          const recipes = [];
+          for (let i = 0; i < toFetch.length; i++) {
+            const slug = toFetch[i];
+            job.currentItem = slug;
+            try {
+              const requestUrl = buildPgEndpointUrl(config, "recipe", { recipeId: slug });
+              const raw = await fetchPgJson({ requestUrl, entityType: "pg.recipe", variables: { recipeId: slug } }, config);
+              const recipe = normalizePgRecipePayload(raw, {
+                importedAt: new Date().toISOString(),
+                sourceUrl: requestUrl,
+              });
+              if (recipe.recipeId.trim().length > 0) {
+                recipes.push(recipe);
+              } else {
+                job.errors.push(`${slug}: geen recipeId in response`);
+              }
+            } catch (error) {
+              job.errors.push(`${slug}: ${error instanceof Error ? error.message : String(error)}`);
+            }
+
+            // Batch-persist elke 50 recepten
+            if (recipes.length > 0 && recipes.length % 50 === 0) {
+              goldReadService.upsertRecipes(recipes.splice(0));
+            }
+
+            job.processed = i + 1;
+            if (i < toFetch.length - 1) {
+              await sleep(PG_RECIPE_FETCH_DELAY_MS);
+            }
+          }
+
+          // Persist resterende recepten
+          if (recipes.length > 0) {
+            goldReadService.upsertRecipes(recipes);
+          }
+
+          completeJob(job, {
+            ...job.meta,
+            imported: toFetch.length - job.errors.length,
+          });
+        } catch (err) {
+          failJob(job, err);
+        }
+      })();
+
+      json(res, 200, { ok: true, data: { jobId: job.jobId } });
       return;
     }
 

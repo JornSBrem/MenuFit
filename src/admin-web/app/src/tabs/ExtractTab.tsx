@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import type { AdminAsyncViewState, AdminExtractViewData, IngestJobStatus, SystemJobRecord } from "@lib/types.ts";
+import type { AdminAsyncViewState, AdminExtractViewData, BackgroundJob, SystemJobRecord } from "@lib/types.ts";
 import type { AdminDashboardController } from "@lib/admin-dashboard-controller.ts";
 import { card, section, table, th, td, btn, btnDanger, emptyMsg, fieldset, label, input } from "./shared-styles.ts";
 
@@ -60,46 +60,60 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
 
   const data = viewState.data;
   const activeIngestJob = data?.activeIngestJob;
+  const activeBackgroundJob = data?.activeBackgroundJob;
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bgPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Start/stop polling op basis van activeIngestJob
+  // Generieke polling helper
+  const useJobPolling = (
+    job: BackgroundJob | undefined,
+    ref: React.MutableRefObject<ReturnType<typeof setInterval> | null>,
+    pollFn: (jobId: string) => Promise<unknown>,
+  ) => {
+    useEffect(() => {
+      if (!job || job.status !== "running") {
+        if (ref.current) { clearInterval(ref.current); ref.current = null; }
+        return;
+      }
+      if (ref.current) return;
+      ref.current = setInterval(() => {
+        void pollFn(job.jobId).then(() => { onStateChange(); });
+      }, 1000);
+      return () => { if (ref.current) { clearInterval(ref.current); ref.current = null; } };
+    }, [job?.jobId, job?.status]);
+  };
+
+  // Poll ingest jobs
+  useJobPolling(activeIngestJob, pollingRef, (jobId) => controller.getIngestStatus(jobId));
+
+  // Toon resultaat wanneer ingest klaar is
   useEffect(() => {
-    if (!activeIngestJob || activeIngestJob.status !== "running") {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
+    if (activeIngestJob && activeIngestJob.status !== "running") {
+      setIngestBusy(false);
+      const meta = activeIngestJob.meta as Record<string, unknown> | undefined;
+      if (activeIngestJob.status === "completed") {
+        setSuccessMsg(`Ingest klaar: ${meta?.goldProjected ?? 0} gold-records, ${meta?.tasksRan ?? 0} taken. ${activeIngestJob.errors.length > 0 ? `(${activeIngestJob.errors.length} waarschuwingen)` : ""}`);
+      } else if (activeIngestJob.status === "failed") {
+        setErrorMsg(`Ingest mislukt: ${activeIngestJob.errors[0] ?? "onbekende fout"}`);
       }
-      return;
     }
-    if (pollingRef.current) return; // al aan het pollen
-    pollingRef.current = setInterval(() => {
-      void controller.getIngestStatus(activeIngestJob.jobId).then((nextState) => {
-        onStateChange();
-        const job = nextState.views.extract.data?.activeIngestJob;
-        if (job && job.status !== "running") {
-          // Klaar of mislukt — stop polling en toon resultaat
-          if (pollingRef.current) {
-            clearInterval(pollingRef.current);
-            pollingRef.current = null;
-          }
-          setIngestBusy(false);
-          if (job.status === "completed") {
-            setSuccessMsg(
-              `Ingest klaar: ${job.goldProjected ?? 0} gold-records, ${job.tasksRan ?? 0} taken. ${job.errors.length > 0 ? `(${job.errors.length} waarschuwingen)` : ""}`,
-            );
-          } else {
-            setErrorMsg(`Ingest mislukt: ${job.errors[0] ?? "onbekende fout"}`);
-          }
-        }
-      });
-    }, 1000);
-    return () => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
+  }, [activeIngestJob?.status]);
+
+  // Poll background jobs (discover-recipes, etc.)
+  useJobPolling(activeBackgroundJob, bgPollingRef, (jobId) => controller.getJobStatus(jobId));
+
+  // Toon resultaat wanneer background job klaar is
+  useEffect(() => {
+    if (activeBackgroundJob && activeBackgroundJob.status !== "running") {
+      setDiscoverRecipesBusy(false);
+      const meta = activeBackgroundJob.meta as Record<string, unknown> | undefined;
+      if (activeBackgroundJob.status === "completed") {
+        setSuccessMsg(`Recepten: ${meta?.discovered ?? "?"} ontdekt, ${meta?.imported ?? "?"} nieuw, ${meta?.skipped ?? "?"} overgeslagen (${activeBackgroundJob.errors.length} fouten).`);
+      } else if (activeBackgroundJob.status === "failed") {
+        setErrorMsg(`Mislukt: ${activeBackgroundJob.errors[0] ?? "onbekende fout"}`);
       }
-    };
-  }, [activeIngestJob?.jobId, activeIngestJob?.status]);
+    }
+  }, [activeBackgroundJob?.status]);
 
   /** Geeft true als de extract-view in de staat een fout heeft. StatusBanner toont die fout al. */
   const extractHasError = (state: { views: { extract: { status: string } } }): boolean =>
@@ -296,17 +310,11 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     setSuccessMsg(null);
     setErrorMsg(null);
     try {
-      const nextState = await controller.discoverAndImportRecipes();
+      await controller.discoverAndImportRecipes();
       onStateChange();
-      const result = nextState.views.extract.data?.discoverRecipesResult;
-      if (result) {
-        setSuccessMsg(
-          `Recepten: ${result.discovered} ontdekt via sitemap, ${result.imported} nieuw geïmporteerd, ${result.skipped} overgeslagen (${result.errors.length} fouten).`,
-        );
-      }
+      // Polling wordt automatisch opgestart via useJobPolling
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Recepten ontdekken/importeren mislukt.");
-    } finally {
       setDiscoverRecipesBusy(false);
     }
   };
@@ -506,12 +514,10 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
             Laatste receptingest: {data.ingestRecipeWebResult.withData}/{data.ingestRecipeWebResult.fetched} recepten met data
           </p>
         )}
-        {data?.discoverRecipesResult && (
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#0a6d3a" }}>
-            Laatste discovery: {data.discoverRecipesResult.discovered} in sitemap, {data.discoverRecipesResult.imported} nieuw, {data.discoverRecipesResult.skipped} al aanwezig
-          </p>
-        )}
       </div>
+
+      {/* Background job voortgang (discover-recipes, etc.) */}
+      {activeBackgroundJob && <JobProgress job={activeBackgroundJob} />}
 
       {/* Jobs list */}
       <div style={card}>
@@ -551,28 +557,31 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
   );
 }
 
-// ---- IngestProgress component ----------------------------------------------
+// ---- JobProgress component (generiek voor alle background jobs) -------------
 
-function IngestProgress({ job }: { job: IngestJobStatus }) {
+const JOB_TYPE_LABELS: Record<string, string> = {
+  "ingest": "Ingest",
+  "discover-recipes": "Recepten ophalen",
+};
+
+function formatEta(startedAt: string, processed: number, total: number): string {
+  if (processed <= 0 || total <= 0) return "";
+  const elapsed = Date.now() - new Date(startedAt).getTime();
+  const msPerItem = elapsed / processed;
+  const remaining = (total - processed) * msPerItem;
+  if (remaining < 60_000) return `~${Math.ceil(remaining / 1000)}s`;
+  if (remaining < 3600_000) return `~${Math.ceil(remaining / 60_000)} min`;
+  return `~${(remaining / 3600_000).toFixed(1)} uur`;
+}
+
+function JobProgress({ job }: { job: BackgroundJob }) {
   const isRunning = job.status === "running";
   const isDone = job.status === "completed";
   const isFailed = job.status === "failed";
 
-  // Bepaal voortgang op basis van fase
-  let pct = 0;
-  let phaseLabel = "";
-  if (job.phase === "fetching") {
-    pct = job.totalFetches > 0 ? Math.round((job.fetched / job.totalFetches) * 50) : 0;
-    phaseLabel = `Ophalen: ${job.fetched} / ${job.totalFetches} unieke URL's`;
-  } else if (job.phase === "processing") {
-    pct = 50 + (job.totalProcessing > 0 ? Math.round((job.processed / job.totalProcessing) * 50) : 0);
-    phaseLabel = `Verwerken: ${job.processed} / ${job.totalProcessing} week×kcal combinaties`;
-  } else if (job.phase === "done") {
-    pct = 100;
-    phaseLabel = isDone
-      ? `Klaar — ${job.goldProjected ?? 0} gold-records, ${job.tasksRan ?? 0} taken`
-      : `Mislukt`;
-  }
+  const pct = job.total > 0 ? Math.round((job.processed / job.total) * 100) : (isDone ? 100 : 0);
+  const eta = isRunning ? formatEta(job.startedAt, job.processed, job.total) : "";
+  const typeLabel = JOB_TYPE_LABELS[job.jobType] ?? job.jobType;
 
   const barColor = isFailed ? "#c00" : isDone ? "#0a6d3a" : "#0071e3";
 
@@ -584,7 +593,7 @@ function IngestProgress({ job }: { job: IngestJobStatus }) {
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <strong style={{ fontSize: 14, color: barColor }}>
-          {isRunning ? "⏳ Ingest bezig…" : isDone ? "✅ Ingest voltooid" : "❌ Ingest mislukt"}
+          {isRunning ? `⏳ ${typeLabel} bezig…` : isDone ? `✅ ${typeLabel} voltooid` : `❌ ${typeLabel} mislukt`}
         </strong>
         <span style={{ fontSize: 12, color: "#6e6e73" }}>
           {new Date(job.startedAt).toLocaleTimeString("nl-NL")}
@@ -603,8 +612,12 @@ function IngestProgress({ job }: { job: IngestJobStatus }) {
         }} />
       </div>
 
-      <div style={{ fontSize: 12, color: "#3a3a3c", marginBottom: 4 }}>
-        {phaseLabel}
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#3a3a3c", marginBottom: 4 }}>
+        <span>
+          {job.phase}{job.total > 0 ? `: ${job.processed} / ${job.total}` : ""}
+          {job.currentItem ? ` — ${job.currentItem}` : ""}
+        </span>
+        {eta && <span style={{ color: "#6e6e73" }}>ETA: {eta}</span>}
       </div>
 
       {job.errors.length > 0 && (
@@ -620,6 +633,9 @@ function IngestProgress({ job }: { job: IngestJobStatus }) {
     </div>
   );
 }
+
+/** @deprecated Backwards-compat alias */
+const IngestProgress = JobProgress;
 
 const successBanner = {
   background: "#f0fff4",

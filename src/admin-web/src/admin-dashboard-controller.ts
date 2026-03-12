@@ -15,7 +15,7 @@ import type {
   DeleteMappingOverrideRequest,
   EetmeterCredentialsRequest,
   EetmeterViewData,
-  DiscoverAndImportRecipesResult,
+  BackgroundJob,
   IngestRecipeWebResult,
   ReprocessFromBronzeResult,
   DeleteRecipeRequest,
@@ -26,7 +26,6 @@ import type {
   HouseholdInviteResendRequest,
   HouseholdOperationsStatus,
   HouseholdSessionResetRequest,
-  IngestJobStatus,
   IngestRequest,
   PgDiscoverResult,
   PgLoginRequest,
@@ -74,10 +73,11 @@ export interface AdminDashboardApi {
   diagnoseUserSession(subjectId: string): Promise<ApiEnvelope<UserSessionDiagnostic>>;
   pgLogin(body: PgLoginRequest): Promise<ApiEnvelope<PgLoginResult>>;
   pgDiscover(year?: number): Promise<ApiEnvelope<PgDiscoverResult>>;
-  getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>>;
+  getIngestStatus(jobId: string): Promise<ApiEnvelope<BackgroundJob>>;
+  getJobStatus(jobId: string): Promise<ApiEnvelope<BackgroundJob>>;
   reprocessFromBronze(): Promise<ApiEnvelope<ReprocessFromBronzeResult>>;
   ingestRecipeWeb(): Promise<ApiEnvelope<IngestRecipeWebResult>>;
-  discoverAndImportRecipes(): Promise<ApiEnvelope<DiscoverAndImportRecipesResult>>;
+  discoverAndImportRecipes(): Promise<ApiEnvelope<{ jobId: string }>>;
   getEetmeterDag(datum?: string): Promise<ApiEnvelope<EetmeterViewData>>;
   eetmeterLogin(body: EetmeterCredentialsRequest): Promise<ApiEnvelope<{ isIngelogd: boolean }>>;
 }
@@ -280,15 +280,14 @@ export class AdminDashboardController {
     try {
       const report = this.unwrapEnvelope(await this.api.runIngest(body));
       // Sla het jobId op in de extract-view zodat de UI kan pollen
-      const activeIngestJob: IngestJobStatus | undefined = report.jobId
+      const activeIngestJob: BackgroundJob | undefined = report.jobId
         ? {
             jobId: report.jobId,
+            jobType: "ingest",
             status: "running",
-            phase: "fetching",
-            fetched: 0,
-            totalFetches: 0,
+            phase: "Starten",
             processed: 0,
-            totalProcessing: 0,
+            total: 0,
             errors: [],
             startedAt: new Date().toISOString(),
           }
@@ -319,6 +318,23 @@ export class AdminDashboardController {
       });
     } catch {
       // Negeer poll-fouten — de UI blijft proberen
+    }
+    return this.getState();
+  }
+
+  async getJobStatus(jobId: string): Promise<AdminDashboardUiState> {
+    try {
+      const status = this.unwrapEnvelope(await this.api.getJobStatus(jobId));
+      const previous = this.state.views.extract.data;
+      this.state.views.extract = createSuccessView({
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: previous?.pgDiscoverResult,
+        activeIngestJob: previous?.activeIngestJob,
+        activeBackgroundJob: status,
+      });
+    } catch {
+      // Negeer poll-fouten
     }
     return this.getState();
   }
@@ -635,15 +651,13 @@ export class AdminDashboardController {
 
   async discoverAndImportRecipes(): Promise<AdminDashboardUiState> {
     const previous = this.state.views.extract.data;
-    this.state.views.extract = createLoadingView(previous);
     try {
       const result = this.unwrapEnvelope(await this.api.discoverAndImportRecipes());
       this.state.views.extract = createSuccessView({
         jobs: previous?.jobs ?? [],
         pgLoginStatus: previous?.pgLoginStatus,
         pgDiscoverResult: previous?.pgDiscoverResult,
-        ingestRecipeWebResult: previous?.ingestRecipeWebResult,
-        discoverRecipesResult: result,
+        activeBackgroundJob: { jobId: result.jobId, jobType: "discover-recipes", status: "running", phase: "Starten", processed: 0, total: 0, errors: [], startedAt: new Date().toISOString() },
       });
     } catch (error) {
       this.state.views.extract = createErrorView(toAdminApiError(error), previous);

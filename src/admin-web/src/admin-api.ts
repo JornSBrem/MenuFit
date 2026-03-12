@@ -3,7 +3,7 @@ import type {
   AdminOperationReport,
   AdminRecipeRecord,
   AdminSession,
-  DiscoverAndImportRecipesResult,
+  BackgroundJob,
   IngestRecipeWebResult,
   ReprocessFromBronzeResult,
   AdminWeekMenuRecord,
@@ -21,7 +21,6 @@ import type {
   HouseholdInviteResendRequest,
   HouseholdOperationsStatus,
   HouseholdSessionResetRequest,
-  IngestJobStatus,
   IngestRequest,
   PgDiscoverResult,
   PgLoginRequest,
@@ -77,11 +76,15 @@ export class AdminApiClient {
     return this.post("/api/v3/admin/ingest-recipe-web", {});
   }
 
-  discoverAndImportRecipes(): Promise<ApiEnvelope<DiscoverAndImportRecipesResult>> {
+  discoverAndImportRecipes(): Promise<ApiEnvelope<{ jobId: string }>> {
     return this.post("/api/v3/admin/discover-and-import-recipes", {});
   }
 
-  getIngestStatus(jobId: string): Promise<ApiEnvelope<IngestJobStatus>> {
+  getJobStatus(jobId: string): Promise<ApiEnvelope<BackgroundJob>> {
+    return this.get(`/api/v3/admin/job-status/${jobId}`);
+  }
+
+  getIngestStatus(jobId: string): Promise<ApiEnvelope<BackgroundJob>> {
     return this.get(`/api/v3/admin/ingest-status/${jobId}`);
   }
 

@@ -215,12 +215,24 @@ const createApi = (
     ok: true,
     data: {
       jobId: "job-1",
+      jobType: "ingest",
       status: "completed" as const,
-      phase: "done" as const,
-      fetched: 0,
-      totalFetches: 0,
+      phase: "Klaar",
       processed: 0,
-      totalProcessing: 0,
+      total: 0,
+      errors: [],
+      startedAt: "2026-02-25T00:00:00.000Z",
+    },
+  }),
+  getJobStatus: async () => ({
+    ok: true,
+    data: {
+      jobId: "job-2",
+      jobType: "discover-recipes",
+      status: "completed" as const,
+      phase: "Klaar",
+      processed: 0,
+      total: 0,
       errors: [],
       startedAt: "2026-02-25T00:00:00.000Z",
     },
@@ -232,6 +244,10 @@ const createApi = (
   ingestRecipeWeb: async () => ({
     ok: true,
     data: { totalRecipes: 50, fetched: 48, withData: 45, errors: [] },
+  }),
+  discoverAndImportRecipes: async () => ({
+    ok: true,
+    data: { jobId: "discover-recipes-1" },
   }),
   ...overrides,
 });

@@ -119,39 +119,31 @@ export interface IngestRecipeWebResult {
   errors: string[];
 }
 
-export interface DiscoverAndImportRecipesResult {
-  discovered: number;
-  source: string;
-  totalSlugs: number;
-  skipped: number;
-  fetched: number;
-  imported: number;
-  errors: string[];
-}
-
-export interface IngestJobStatus {
+export interface BackgroundJob {
   jobId: string;
+  jobType: string;
   status: "running" | "completed" | "failed";
-  phase: "fetching" | "processing" | "done";
-  fetched: number;
-  totalFetches: number;
+  phase: string;
   processed: number;
-  totalProcessing: number;
+  total: number;
+  currentItem?: string;
   errors: string[];
   startedAt: string;
   finishedAt?: string;
-  tasksRan?: number;
-  goldProjected?: number;
+  meta?: Record<string, unknown>;
 }
+
+/** @deprecated Use BackgroundJob instead */
+export type IngestJobStatus = BackgroundJob;
 
 export interface AdminExtractViewData {
   jobs: SystemJobRecord[];
   pgLoginStatus?: PgLoginStatus;
   pgDiscoverResult?: PgDiscoverResult;
-  activeIngestJob?: IngestJobStatus;
+  activeIngestJob?: BackgroundJob;
+  activeBackgroundJob?: BackgroundJob;
   reprocessResult?: ReprocessFromBronzeResult;
   ingestRecipeWebResult?: IngestRecipeWebResult;
-  discoverRecipesResult?: DiscoverAndImportRecipesResult;
 }
 
 export interface AdminOperationsViewData {
