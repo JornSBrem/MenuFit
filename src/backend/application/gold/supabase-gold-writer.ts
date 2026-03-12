@@ -78,11 +78,16 @@ export class PsqlSupabaseGoldWriter implements SupabaseGoldWriter {
 
     const result = spawnSync("psql", [this.connectionString, "-v", "ON_ERROR_STOP=1"], {
       input: sql,
-      stdio: ["pipe", "inherit", "inherit"],
+      stdio: ["pipe", "pipe", "pipe"],
       encoding: "utf8",
     });
+    if (result.error) {
+      throw new Error(`Supabase gold sync: psql niet gevonden of kon niet starten: ${result.error.message}`);
+    }
     if (result.status !== 0) {
-      throw new Error(`Supabase gold sync failed with status ${result.status ?? "unknown"}.`);
+      const stderr = (result.stderr ?? "").trim();
+      const detail = stderr.length > 0 ? stderr.slice(0, 500) : "(geen details)";
+      throw new Error(`Supabase gold sync failed (exit ${result.status ?? "?"}): ${detail}`);
     }
   }
 }
