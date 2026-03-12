@@ -92,18 +92,28 @@ const aggregateGroceries = (
     }));
 };
 
+const RECONCILE_SEVERITY: Record<string, number> = {
+  missing_in_pdf: 3,
+  missing_in_computed: 2,
+  partial: 1,
+  matched: 0,
+};
+
 const buildReconcile = (
   input: GoldProjectionInput,
 ): GoldGroceryReconcileView[] => {
   const canonicalByRaw = buildCanonicalMap(input.silver.ingredientsCanonical);
+  const map = new Map<string, GoldGroceryReconcileView>();
 
-  return input.silver.reconcileResults
-    .map((row) => ({
-      canonicalName: canonicalByRaw.get(row.rawId) ?? row.rawId,
-      reconcileStatus: row.reconcileStatus,
-      note: row.note,
-    }))
-    .sort((a, b) => a.canonicalName.localeCompare(b.canonicalName));
+  for (const row of input.silver.reconcileResults) {
+    const canonicalName = canonicalByRaw.get(row.rawId) ?? row.rawId;
+    const existing = map.get(canonicalName);
+    if (!existing || (RECONCILE_SEVERITY[row.reconcileStatus] ?? 0) > (RECONCILE_SEVERITY[existing.reconcileStatus] ?? 0)) {
+      map.set(canonicalName, { canonicalName, reconcileStatus: row.reconcileStatus, note: row.note });
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.canonicalName.localeCompare(b.canonicalName));
 };
 
 export const projectSilverToGold = (input: GoldProjectionInput): GoldReadModel => {

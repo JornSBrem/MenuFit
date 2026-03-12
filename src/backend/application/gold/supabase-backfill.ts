@@ -255,13 +255,15 @@ values (${sqlString(model.weekPlan.weekPlanId)}, ${model.weekPlan.year}, ${model
     for (const grocery of model.groceries) {
       lines.push(
         `insert into public.menufit_gold_groceries (week_plan_id, canonical_name, total_amount, unit, requires_review, category)
-values (${sqlString(model.weekPlan.weekPlanId)}, ${sqlString(grocery.canonicalName)}, ${sqlNullable(grocery.totalAmount)}, ${sqlNullable(grocery.unit)}, ${grocery.requiresReview ? "true" : "false"}, ${sqlNullable(grocery.category)});`,
+values (${sqlString(model.weekPlan.weekPlanId)}, ${sqlString(grocery.canonicalName)}, ${sqlNullable(grocery.totalAmount)}, ${sqlNullable(grocery.unit)}, ${grocery.requiresReview ? "true" : "false"}, ${sqlNullable(grocery.category)})
+on conflict (week_plan_id, canonical_name) do nothing;`,
       );
     }
     for (const reconcile of model.groceryReconcile) {
       lines.push(
         `insert into public.menufit_gold_grocery_reconcile (week_plan_id, canonical_name, reconcile_status, note)
-values (${sqlString(model.weekPlan.weekPlanId)}, ${sqlString(reconcile.canonicalName)}, ${sqlString(reconcile.reconcileStatus)}, ${sqlNullable(reconcile.note)});`,
+values (${sqlString(model.weekPlan.weekPlanId)}, ${sqlString(reconcile.canonicalName)}, ${sqlString(reconcile.reconcileStatus)}, ${sqlNullable(reconcile.note)})
+on conflict (week_plan_id, canonical_name) do nothing;`,
       );
     }
     lines.push(

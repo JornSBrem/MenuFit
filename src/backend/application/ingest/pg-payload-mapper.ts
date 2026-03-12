@@ -149,21 +149,88 @@ const extractRecipeName = (html: string): string | undefined => {
     .replace(/^\w/, (c) => c.toUpperCase()) || undefined;
 };
 
+/** Bekende eenheden die tussen hoeveelheid en productnaam staan */
+const KNOWN_UNITS = new Set([
+  "gram", "g", "gr", "kg",
+  "ml", "l", "dl", "cl",
+  "el", "tl",
+  "stuk", "stuks", "teen", "plak", "plakken", "plakje", "plakjes",
+  "blikje", "blik", "pot", "potje",
+  "zakje", "zak", "fles",
+  "schijf", "schijfje", "schijfjes",
+  "snufje", "takje", "takjes",
+  "eetlepel", "eetlepels", "theelepel", "theelepels",
+  "handvol", "bosje",
+]);
+
+/**
+ * Splitst een ingrediënttekst in hoeveelheid, eenheid en productnaam.
+ * Voorbeelden:
+ *   "1 appel"           → { text: "appel", amount: "1" }
+ *   "200 gram gehakt"   → { text: "gehakt", amount: "200", unit: "gram" }
+ *   "½ avocado"         → { text: "avocado", amount: "0.5" }
+ *   "peper naar smaak"  → { text: "peper naar smaak" }
+ */
+const parseIngredientText = (raw: string): { text: string; amount?: string; unit?: string } => {
+  const trimmed = raw.trim();
+
+  // Patroon: optioneel getal (met fractie-tekens) + optioneel eenheid + productnaam
+  const match = /^(\d+[½¼¾]?|[½¼¾]|\d+[.,]\d+|\d+\/\d+)\s*(.*)$/.exec(trimmed);
+  if (!match) {
+    return { text: trimmed };
+  }
+
+  let amountStr = match[1]
+    .replace("½", ".5")
+    .replace("¼", ".25")
+    .replace("¾", ".75");
+
+  // Fractie-notatie: "1/2" → "0.5"
+  if (amountStr.includes("/")) {
+    const [num, den] = amountStr.split("/");
+    const frac = parseFloat(num) / parseFloat(den);
+    if (Number.isFinite(frac)) amountStr = String(frac);
+  }
+
+  // Combinatie: "1.5" of "1,5"
+  amountStr = amountStr.replace(",", ".");
+
+  const rest = match[2].trim();
+  if (!rest) {
+    return { text: trimmed };
+  }
+
+  // Kijk of het eerste woord van rest een bekende eenheid is
+  const spaceIdx = rest.indexOf(" ");
+  if (spaceIdx > 0) {
+    const firstWord = rest.slice(0, spaceIdx).toLowerCase();
+    if (KNOWN_UNITS.has(firstWord)) {
+      const product = rest.slice(spaceIdx + 1).trim();
+      if (product.length > 0) {
+        return { text: product, amount: amountStr, unit: firstWord };
+      }
+    }
+  }
+
+  // Geen eenheid gevonden → getal is hoeveelheid, rest is product
+  return { text: rest, amount: amountStr };
+};
+
 /**
  * Converteert moment-HTML naar een lijst van ingrediëntteksten.
  * Elke <p> is één ingrediënt; links worden gereduceerd tot hun tekst.
  * Blokken met een receptlink (href="/recepten/...") worden overgeslagen —
  * dat is de receptnaam, geen ingrediënt.
  */
-const extractIngredients = (html: string): Array<{ text: string }> => {
+const extractIngredients = (html: string): Array<{ text: string; amount?: string; unit?: string }> => {
   const blocks = html.split(/<\/p>/i);
-  const ingredients: Array<{ text: string }> = [];
+  const ingredients: Array<{ text: string; amount?: string; unit?: string }> = [];
   for (const block of blocks) {
     // Sla blokken over die een receptlink bevatten (dit is de receptnaam, geen ingrediënt)
     if (/href="\/recepten\//i.test(block)) continue;
     const stripped = stripHtml(block.replace(/<p[^>]*>/i, "")).trim();
     if (stripped.length > 0) {
-      ingredients.push({ text: stripped });
+      ingredients.push(parseIngredientText(stripped));
     }
   }
   return ingredients;
