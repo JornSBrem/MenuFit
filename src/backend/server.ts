@@ -41,6 +41,7 @@ import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
 import { normalizePgRecipePayload } from "./integrations/pg/pg-recipe-normalizer.ts";
 import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
 import { discoverPgRecipeSlugs } from "./integrations/pg/pg-recipe-discover.ts";
+import { fetchPgRecipeFromHtml } from "./integrations/pg/pg-recipe-html-scraper.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
 import { createPersistentStateStore } from "./application/config/create-persistent-state-store.ts";
 import {
@@ -381,7 +382,22 @@ async function importRecipesBySlugs(slugs: string[], options?: {
         errors.push(`${slug}: geen recipeId in response`);
       }
     } catch (error) {
-      errors.push(`${slug}: ${error instanceof Error ? error.message : String(error)}`);
+      const msg = error instanceof Error ? error.message : String(error);
+      // Bij 404: probeer HTML scraping als fallback
+      if (msg.includes("(404)")) {
+        try {
+          const recipe = await fetchPgRecipeFromHtml(slug);
+          if (recipe.recipeId.trim().length > 0) {
+            recipes.push(recipe);
+          } else {
+            errors.push(`${slug}: geen recipeId via HTML scraping`);
+          }
+        } catch (htmlError) {
+          errors.push(`${slug}: ${htmlError instanceof Error ? htmlError.message : String(htmlError)}`);
+        }
+      } else {
+        errors.push(`${slug}: ${msg}`);
+      }
     }
 
     // Batch-persist elke 50 recepten (voorkomt verlies bij crash)
@@ -1739,6 +1755,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           job.processed = 0;
 
           const recipes = [];
+          let notFound = 0;
           for (let i = 0; i < toFetch.length; i++) {
             const slug = toFetch[i];
             job.currentItem = slug;
@@ -1755,7 +1772,22 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
                 job.errors.push(`${slug}: geen recipeId in response`);
               }
             } catch (error) {
-              job.errors.push(`${slug}: ${error instanceof Error ? error.message : String(error)}`);
+              const msg = error instanceof Error ? error.message : String(error);
+              // Bij 404: probeer HTML scraping als fallback
+              if (msg.includes("(404)")) {
+                try {
+                  const recipe = await fetchPgRecipeFromHtml(slug);
+                  if (recipe.recipeId.trim().length > 0) {
+                    recipes.push(recipe);
+                  } else {
+                    job.errors.push(`${slug}: geen recipeId via HTML scraping`);
+                  }
+                } catch (htmlError) {
+                  job.errors.push(`${slug}: ${htmlError instanceof Error ? htmlError.message : String(htmlError)}`);
+                }
+              } else {
+                job.errors.push(`${slug}: ${msg}`);
+              }
             }
 
             // Batch-persist elke 50 recepten
@@ -1776,7 +1808,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
           completeJob(job, {
             ...job.meta,
-            imported: toFetch.length - job.errors.length,
+            imported: recipes.length,
           });
         } catch (err) {
           failJob(job, err);
