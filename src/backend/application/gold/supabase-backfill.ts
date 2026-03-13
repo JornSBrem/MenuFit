@@ -167,7 +167,8 @@ function collectRecipes(state: PersistentAppState): SqlRecipeRow[] {
 function renderMealInserts(meals: GoldMealView[], weekPlanId: string): string[] {
   return meals.map((meal, index) =>
     `insert into public.menufit_gold_meals (meal_id, week_plan_id, recipe_id, day_label, meal_label, recipe_name, image_url, kcal, sort_order)
-values (${sqlString(meal.mealId)}, ${sqlString(weekPlanId)}, ${sqlNullable(meal.recipeId)}, ${sqlString(meal.dayLabel)}, ${sqlString(meal.mealLabel)}, ${sqlNullable(meal.recipeName)}, ${sqlNullable(meal.imageUrl)}, ${sqlNullable(meal.kcal)}, ${index});`,
+values (${sqlString(meal.mealId)}, ${sqlString(weekPlanId)}, ${sqlNullable(meal.recipeId)}, ${sqlString(meal.dayLabel)}, ${sqlString(meal.mealLabel)}, ${sqlNullable(meal.recipeName)}, ${sqlNullable(meal.imageUrl)}, ${sqlNullable(meal.kcal)}, ${index})
+on conflict do nothing;`,
   );
 }
 
@@ -200,48 +201,56 @@ export function buildSupabaseGoldBackfillSql(
   for (const recipe of recipes) {
     lines.push(
       `insert into public.menufit_gold_recipes (recipe_id, slug, name, image_url, kcal, intro, ingredients_relates_to, nutrients_relates_to, imported_at, source_url)
-values (${sqlString(recipe.recipeId)}, ${sqlNullable(recipe.slug)}, ${sqlString(recipe.name)}, ${sqlNullable(recipe.imageUrl)}, ${sqlNullable(recipe.kcal)}, ${sqlNullable(recipe.intro)}, ${sqlNullable(recipe.ingredientsRelatesTo)}, ${sqlNullable(recipe.nutrientsRelatesTo)}, ${sqlNullable(recipe.importedAt)}, ${sqlNullable(recipe.sourceUrl)});`,
+values (${sqlString(recipe.recipeId)}, ${sqlNullable(recipe.slug)}, ${sqlString(recipe.name)}, ${sqlNullable(recipe.imageUrl)}, ${sqlNullable(recipe.kcal)}, ${sqlNullable(recipe.intro)}, ${sqlNullable(recipe.ingredientsRelatesTo)}, ${sqlNullable(recipe.nutrientsRelatesTo)}, ${sqlNullable(recipe.importedAt)}, ${sqlNullable(recipe.sourceUrl)})
+on conflict (recipe_id) do update set slug = excluded.slug, name = excluded.name, image_url = excluded.image_url, kcal = excluded.kcal, intro = excluded.intro, ingredients_relates_to = excluded.ingredients_relates_to, nutrients_relates_to = excluded.nutrients_relates_to, imported_at = excluded.imported_at, source_url = excluded.source_url;`,
     );
 
     for (const tag of [...new Set(recipe.tags)]) {
       lines.push(
-        `insert into public.menufit_gold_recipe_tags (recipe_id, tag) values (${sqlString(recipe.recipeId)}, ${sqlString(tag)});`,
+        `insert into public.menufit_gold_recipe_tags (recipe_id, tag) values (${sqlString(recipe.recipeId)}, ${sqlString(tag)})
+on conflict do nothing;`,
       );
     }
     recipe.prepTimes.forEach((prepTime, index) => {
       lines.push(
         `insert into public.menufit_gold_recipe_prep_times (recipe_id, ordinal, label, amount, unit)
-values (${sqlString(recipe.recipeId)}, ${index}, ${sqlString(prepTime.label)}, ${sqlNullable(prepTime.amount)}, ${sqlNullable(prepTime.unit)});`,
+values (${sqlString(recipe.recipeId)}, ${index}, ${sqlString(prepTime.label)}, ${sqlNullable(prepTime.amount)}, ${sqlNullable(prepTime.unit)})
+on conflict do nothing;`,
       );
     });
     recipe.ingredients.forEach((ingredient, index) => {
       lines.push(
         `insert into public.menufit_gold_recipe_ingredients (recipe_id, ordinal, ingredient_text)
-values (${sqlString(recipe.recipeId)}, ${index}, ${sqlString(ingredient.text)});`,
+values (${sqlString(recipe.recipeId)}, ${index}, ${sqlString(ingredient.text)})
+on conflict do nothing;`,
       );
     });
     recipe.steps.forEach((step) => {
       lines.push(
         `insert into public.menufit_gold_recipe_steps (recipe_id, step_number, step_text)
-values (${sqlString(recipe.recipeId)}, ${step.step}, ${sqlString(step.text)});`,
+values (${sqlString(recipe.recipeId)}, ${step.step}, ${sqlString(step.text)})
+on conflict do nothing;`,
       );
     });
     recipe.tips.forEach((tip, index) => {
       lines.push(
         `insert into public.menufit_gold_recipe_tips (recipe_id, ordinal, tip_text)
-values (${sqlString(recipe.recipeId)}, ${index}, ${sqlString(tip.text)});`,
+values (${sqlString(recipe.recipeId)}, ${index}, ${sqlString(tip.text)})
+on conflict do nothing;`,
       );
     });
     recipe.nutrition.forEach((nutrition) => {
       lines.push(
         `insert into public.menufit_gold_recipe_nutrition (recipe_id, code, label, amount, unit)
-values (${sqlString(recipe.recipeId)}, ${sqlString(nutrition.code)}, ${sqlString(nutrition.label)}, ${sqlNullable(nutrition.amount)}, ${sqlNullable(nutrition.unit)});`,
+values (${sqlString(recipe.recipeId)}, ${sqlString(nutrition.code)}, ${sqlString(nutrition.label)}, ${sqlNullable(nutrition.amount)}, ${sqlNullable(nutrition.unit)})
+on conflict do nothing;`,
       );
     });
     recipe.linkedDayMenus.forEach((linkedDayMenu) => {
       lines.push(
         `insert into public.menufit_gold_linked_day_menus (recipe_id, day_menu_id, slug, title, image_url, kcal_variants)
-values (${sqlString(recipe.recipeId)}, ${sqlString(linkedDayMenu.dayMenuId)}, ${sqlString(linkedDayMenu.slug)}, ${sqlString(linkedDayMenu.title)}, ${sqlNullable(linkedDayMenu.imageUrl)}, ${sqlIntArray(linkedDayMenu.kcalVariants)});`,
+values (${sqlString(recipe.recipeId)}, ${sqlString(linkedDayMenu.dayMenuId)}, ${sqlString(linkedDayMenu.slug)}, ${sqlString(linkedDayMenu.title)}, ${sqlNullable(linkedDayMenu.imageUrl)}, ${sqlIntArray(linkedDayMenu.kcalVariants)})
+on conflict do nothing;`,
       );
     });
   }
@@ -249,7 +258,8 @@ values (${sqlString(recipe.recipeId)}, ${sqlString(linkedDayMenu.dayMenuId)}, ${
   for (const model of Object.values(state.goldReadModels)) {
     lines.push(
       `insert into public.menufit_gold_week_plans (week_plan_id, year, week, kcal, base_persons, meal_count, source_object_id, transform_version, generated_at)
-values (${sqlString(model.weekPlan.weekPlanId)}, ${model.weekPlan.year}, ${model.weekPlan.week}, ${model.weekPlan.kcal}, ${model.weekPlan.basePersons}, ${model.weekPlan.mealCount}, ${sqlString(model.weekPlan.sourceObjectId)}, ${sqlString(model.weekPlan.transformVersion)}, ${sqlString(model.weekPlan.generatedAt)});`,
+values (${sqlString(model.weekPlan.weekPlanId)}, ${model.weekPlan.year}, ${model.weekPlan.week}, ${model.weekPlan.kcal}, ${model.weekPlan.basePersons}, ${model.weekPlan.mealCount}, ${sqlString(model.weekPlan.sourceObjectId)}, ${sqlString(model.weekPlan.transformVersion)}, ${sqlString(model.weekPlan.generatedAt)})
+on conflict (week_plan_id) do update set year = excluded.year, week = excluded.week, kcal = excluded.kcal, base_persons = excluded.base_persons, meal_count = excluded.meal_count, source_object_id = excluded.source_object_id, transform_version = excluded.transform_version, generated_at = excluded.generated_at;`,
     );
     lines.push(...renderMealInserts(model.meals, model.weekPlan.weekPlanId));
     for (const grocery of model.groceries) {
@@ -268,14 +278,16 @@ on conflict (week_plan_id, canonical_name) do nothing;`,
     }
     lines.push(
       `insert into public.menufit_gold_cart_plans (cart_plan_id, week_plan_id, item_count, unresolved_count, generated_at)
-values (${sqlString(model.cartPlan.cartPlanId)}, ${sqlString(model.cartPlan.weekPlanId)}, ${model.cartPlan.itemCount}, ${model.cartPlan.unresolvedCount}, ${sqlString(model.cartPlan.generatedAt)});`,
+values (${sqlString(model.cartPlan.cartPlanId)}, ${sqlString(model.cartPlan.weekPlanId)}, ${model.cartPlan.itemCount}, ${model.cartPlan.unresolvedCount}, ${sqlString(model.cartPlan.generatedAt)})
+on conflict (cart_plan_id) do update set item_count = excluded.item_count, unresolved_count = excluded.unresolved_count, generated_at = excluded.generated_at;`,
     );
   }
 
   lines.push("");
   lines.push(
     `insert into public.menufit_import_runs (import_run_id, source, mode, status, started_at, finished_at, actor_user_id, details)
-values (${sqlString(options.importRunId)}, ${sqlString(options.source ?? "local-state-backfill")}, 'backfill', 'completed', now(), now(), ${sqlNullable(options.actorUserId)}, jsonb_build_object('weekPlans', ${Object.keys(state.goldReadModels).length}, 'recipes', ${recipes.length}));`,
+values (${sqlString(options.importRunId)}, ${sqlString(options.source ?? "local-state-backfill")}, 'backfill', 'completed', now(), now(), ${sqlNullable(options.actorUserId)}, jsonb_build_object('weekPlans', ${Object.keys(state.goldReadModels).length}, 'recipes', ${recipes.length}))
+on conflict (import_run_id) do nothing;`,
   );
   lines.push("");
   lines.push("commit;");
