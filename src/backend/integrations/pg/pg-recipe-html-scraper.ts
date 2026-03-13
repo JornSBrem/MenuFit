@@ -15,6 +15,12 @@ import { stripHtml } from "./pg-recipe-normalizer.ts";
 
 const PG_FRONTEND = "https://projectgezond.nl";
 
+/** Decode numerieke en benoemde HTML entities die stripHtml niet dekt */
+const decodeHtmlEntities = (value: string): string =>
+  value
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+    .replace(/&amp;/g, "&");
+
 /** Haalt de eerste regex-match op uit de HTML */
 const extractFirst = (html: string, pattern: RegExp): string | undefined => {
   const match = pattern.exec(html);
@@ -69,9 +75,21 @@ const parseKcal = (html: string): number | undefined => {
 };
 
 const parseTags = (html: string): string[] => {
-  // Categories uit de badge links bovenaan
-  const tagPattern = /<a class="badge"[^>]*>([^<]+)<\/a>/g;
-  return extractAll(html, tagPattern);
+  // Categories uit de article CSS classes (meest betrouwbaar)
+  const articleMatch = html.match(/class="recipe[^"]*\bcategory-([^"]+)"/);
+  if (articleMatch) {
+    const classes = articleMatch[0];
+    const catPattern = /\bcategory-([a-z0-9-]+)/g;
+    const tags: string[] = [];
+    let match;
+    while ((match = catPattern.exec(classes)) !== null) {
+      // Converteer slug naar leesbare naam
+      const tag = match[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      tags.push(tag);
+    }
+    return [...new Set(tags)];
+  }
+  return [];
 };
 
 const parseIngredients = (html: string): GoldMealIngredient[] => {
@@ -115,7 +133,7 @@ const parseSteps = (html: string): GoldRecipeStep[] => {
   let match;
   let stepNum = 0;
   while ((match = stepPattern.exec(instructionsHtml)) !== null) {
-    const text = stripHtml(match[1]).trim();
+    const text = decodeHtmlEntities(stripHtml(match[1]).trim());
     if (text.length > 0) {
       stepNum++;
       steps.push({ step: stepNum, text });
@@ -136,7 +154,7 @@ const parseTips = (html: string): GoldRecipeTip[] => {
   const tips: GoldRecipeTip[] = [];
   let match;
   while ((match = tipPattern.exec(tipsHtml)) !== null) {
-    const text = stripHtml(match[1]).trim();
+    const text = decodeHtmlEntities(stripHtml(match[1]).trim());
     if (text.length > 0) {
       tips.push({ text });
     }
@@ -147,7 +165,7 @@ const parseTips = (html: string): GoldRecipeTip[] => {
 const parseDescription = (html: string): string | undefined => {
   const descMatch = html.match(/itemprop="description"[^>]*>([\s\S]*?)<\/div>/);
   if (!descMatch) return undefined;
-  const text = stripHtml(descMatch[1]).trim();
+  const text = decodeHtmlEntities(stripHtml(descMatch[1]).trim());
   return text.length > 0 ? text : undefined;
 };
 
@@ -201,22 +219,37 @@ const parseRecipeYield = (html: string): string | undefined => {
   return undefined;
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Haalt een recept op via de projectgezond.nl website en parsed de HTML.
  * Gooit een error als de pagina niet gevonden kan worden.
+ * Retry bij 429/503 met exponential backoff.
  */
 export const fetchPgRecipeFromHtml = async (slug: string): Promise<RecipeView> => {
   const url = `${PG_FRONTEND}/recepten/${slug}`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "text/html",
-      "User-Agent": "MenuFit/1.0",
-    },
-    redirect: "follow",
-  });
 
-  if (!response.ok) {
-    throw new Error(`HTML scrape failed (${response.status}) for ${url}`);
+  let response: Response | undefined;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(url, {
+      headers: {
+        Accept: "text/html",
+        "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)",
+      },
+      redirect: "follow",
+    });
+
+    if (response.status === 429 || response.status === 503) {
+      const retryAfter = response.headers.get("retry-after");
+      const waitMs = retryAfter ? parseFloat(retryAfter) * 1000 : (attempt + 1) * 10_000;
+      await sleep(waitMs);
+      continue;
+    }
+    break;
+  }
+
+  if (!response || !response.ok) {
+    throw new Error(`HTML scrape failed (${response?.status ?? "no response"}) for ${url}`);
   }
 
   const html = await response.text();

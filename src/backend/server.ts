@@ -274,7 +274,7 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 
 /** Milliseconden wachten tussen opeenvolgende PG API requests (rate limit) */
 const PG_FETCH_DELAY_MS = 4000;
-const PG_RECIPE_FETCH_DELAY_MS = 250;
+const PG_RECIPE_FETCH_DELAY_MS = 1000;
 
 /** Vaste kcal-varianten die de PG API altijd teruggeeft in één weekmenu-response */
 const PG_FIXED_KCALS = [1250, 1500, 1800, 2100];
