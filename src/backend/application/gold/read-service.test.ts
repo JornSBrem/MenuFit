@@ -301,3 +301,49 @@ test("gold read service mirrors writes to supabase writer when configured", () =
   assert.deepEqual(calls[0], { models: 1, recipes: 0 });
   assert.deepEqual(calls[1], { models: 1, recipes: 1 });
 });
+
+test("gold read service can enable supabase writer at runtime", () => {
+  const calls: Array<{ models: number; recipes: number }> = [];
+  const writer: SupabaseGoldWriter = {
+    syncAll(models, recipes) {
+      calls.push({ models: models.length, recipes: recipes.length });
+    },
+  };
+
+  const service = new GoldWeekReadService();
+  service.upsert({
+    weekPlan: {
+      weekPlanId: "weekplan-13",
+      year: 2026,
+      week: 13,
+      kcal: 1800,
+      basePersons: 2,
+      mealCount: 1,
+      sourceObjectId: "bronze-week-13",
+      transformVersion: "gold-v1",
+      generatedAt: "2026-03-13T00:00:00.000Z",
+    },
+    meals: [],
+    groceries: [],
+    groceryReconcile: [],
+    matchStatus: {
+      totalItems: 0,
+      resolvedItems: 0,
+      unresolvedItems: 0,
+      coverageScore: 1,
+    },
+    cartPlan: {
+      cartPlanId: "cartplan-13",
+      weekPlanId: "weekplan-13",
+      itemCount: 0,
+      unresolvedCount: 0,
+      generatedAt: "2026-03-13T00:00:00.000Z",
+    },
+  });
+  assert.equal(calls.length, 0);
+
+  service.setSupabaseGoldWriter(writer);
+  service.upsertRecipes([{ recipeId: "recipe-13", name: "Recept 13" }]);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], { models: 1, recipes: 1 });
+});

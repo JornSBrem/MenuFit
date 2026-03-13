@@ -141,22 +141,30 @@ const adminData = new AdminDataService({ auditTrail });
 const systemOps = new SystemOperationsService({ auditTrail });
 const householdService = new HouseholdService({ stateStore });
 const pushService = new PushNotificationService({ stateStore });
-const supabaseGoldDatabaseUrl = (config.get<string>("SUPABASE_GOLD_DATABASE_URL") || "").trim();
-const supabaseGoldSyncEnabled = Boolean(config.get<boolean>("SUPABASE_GOLD_SYNC_ENABLED") ?? false);
+
+const createSupabaseGoldWriterFromConfig = (): PsqlSupabaseGoldWriter | undefined => {
+  const supabaseGoldDatabaseUrl = (config.get<string>("SUPABASE_GOLD_DATABASE_URL") || "").trim();
+  const supabaseGoldSyncEnabled = Boolean(config.get<boolean>("SUPABASE_GOLD_SYNC_ENABLED") ?? false);
+  if (!supabaseGoldSyncEnabled || !supabaseGoldDatabaseUrl) {
+    return undefined;
+  }
+  return new PsqlSupabaseGoldWriter({
+    connectionString: supabaseGoldDatabaseUrl,
+  });
+};
+
 const goldReadService = new GoldWeekReadService({
   stateStore,
-  supabaseGoldWriter:
-    supabaseGoldSyncEnabled && supabaseGoldDatabaseUrl
-      ? new PsqlSupabaseGoldWriter({
-          connectionString: supabaseGoldDatabaseUrl,
-        })
-      : undefined,
+  supabaseGoldWriter: createSupabaseGoldWriterFromConfig(),
 });
-if (supabaseGoldSyncEnabled && supabaseGoldDatabaseUrl) {
-  console.log("[boot] Supabase gold dual-write enabled");
-} else {
-  console.log("[boot] Supabase gold dual-write disabled");
-}
+
+const refreshSupabaseGoldSyncWriter = (source: "boot" | "config_update"): void => {
+  const writer = createSupabaseGoldWriterFromConfig();
+  goldReadService.setSupabaseGoldWriter(writer);
+  console.log(`[${source}] Supabase gold dual-write ${writer ? "enabled" : "disabled"}`);
+};
+
+refreshSupabaseGoldSyncWriter("boot");
 
 // ---- Supabase JWT validation (optional, enabled when SUPABASE_PROJECT_URL is set) ---
 
@@ -2002,6 +2010,12 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         if (typeof configBody.key === "string" && configBody.key) {
           try {
             config.set(configBody.key, configBody.value);
+            if (
+              configBody.key === "SUPABASE_GOLD_SYNC_ENABLED" ||
+              configBody.key === "SUPABASE_GOLD_DATABASE_URL"
+            ) {
+              refreshSupabaseGoldSyncWriter("config_update");
+            }
           } catch {
             // Key not in runtime config definitions — ignore
           }

@@ -24,7 +24,7 @@ export class GoldWeekReadService {
 
   private readonly stateStore?: PersistentStateStore;
 
-  private readonly supabaseGoldWriter?: SupabaseGoldWriter;
+  private supabaseGoldWriter?: SupabaseGoldWriter;
 
   constructor(options?: { stateStore?: PersistentStateStore; supabaseGoldWriter?: SupabaseGoldWriter }) {
     this.stateStore = options?.stateStore;
@@ -38,6 +38,10 @@ export class GoldWeekReadService {
         this.recipeCatalog.set(recipeId, recipe);
       }
     }
+  }
+
+  setSupabaseGoldWriter(writer?: SupabaseGoldWriter): void {
+    this.supabaseGoldWriter = writer;
   }
 
   upsert(model: GoldReadModel): void {
