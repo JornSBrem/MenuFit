@@ -323,7 +323,11 @@ export class GoldWeekReadService {
     if (!this.supabaseGoldWriter) {
       return;
     }
-    this.supabaseGoldWriter.syncAll(this.listAllModels(), this.listRecipes());
+    try {
+      this.supabaseGoldWriter.syncAll(this.listAllModels(), this.listRecipes());
+    } catch (error) {
+      console.error(`[gold] Supabase sync error (non-fatal): ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   private findClosestBaseline(

@@ -94,7 +94,7 @@ function mergeRecipe(into: SqlRecipeRow, next: Partial<SqlRecipeRow> & { name?: 
     nutrientsRelatesTo: into.nutrientsRelatesTo ?? next.nutrientsRelatesTo,
     importedAt: into.importedAt ?? next.importedAt,
     sourceUrl: into.sourceUrl ?? next.sourceUrl,
-    tags: into.tags.length > 0 ? into.tags : next.tags ?? [],
+    tags: [...new Set(into.tags.length > 0 ? into.tags : next.tags ?? [])],
     prepTimes: into.prepTimes.length > 0 ? into.prepTimes : next.prepTimes ?? [],
     ingredients: into.ingredients.length > 0 ? into.ingredients : next.ingredients ?? [],
     steps: into.steps.length > 0 ? into.steps : next.steps ?? [],
@@ -203,7 +203,7 @@ export function buildSupabaseGoldBackfillSql(
 values (${sqlString(recipe.recipeId)}, ${sqlNullable(recipe.slug)}, ${sqlString(recipe.name)}, ${sqlNullable(recipe.imageUrl)}, ${sqlNullable(recipe.kcal)}, ${sqlNullable(recipe.intro)}, ${sqlNullable(recipe.ingredientsRelatesTo)}, ${sqlNullable(recipe.nutrientsRelatesTo)}, ${sqlNullable(recipe.importedAt)}, ${sqlNullable(recipe.sourceUrl)});`,
     );
 
-    for (const tag of recipe.tags) {
+    for (const tag of [...new Set(recipe.tags)]) {
       lines.push(
         `insert into public.menufit_gold_recipe_tags (recipe_id, tag) values (${sqlString(recipe.recipeId)}, ${sqlString(tag)});`,
       );
