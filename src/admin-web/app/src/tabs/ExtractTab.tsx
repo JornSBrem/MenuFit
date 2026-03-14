@@ -71,14 +71,17 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     pollFn: (jobId: string) => Promise<unknown>,
   ) => {
     useEffect(() => {
-      if (!job || job.status !== "running") {
-        if (ref.current) { clearInterval(ref.current); ref.current = null; }
-        return;
-      }
-      if (ref.current) return;
-      ref.current = setInterval(() => {
+      if (ref.current) { clearInterval(ref.current); ref.current = null; }
+      if (!job || job.status !== "running") return;
+
+      const doPoll = () => {
         void pollFn(job.jobId).then(() => { onStateChange(); });
-      }, 1000);
+      };
+
+      // Meteen eerste poll doen (niet wachten op interval)
+      doPoll();
+      ref.current = setInterval(doPoll, 1000);
+
       return () => { if (ref.current) { clearInterval(ref.current); ref.current = null; } };
     }, [job?.jobId, job?.status]);
   };
