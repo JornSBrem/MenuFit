@@ -10,7 +10,7 @@
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdir, writeFile } from "node:fs/promises";
-import { readdirSync, readFileSync } from "node:fs";
+import { createReadStream, existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,7 +41,7 @@ import { loginToPg, PgLoginError } from "./integrations/pg/pg-login.ts";
 import { normalizePgRecipePayload } from "./integrations/pg/pg-recipe-normalizer.ts";
 import { discoverAvailableWeeks } from "./integrations/pg/pg-discover.ts";
 import { discoverPgRecipeSlugs } from "./integrations/pg/pg-recipe-discover.ts";
-import { fetchPgRecipeFromHtml } from "./integrations/pg/pg-recipe-html-scraper.ts";
+import { fetchPgRecipeFromHtml, fetchPgRecipeImageUrl } from "./integrations/pg/pg-recipe-html-scraper.ts";
 import { PersistentStateStore } from "./integrations/storage/persistent-state-store.ts";
 import { createPersistentStateStore } from "./application/config/create-persistent-state-store.ts";
 import {
@@ -283,6 +283,45 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 /** Milliseconden wachten tussen opeenvolgende PG API requests (rate limit) */
 const PG_FETCH_DELAY_MS = 4000;
 const PG_RECIPE_FETCH_DELAY_MS = 1000;
+const IMAGES_DIR = join(ROOT, "out", "v3", "images");
+
+const IMAGE_CONTENT_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+};
+
+/**
+ * Download an image from an external URL and save it locally.
+ * Returns the local serving path (e.g., `/api/v3/images/some-slug.jpg`).
+ */
+async function downloadRecipeImage(slug: string, externalUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(externalUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)" },
+    });
+    if (!response.ok) return null;
+
+    const contentType = response.headers.get("content-type") ?? "image/jpeg";
+    let ext = ".jpg";
+    if (contentType.includes("png")) ext = ".png";
+    else if (contentType.includes("webp")) ext = ".webp";
+    else if (contentType.includes("gif")) ext = ".gif";
+    else if (contentType.includes("svg")) ext = ".svg";
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    await mkdir(IMAGES_DIR, { recursive: true });
+    const filename = `${slug}${ext}`;
+    await writeFile(join(IMAGES_DIR, filename), buffer);
+    return `/api/v3/images/${filename}`;
+  } catch (error) {
+    console.error(`[images] Failed to download image for ${slug}: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+}
 
 /** Vaste kcal-varianten die de PG API altijd teruggeeft in één weekmenu-response */
 const PG_FIXED_KCALS = [1250, 1500, 1800, 2100];
@@ -858,6 +897,31 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   // Health check (no auth required)
   if (path === "/health" && method === "GET") {
     json(res, 200, { ok: true, status: "up" });
+    return;
+  }
+
+  // ---- Serve local recipe images (no auth required) ----
+  if (path.startsWith("/api/v3/images/") && method === "GET") {
+    const filename = path.slice("/api/v3/images/".length);
+    if (!filename || filename.includes("..") || filename.includes("/")) {
+      res.writeHead(400);
+      res.end("Bad request");
+      return;
+    }
+    const filePath = join(IMAGES_DIR, filename);
+    if (!existsSync(filePath)) {
+      res.writeHead(404);
+      res.end("Not found");
+      return;
+    }
+    const ext = filename.substring(filename.lastIndexOf(".")).toLowerCase();
+    const contentType = IMAGE_CONTENT_TYPES[ext] ?? "application/octet-stream";
+    cors(res);
+    res.writeHead(200, {
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=86400",
+    });
+    createReadStream(filePath).pipe(res);
     return;
   }
 
@@ -1818,6 +1882,98 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             ...job.meta,
             imported: recipes.length,
           });
+        } catch (err) {
+          failJob(job, err);
+        }
+      })();
+
+      json(res, 200, { ok: true, data: { jobId: job.jobId } });
+      return;
+    }
+
+    // ---- Admin: fetch missing recipe images from website ----
+    if (path === "/api/v3/admin/fetch-recipe-images" && method === "POST") {
+      const job = createBackgroundJob("fetch-recipe-images");
+
+      void (async () => {
+        try {
+          const allRecipes = goldReadService.listRecipes();
+          const missingImage = allRecipes.filter((r) => !r.imageUrl && r.slug);
+          job.total = missingImage.length;
+          job.phase = "Foto's ophalen";
+          job.meta = { totalRecipes: allRecipes.length, missingBefore: missingImage.length };
+
+          let updated = 0;
+          for (let i = 0; i < missingImage.length; i++) {
+            const recipe = missingImage[i];
+            const slug = recipe.slug ?? recipe.recipeId;
+            job.currentItem = slug;
+            try {
+              const externalUrl = await fetchPgRecipeImageUrl(slug);
+              if (externalUrl) {
+                const localPath = await downloadRecipeImage(slug, externalUrl);
+                const imageUrl = localPath ?? externalUrl;
+                goldReadService.upsertRecipes([{ ...recipe, imageUrl }]);
+                updated++;
+              }
+            } catch (error) {
+              job.errors.push(`${recipe.recipeId}: ${error instanceof Error ? error.message : String(error)}`);
+            }
+            job.processed = i + 1;
+            if (i < missingImage.length - 1) {
+              await sleep(PG_RECIPE_FETCH_DELAY_MS);
+            }
+          }
+
+          completeJob(job, { ...job.meta, updated });
+        } catch (err) {
+          failJob(job, err);
+        }
+      })();
+
+      json(res, 200, { ok: true, data: { jobId: job.jobId } });
+      return;
+    }
+
+    // ---- Admin: download external recipe images to local storage ----
+    if (path === "/api/v3/admin/download-recipe-images" && method === "POST") {
+      const job = createBackgroundJob("download-recipe-images");
+
+      void (async () => {
+        try {
+          const allRecipes = goldReadService.listRecipes();
+          const externalImages = allRecipes.filter(
+            (r) => r.imageUrl && !r.imageUrl.startsWith("/api/v3/images/"),
+          );
+          job.total = externalImages.length;
+          job.phase = "Foto's downloaden";
+          job.meta = { totalRecipes: allRecipes.length, externalBefore: externalImages.length };
+
+          let downloaded = 0;
+          let skipped = 0;
+          for (let i = 0; i < externalImages.length; i++) {
+            const recipe = externalImages[i];
+            const slug = recipe.slug ?? recipe.recipeId;
+            job.currentItem = slug;
+            try {
+              const localPath = await downloadRecipeImage(slug, recipe.imageUrl!);
+              if (localPath) {
+                goldReadService.upsertRecipes([{ ...recipe, imageUrl: localPath }]);
+                downloaded++;
+              } else {
+                skipped++;
+              }
+            } catch (error) {
+              job.errors.push(`${recipe.recipeId}: ${error instanceof Error ? error.message : String(error)}`);
+            }
+            job.processed = i + 1;
+            // Kort wachten om de bron niet te overbelasten
+            if (i < externalImages.length - 1) {
+              await sleep(500);
+            }
+          }
+
+          completeJob(job, { ...job.meta, downloaded, skipped });
         } catch (err) {
           failJob(job, err);
         }

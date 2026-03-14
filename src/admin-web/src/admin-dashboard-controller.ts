@@ -78,6 +78,8 @@ export interface AdminDashboardApi {
   reprocessFromBronze(): Promise<ApiEnvelope<ReprocessFromBronzeResult>>;
   ingestRecipeWeb(): Promise<ApiEnvelope<IngestRecipeWebResult>>;
   discoverAndImportRecipes(): Promise<ApiEnvelope<{ jobId: string }>>;
+  fetchRecipeImages(): Promise<ApiEnvelope<{ jobId: string }>>;
+  downloadRecipeImages(): Promise<ApiEnvelope<{ jobId: string }>>;
   getEetmeterDag(datum?: string): Promise<ApiEnvelope<EetmeterViewData>>;
   eetmeterLogin(body: EetmeterCredentialsRequest): Promise<ApiEnvelope<{ isIngelogd: boolean }>>;
 }
@@ -658,6 +660,38 @@ export class AdminDashboardController {
         pgLoginStatus: previous?.pgLoginStatus,
         pgDiscoverResult: previous?.pgDiscoverResult,
         activeBackgroundJob: { jobId: result.jobId, jobType: "discover-recipes", status: "running", phase: "Starten", processed: 0, total: 0, errors: [], startedAt: new Date().toISOString() },
+      });
+    } catch (error) {
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async fetchRecipeImages(): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.extract.data;
+    try {
+      const result = this.unwrapEnvelope(await this.api.fetchRecipeImages());
+      this.state.views.extract = createSuccessView({
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: previous?.pgDiscoverResult,
+        activeBackgroundJob: { jobId: result.jobId, jobType: "fetch-recipe-images", status: "running", phase: "Starten", processed: 0, total: 0, errors: [], startedAt: new Date().toISOString() },
+      });
+    } catch (error) {
+      this.state.views.extract = createErrorView(toAdminApiError(error), previous);
+    }
+    return this.getState();
+  }
+
+  async downloadRecipeImages(): Promise<AdminDashboardUiState> {
+    const previous = this.state.views.extract.data;
+    try {
+      const result = this.unwrapEnvelope(await this.api.downloadRecipeImages());
+      this.state.views.extract = createSuccessView({
+        jobs: previous?.jobs ?? [],
+        pgLoginStatus: previous?.pgLoginStatus,
+        pgDiscoverResult: previous?.pgDiscoverResult,
+        activeBackgroundJob: { jobId: result.jobId, jobType: "download-recipe-images", status: "running", phase: "Starten", processed: 0, total: 0, errors: [], startedAt: new Date().toISOString() },
       });
     } catch (error) {
       this.state.views.extract = createErrorView(toAdminApiError(error), previous);

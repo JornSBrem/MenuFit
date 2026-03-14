@@ -289,3 +289,35 @@ export const fetchPgRecipeFromHtml = async (slug: string): Promise<RecipeView> =
     sourceUrl: url,
   };
 };
+
+/**
+ * Haalt alleen de afbeelding-URL op voor een recept via de website.
+ * Retourneert undefined als er geen afbeelding gevonden wordt.
+ */
+export const fetchPgRecipeImageUrl = async (slug: string): Promise<string | undefined> => {
+  const url = `${PG_FRONTEND}/recepten/${slug}`;
+
+  let response: Response | undefined;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(url, {
+      headers: {
+        Accept: "text/html",
+        "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)",
+      },
+      redirect: "follow",
+    });
+
+    if (response.status === 429 || response.status === 503) {
+      const retryAfter = response.headers.get("retry-after");
+      const waitMs = retryAfter ? parseFloat(retryAfter) * 1000 : (attempt + 1) * 10_000;
+      await sleep(waitMs);
+      continue;
+    }
+    break;
+  }
+
+  if (!response || !response.ok) return undefined;
+
+  const html = await response.text();
+  return parseImageUrl(html);
+};

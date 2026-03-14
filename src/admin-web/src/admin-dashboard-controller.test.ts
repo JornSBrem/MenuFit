@@ -249,6 +249,14 @@ const createApi = (
     ok: true,
     data: { jobId: "discover-recipes-1" },
   }),
+  fetchRecipeImages: async () => ({
+    ok: true,
+    data: { jobId: "fetch-images-1" },
+  }),
+  downloadRecipeImages: async () => ({
+    ok: true,
+    data: { jobId: "download-images-1" },
+  }),
   ...overrides,
 });
 

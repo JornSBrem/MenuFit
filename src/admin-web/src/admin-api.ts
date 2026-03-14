@@ -80,6 +80,14 @@ export class AdminApiClient {
     return this.post("/api/v3/admin/discover-and-import-recipes", {});
   }
 
+  fetchRecipeImages(): Promise<ApiEnvelope<{ jobId: string }>> {
+    return this.post("/api/v3/admin/fetch-recipe-images", {});
+  }
+
+  downloadRecipeImages(): Promise<ApiEnvelope<{ jobId: string }>> {
+    return this.post("/api/v3/admin/download-recipe-images", {});
+  }
+
   getJobStatus(jobId: string): Promise<ApiEnvelope<BackgroundJob>> {
     return this.get(`/api/v3/admin/job-status/${jobId}`);
   }

@@ -312,10 +312,37 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
     try {
       await controller.discoverAndImportRecipes();
       onStateChange();
-      // Polling wordt automatisch opgestart via useJobPolling
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Recepten ontdekken/importeren mislukt.");
       setDiscoverRecipesBusy(false);
+    }
+  };
+
+  const [fetchImagesBusy, setFetchImagesBusy] = useState(false);
+  const handleFetchRecipeImages = async () => {
+    setFetchImagesBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      await controller.fetchRecipeImages();
+      onStateChange();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Foto's ophalen mislukt.");
+      setFetchImagesBusy(false);
+    }
+  };
+
+  const [downloadImagesBusy, setDownloadImagesBusy] = useState(false);
+  const handleDownloadRecipeImages = async () => {
+    setDownloadImagesBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      await controller.downloadRecipeImages();
+      onStateChange();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Foto's downloaden mislukt.");
+      setDownloadImagesBusy(false);
     }
   };
 
@@ -502,6 +529,12 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
           </button>
           <button style={btn} onClick={() => void handleDiscoverAndImportRecipes()} disabled={discoverRecipesBusy}>
             {discoverRecipesBusy ? "Bezig (ontdekken + importeren)…" : "Nieuwe recepten ophalen"}
+          </button>
+          <button style={btn} onClick={() => void handleFetchRecipeImages()} disabled={fetchImagesBusy}>
+            {fetchImagesBusy ? "Bezig (foto's ophalen)…" : "Ontbrekende foto's ophalen"}
+          </button>
+          <button style={btn} onClick={() => void handleDownloadRecipeImages()} disabled={downloadImagesBusy}>
+            {downloadImagesBusy ? "Bezig (downloaden)…" : "Foto's lokaal opslaan"}
           </button>
         </div>
         {data?.reprocessResult && (
