@@ -300,9 +300,13 @@ const IMAGE_CONTENT_TYPES: Record<string, string> = {
  */
 async function downloadRecipeImage(slug: string, externalUrl: string): Promise<string | null> {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
     const response = await fetch(externalUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)" },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     if (!response.ok) return null;
 
     const contentType = response.headers.get("content-type") ?? "image/jpeg";
@@ -1902,6 +1906,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           job.total = missingImage.length;
           job.phase = "Foto's ophalen";
           job.meta = { totalRecipes: allRecipes.length, missingBefore: missingImage.length };
+          console.log(`[fetch-images] Start: ${missingImage.length} recepten zonder foto (van ${allRecipes.length} totaal)`);
 
           let updated = 0;
           for (let i = 0; i < missingImage.length; i++) {
@@ -1909,6 +1914,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             const slug = recipe.slug ?? recipe.recipeId;
             job.currentItem = slug;
             try {
+              console.log(`[fetch-images] ${i + 1}/${missingImage.length} ${slug}`);
               const externalUrl = await fetchPgRecipeImageUrl(slug);
               if (externalUrl) {
                 const localPath = await downloadRecipeImage(slug, externalUrl);
@@ -1917,7 +1923,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
                 updated++;
               }
             } catch (error) {
-              job.errors.push(`${recipe.recipeId}: ${error instanceof Error ? error.message : String(error)}`);
+              const msg = `${recipe.recipeId}: ${error instanceof Error ? error.message : String(error)}`;
+              console.error(`[fetch-images] Error: ${msg}`);
+              job.errors.push(msg);
             }
             job.processed = i + 1;
             if (i < missingImage.length - 1) {
@@ -1925,6 +1933,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             }
           }
 
+          console.log(`[fetch-images] Klaar: ${updated} bijgewerkt`);
           completeJob(job, { ...job.meta, updated });
         } catch (err) {
           failJob(job, err);
@@ -1948,6 +1957,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           job.total = externalImages.length;
           job.phase = "Foto's downloaden";
           job.meta = { totalRecipes: allRecipes.length, externalBefore: externalImages.length };
+          console.log(`[download-images] Start: ${externalImages.length} recepten met externe URL (van ${allRecipes.length} totaal)`);
 
           let downloaded = 0;
           let skipped = 0;
@@ -1956,6 +1966,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
             const slug = recipe.slug ?? recipe.recipeId;
             job.currentItem = slug;
             try {
+              console.log(`[download-images] ${i + 1}/${externalImages.length} ${slug}`);
               const localPath = await downloadRecipeImage(slug, recipe.imageUrl!);
               if (localPath) {
                 goldReadService.upsertRecipes([{ ...recipe, imageUrl: localPath }]);
@@ -1964,7 +1975,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
                 skipped++;
               }
             } catch (error) {
-              job.errors.push(`${recipe.recipeId}: ${error instanceof Error ? error.message : String(error)}`);
+              const msg = `${recipe.recipeId}: ${error instanceof Error ? error.message : String(error)}`;
+              console.error(`[download-images] Error: ${msg}`);
+              job.errors.push(msg);
             }
             job.processed = i + 1;
             // Kort wachten om de bron niet te overbelasten
@@ -1972,6 +1985,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
               await sleep(500);
             }
           }
+          console.log(`[download-images] Klaar: ${downloaded} gedownload, ${skipped} overgeslagen`);
 
           completeJob(job, { ...job.meta, downloaded, skipped });
         } catch (err) {

@@ -231,13 +231,20 @@ export const fetchPgRecipeFromHtml = async (slug: string): Promise<RecipeView> =
 
   let response: Response | undefined;
   for (let attempt = 0; attempt < 3; attempt++) {
-    response = await fetch(url, {
-      headers: {
-        Accept: "text/html",
-        "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)",
-      },
-      redirect: "follow",
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    try {
+      response = await fetch(url, {
+        headers: {
+          Accept: "text/html",
+          "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)",
+        },
+        redirect: "follow",
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (response.status === 429 || response.status === 503) {
       const retryAfter = response.headers.get("retry-after");
@@ -299,13 +306,20 @@ export const fetchPgRecipeImageUrl = async (slug: string): Promise<string | unde
 
   let response: Response | undefined;
   for (let attempt = 0; attempt < 3; attempt++) {
-    response = await fetch(url, {
-      headers: {
-        Accept: "text/html",
-        "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)",
-      },
-      redirect: "follow",
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    try {
+      response = await fetch(url, {
+        headers: {
+          Accept: "text/html",
+          "User-Agent": "Mozilla/5.0 (compatible; MenuFit/1.0)",
+        },
+        redirect: "follow",
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (response.status === 429 || response.status === 503) {
       const retryAfter = response.headers.get("retry-after");

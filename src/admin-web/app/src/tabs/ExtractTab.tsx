@@ -106,9 +106,20 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
   useEffect(() => {
     if (activeBackgroundJob && activeBackgroundJob.status !== "running") {
       setDiscoverRecipesBusy(false);
+      setFetchImagesBusy(false);
+      setDownloadImagesBusy(false);
       const meta = activeBackgroundJob.meta as Record<string, unknown> | undefined;
+      const jobType = activeBackgroundJob.jobType;
       if (activeBackgroundJob.status === "completed") {
-        setSuccessMsg(`Recepten: ${meta?.discovered ?? "?"} ontdekt, ${meta?.imported ?? "?"} nieuw, ${meta?.skipped ?? "?"} overgeslagen (${activeBackgroundJob.errors.length} fouten).`);
+        if (jobType === "discover-recipes") {
+          setSuccessMsg(`Recepten: ${meta?.discovered ?? "?"} ontdekt, ${meta?.imported ?? "?"} nieuw, ${meta?.skipped ?? "?"} overgeslagen (${activeBackgroundJob.errors.length} fouten).`);
+        } else if (jobType === "fetch-recipe-images") {
+          setSuccessMsg(`Foto's ophalen: ${meta?.updated ?? "?"} bijgewerkt van ${meta?.missingBefore ?? "?"} ontbrekend (${activeBackgroundJob.errors.length} fouten).`);
+        } else if (jobType === "download-recipe-images") {
+          setSuccessMsg(`Foto's downloaden: ${meta?.downloaded ?? "?"} gedownload, ${meta?.skipped ?? "?"} overgeslagen (${activeBackgroundJob.errors.length} fouten).`);
+        } else {
+          setSuccessMsg(`Job voltooid (${activeBackgroundJob.errors.length} fouten).`);
+        }
       } else if (activeBackgroundJob.status === "failed") {
         setErrorMsg(`Mislukt: ${activeBackgroundJob.errors[0] ?? "onbekende fout"}`);
       }
@@ -595,6 +606,8 @@ export function ExtractTab({ viewState, controller, onStateChange }: ExtractTabP
 const JOB_TYPE_LABELS: Record<string, string> = {
   "ingest": "Ingest",
   "discover-recipes": "Recepten ophalen",
+  "fetch-recipe-images": "Foto's ophalen",
+  "download-recipe-images": "Foto's downloaden",
 };
 
 function formatEta(startedAt: string, processed: number, total: number): string {
